@@ -1,23 +1,226 @@
+---
+interface Props {
+	title: string
+}
+
+const { title } = Astro.props
+---
+
 <!doctype html>
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
+		<title>{title}</title>
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+		/>
 	</head>
 	<body>
-		<slot />
+		<main>
+			<slot />
+		</main>
+
+		<footer class="footer-dark">
+    <div class="footer-container">
+        <div class="footer-section brand-section">
+            <h3>AU CASINOS <span style="color: #60A5FA;">ONLINE</span></h3>
+            <p>Your trusted guide to the fastest, safest, and most rewarding online casino experiences in Australia for 2026.</p>
+        </div>
+
+        <div class="footer-section links-section">
+            <h4>Quick Links</h4>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/about">About Us</a></li>
+                <li><a href="/contact">Contact</a></li>
+                <li><a href="/bonuses">Best Bonuses</a></li>
+            </ul>
+        </div>
+
+        <div class="footer-section links-section">
+            <h4>Legal & Support</h4>
+            <ul>
+                <li><a href="/terms">Terms & Conditions</a></li>
+                <li><a href="/privacy">Privacy Policy</a></li>
+                <li><a href="/responsible-gaming">Responsible Gaming</a></li>
+                <li><a href="/faq">FAQ</a></li>
+            </ul>
+        </div>
+
+        <div class="footer-section social-section">
+            <h4>Follow Us</h4>
+            <div class="social-icons">
+                <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                <a href="#" aria-label="X (Twitter)"><i class="fa-brands fa-x-twitter"></i></a>
+                <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                <a href="#" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer-bottom">
+        <p>&copy; 2026 AU Casinos Online. All rights reserved.</p>
+    </div>
+</footer>
 	</body>
 </html>
 
-<style>
+<style is:global>
+	/* Global Reset & Base Styles */
+	:root {
+		--bg-main: #f3f4f6;
+		--text-main: #1f2937;
+	}
+
 	html,
 	body {
 		margin: 0;
+		padding: 0;
+		box-sizing: border-box;
+		font-family:
+			system-ui,
+			-apple-system,
+			sans-serif;
+		background-color: var(--bg-main);
+		color: var(--text-main);
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+	}
+
+	/* Expanded Footer Styling */
+    .footer-dark {
+        background-color: #0f172a; /* Deep slate dark background */
+        color: #cbd5e1;
+        padding-top: 4rem;
+        margin-top: auto;
+        font-size: 0.95rem;
+    }
+
+    .footer-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr; /* Brand gets more space */
+        gap: 3rem;
+        margin-bottom: 3rem;
+    }
+
+    .footer-section h3 {
+        margin-top: 0;
+        font-size: 1.2rem;
+        font-weight: 900;
+        color: white;
+        letter-spacing: 0.5px;
+        margin-bottom: 1rem;
+    }
+
+    .footer-section h4 {
+        margin-top: 0;
+        color: white;
+        font-size: 1.05rem;
+        margin-bottom: 1.2rem;
+        font-weight: 700;
+    }
+
+    .brand-section p {
+        color: #94a3b8;
+        line-height: 1.6;
+    }
+
+    /* Footer Lists */
+    .links-section ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .links-section a {
+        color: #94a3b8;
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .links-section a:hover {
+        color: #60a5fa; /* Blue highlight on hover */
+    }
+
+    /* Social Icons */
+    .social-icons {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .social-icons a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background-color: #1e293b;
+        color: #cbd5e1;
+        border-radius: 50%;
+        text-decoration: none;
+        font-size: 1.2rem;
+        transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    }
+
+    .social-icons a:hover {
+        background-color: #60a5fa;
+        color: white;
+        transform: translateY(-3px); /* Slight pop-up effect */
+    }
+
+    /* Footer Bottom Strip */
+    .footer-bottom {
+        border-top: 1px solid #1e293b;
+        text-align: center;
+        padding: 1.5rem 2rem;
+        color: #64748b;
+        font-size: 0.85rem;
+    }
+    
+    .footer-bottom p {
+        margin: 0;
+    }
+
+    /* Mobile Responsiveness for Footer */
+    @media (max-width: 900px) {
+        .footer-container {
+            grid-template-columns: 1fr 1fr; /* 2 columns on medium screens */
+        }
+    }
+
+    @media (max-width: 600px) {
+        .footer-container {
+            grid-template-columns: 1fr; /* Stack everything on small screens */
+            gap: 2rem;
+            text-align: center;
+        }
+        
+        .social-icons {
+            justify-content: center;
+        }
+    }
+
+	main {
+		flex-grow: 1;
 		width: 100%;
-		height: 100%;
+	}
+
+	/* Simple Footer */
+	.footer-dark {
+		background-color: #111827;
+		color: #9ca3af;
+		padding: 2rem;
+		margin-top: auto;
+		text-align: center;
+		font-size: 0.9rem;
 	}
 </style>
