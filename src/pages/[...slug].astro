@@ -1,0 +1,1476 @@
+---
+import { Image } from "astro:assets"
+import Layout from "../layouts/Layout.astro"
+
+// 1. Fetch data from WordPress (Posts AND Pages)
+export async function getStaticPaths() {
+    // 🚨 1. SINGLE SOURCE OF TRUTH FOR THE DOMAIN
+    const APP_ID = "6409582"
+    const wpDomain = `https://wordpress-1621926-${APP_ID}.cloudwaysapps.com`
+    const wpUrl = `${wpDomain}/graphql`
+
+    let allNodes: any[] = []
+    let allPostsList: any[] = []
+
+    // --- FETCH POSTS ---
+    let hasNextPosts = true
+    let postsCursor = null
+
+    while (hasNextPosts) {
+        const response = await fetch(wpUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                query: `
+                    query GetPosts($after: String) {
+                        posts(first: 70, after: $after) {
+                            pageInfo { hasNextPage endCursor }
+                            nodes {
+                                uri title content date modified
+                                featuredImage { node { sourceUrl altText } }
+                                author { node { name firstName lastName uri url avatar { url } seo { social { facebook twitter instagram linkedIn } } } }
+                                seo { 
+                                    title metaDesc focuskw canonical metaRobotsNoindex metaRobotsNofollow schema { raw } 
+                                    breadcrumbs {
+                                        text
+                                        url
+                                    }
+                                }
+                            }
+                        }
+                    }
+                `,
+                variables: { after: postsCursor },
+            }),
+        })
+
+        const result = await response.json()
+
+        if (result.errors) {
+            console.error(
+                "❌ GRAPHQL POSTS ERROR:",
+                JSON.stringify(result.errors, null, 2),
+            )
+            throw new Error("WordPress rejected the GraphQL query for posts.")
+        }
+
+        if (!result?.data?.posts?.nodes) {
+            console.error(
+                "❌ UNEXPECTED POSTS RESPONSE:",
+                JSON.stringify(result, null, 2),
+            )
+            throw new Error(
+                `GraphQL succeeded, but 'posts' are missing. URL: ${wpUrl}`,
+            )
+        }
+
+        const postsData = result.data.posts.nodes.map((node: any) => ({
+            ...node,
+            contentType: "post",
+        }))
+        allNodes.push(...postsData)
+        allPostsList.push(...postsData)
+
+        hasNextPosts = result.data.posts.pageInfo.hasNextPage
+        postsCursor = result.data.posts.pageInfo.endCursor
+    }
+
+    // --- FETCH PAGES ---
+    let hasNextPages = true
+    let pagesCursor = null
+
+    while (hasNextPages) {
+        const response = await fetch(wpUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                query: `
+                    query GetPages($after: String) {
+                        pages(first: 70, after: $after) {
+                            pageInfo { hasNextPage endCursor }
+                            nodes {
+                                uri title content date modified
+                                featuredImage { node { sourceUrl altText } }
+                                author { node { name firstName lastName uri url avatar { url } seo { social { facebook twitter instagram linkedIn } } } }
+                                seo { 
+                                    title metaDesc focuskw canonical metaRobotsNoindex metaRobotsNofollow schema { raw } 
+                                    breadcrumbs {
+                                        text
+                                        url
+                                    }
+                                }
+                            }
+                        }
+                    }
+                `,
+                variables: { after: pagesCursor },
+            }),
+        })
+
+        const result = await response.json()
+
+        if (result.errors) {
+            console.error(
+                "❌ GRAPHQL PAGES ERROR:",
+                JSON.stringify(result.errors, null, 2),
+            )
+            throw new Error("WordPress rejected the GraphQL query for pages.")
+        }
+
+        if (!result?.data?.pages?.nodes) {
+            console.error(
+                "❌ UNEXPECTED PAGES RESPONSE:",
+                JSON.stringify(result, null, 2),
+            )
+            throw new Error(
+                `GraphQL succeeded, but 'pages' are missing. URL: ${wpUrl}`,
+            )
+        }
+
+        const pagesData = result.data.pages.nodes.map((node: any) => ({
+            ...node,
+            contentType: "page",
+        }))
+        allNodes.push(...pagesData)
+
+        hasNextPages = result.data.pages.pageInfo.hasNextPage
+        pagesCursor = result.data.pages.pageInfo.endCursor
+    }
+
+    // --- FILTER AND RETURN ---
+    const sanitizeSlug = (uri: string) => {
+        if (!uri) return ""
+        let clean = uri.replace(/https?:\/+www\.casinous\.com/gi, "")
+        clean = clean.replace(
+            /https?:\/+wordpress-[a-zA-Z0-9-]+\.cloudwaysapps\.com/gi,
+            "",
+        )
+        clean = clean.replace(/https?:[\/]+/gi, "")
+        clean = clean.replace(/[:\\]/g, "")
+        clean = clean.replace(/\/+/g, "/")
+        return clean.replace(/^\/|\/$/g, "")
+    }
+
+    const validNodes = allNodes.filter((node: any) => {
+        if (!node.uri || node.uri === "/") return false
+        if (node.uri.includes("http") || node.uri.includes("casinous.com")) {
+            return false
+        }
+        return true
+    })
+
+    // Grab 8 recent posts total to divide between the two sections later
+    const recentPosts = allPostsList.slice(0, 8)
+
+    return validNodes.map((node: any) => {
+        const cleanSlug = sanitizeSlug(node.uri)
+
+        // Give the page/post 7 total related items to match the homepage layout
+        const related =
+            node.contentType === "post"
+                ? recentPosts.filter(p => p.uri !== node.uri).slice(0, 7)
+                : []
+
+        return {
+            params: { slug: cleanSlug || undefined },
+            props: {
+                post: node,
+                contentType: node.contentType,
+                relatedPosts: related,
+            },
+        }
+    })
+}
+
+// 2. Define the Props Interface
+interface Props {
+    contentType: "post" | "page"
+    relatedPosts: any[]
+    post: any
+}
+
+const { post, contentType, relatedPosts } = Astro.props
+const { slug } = Astro.params
+
+// 🚨 SPLIT THE POSTS FOR THE FOOTER LAYOUT
+const breakingStories = relatedPosts.slice(0, 3)
+const blogPosts = relatedPosts.slice(3, 7)
+
+const isPost = contentType === "post"
+const isPage = contentType === "page"
+
+const pathSegments = slug?.split("/") || []
+const category = pathSegments.length > 1 ? pathSegments[0] : "guide"
+const cleanCategoryName = category.replace(/-/g, " ")
+
+const currentYear = new Date().getFullYear().toString()
+
+const yoastTitle = (post.seo?.title || post.title || "").replaceAll(
+    "[year]",
+    currentYear,
+)
+const yoastDesc = (post.seo?.metaDesc || "").replaceAll("[year]", currentYear)
+
+// 🚨 FIX: Swap the Cloudways domain and fix the uncategorized path in the Schema
+let yoastSchema = post.seo?.schema?.raw || undefined
+if (yoastSchema) {
+    yoastSchema = yoastSchema
+        .replaceAll("https://wordpress-1621926-6409582.cloudwaysapps.com", "https://www.casinous.com")
+        .replaceAll("/uncategorized/", "/blog/")
+}
+
+// 🚨 FIX: Force the Yoast canonical URL to use the live domain AND fix the uncategorized path
+let canonicalUrl = post.seo?.canonical || undefined;
+if (canonicalUrl) {
+    canonicalUrl = canonicalUrl
+        .replace("https://wordpress-1621926-6409582.cloudwaysapps.com", "https://www.casinous.com")
+        .replace("/uncategorized/", "/blog/");
+}
+const focusKeyword = post.seo?.focuskw || undefined
+
+// 🚨 Extract and clean Yoast Breadcrumbs
+const rawBreadcrumbs = post.seo?.breadcrumbs || []
+const yoastBreadcrumbs = rawBreadcrumbs.map((crumb: any, index: number) => {
+    let cleanUrl = crumb.url || "/"
+    
+    // Strip both the live domain and the Cloudways domain to make links relative
+    cleanUrl = cleanUrl.replace(/https?:\/\/(www\.)?casinous\.com/gi, "")
+    cleanUrl = cleanUrl.replace(/https?:\/+wordpress-[a-zA-Z0-9-]+\.cloudwaysapps\.com/gi, "")
+    // Fix uncategorized breadcrumb paths
+    cleanUrl = cleanUrl.replace("/uncategorized/", "/blog/")
+    
+    if (cleanUrl === "") cleanUrl = "/"
+
+    const isLastItem = index === rawBreadcrumbs.length - 1;
+
+    // Override the text with the Focus Keyword if it is the last item in the chain
+    let displayText = crumb.text;
+    if (isLastItem && focusKeyword) {
+        // Capitalize the first letter so it looks like a proper title
+        displayText = focusKeyword.charAt(0).toUpperCase() + focusKeyword.slice(1);
+    }
+
+    return {
+        text: displayText,
+        url: cleanUrl,
+        isLast: isLastItem
+    }
+})
+
+const noindex = post.seo?.metaRobotsNoindex || "index"
+const nofollow = post.seo?.metaRobotsNofollow || "follow"
+const robotsTag = `${noindex}, ${nofollow}`
+
+// 5. Author Data Extraction
+const wpDomain = "https://wordpress-1621926-6409582.cloudwaysapps.com"
+const authorNode = post.author?.node
+const authorName = authorNode
+    ? authorNode.firstName && authorNode.lastName
+        ? `${authorNode.firstName} ${authorNode.lastName}`
+        : authorNode.name
+    : "Editorial Team"
+
+let authorAvatar =
+    authorNode?.avatar?.url ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=f1f5f9&color=1e293b&bold=true`
+authorAvatar = authorAvatar.replace(
+    /https?:\/\/(www\.)?casinous\.com/gi,
+    wpDomain,
+)
+
+const authorSlug = authorName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "")
+const authorLink = `/about-us/${authorSlug}/`
+
+const formatSocial = (value: string | undefined, domain: string) => {
+    if (!value) return null
+    return value.startsWith("http")
+        ? value
+        : `${domain}${value.replace(/^@/, "")}`
+}
+
+const authorSocials = authorNode?.seo?.social || {}
+const twitterLink = formatSocial(authorSocials.twitter, "https://twitter.com/")
+const facebookLink = formatSocial(
+    authorSocials.facebook,
+    "https://facebook.com/",
+)
+const instagramLink = formatSocial(
+    authorSocials.instagram,
+    "https://instagram.com/",
+)
+const linkedinLink = formatSocial(
+    authorSocials.linkedIn,
+    "https://linkedin.com/in/",
+)
+
+let reviewerName = "Paul Jacobs"
+if (authorName.toLowerCase().includes("sarah")) {
+    reviewerName = "David Reynolds"
+}
+
+const reviewerAvatars: Record<string, string> = {
+    "Paul Jacobs":
+        "https://secure.gravatar.com/avatar/5c4ed09c966f392059e806c5812445eda41c0f95e81217db92bc0865be4f1185?s=32&d=mm&r=g",
+    "David Reynolds":
+        "https://secure.gravatar.com/avatar/907015fdee956f1b4291ed4c4290571d3b2652adbe40b1938629a7d9b65a8f08?s=32&d=mm&r=g",
+    "Paige Jacobs":
+        "https://secure.gravatar.com/avatar/b5b0117907d6dc14bd89e93752ab00d26bb4608b5f3d0f4bff4d5545071120d3?s=32&d=mm&r=g",
+}
+const reviewerAvatar =
+    reviewerAvatars[reviewerName] ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(reviewerName)}&background=f1f5f9&color=1e293b&bold=true`
+
+const reviewerSlug = reviewerName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "")
+const reviewerLink = `/about-us/${reviewerSlug}/`
+
+const rawDate = post.modified || post.date || new Date().toISOString()
+const formattedDate = new Date(rawDate).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+})
+
+let featuredImageUrl = post.featuredImage?.node?.sourceUrl
+if (featuredImageUrl) {
+    try {
+        const parsedUrl = new URL(featuredImageUrl)
+        // 🚨 FIX: Extract relative path for the proxy
+        featuredImageUrl = parsedUrl.pathname 
+    } catch (e) {}
+}
+
+// --- 6. AUTO TABLE OF CONTENTS (TOC) GENERATOR ---
+let rawContent = post.content || ""
+
+if (post.uri.startsWith("/casino-reviews/")) {
+    rawContent = rawContent.replace(/<h1[^>]*>[\s\S]*?<\/h1>/gi, "")
+}
+
+const tocItems: { text: string; slug: string }[] = []
+const h2Regex = /<h2([^>]*)>([\s\S]*?)<\/h2>/gi
+const contentWithIds = rawContent.replace(
+    h2Regex,
+    (match, attributes, text) => {
+        const cleanText = text.replace(/<\/?[^>]+(>|$)/g, "").trim()
+        const h2Slug = cleanText
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)+/g, "")
+        if (cleanText.length > 0)
+            tocItems.push({ text: cleanText, slug: h2Slug })
+        if (attributes.includes("id=")) return match
+        return `<h2${attributes} id="${h2Slug}">${text}</h2>`
+    },
+)
+
+let tocHTML = ""
+if (tocItems.length > 0) {
+    const listItems = tocItems
+        .map(
+            item =>
+                `<li><a href="#${item.slug}" class="toc-jump-link">${item.text}</a></li>`,
+        )
+        .join("")
+    tocHTML = `
+    <div class="custom-toc">
+        <button class="toc-toggle" onclick="window.toggleTableOfContents(this)">
+            <span>Table of Contents</span>
+            <svg class="toc-icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <ul class="toc-list" style="display: none;">${listItems}</ul>
+    </div>`
+}
+
+const displayTitle = (post.title || "").replaceAll("[year]", currentYear)
+
+// --- 7. FINAL CONTENT REPLACEMENTS ---
+const fixedContent = contentWithIds
+    .replaceAll("[casino_toc]", tocHTML)
+    .replace(/src="[^"]*placeholder[^"]*"/gi, "")
+    .replaceAll('data-src="/wp-content/', 'src="/wp-content/')
+    .replaceAll('data-srcset="/wp-content/', 'srcset="/wp-content/')
+    
+    // 🚨 BULLETPROOF FIX: Globally strip the Cloudways domain from the entire HTML string.
+    // This catches hrefs, src, and all the comma-separated links hiding inside srcset.
+    .replaceAll(wpDomain, "") 
+    
+    .replaceAll("<img ", '<img referrerpolicy="no-referrer" ')
+    .replaceAll("<p>&nbsp;</p>", "")
+    .replaceAll("<p>[author_reviewer]</p>", "")
+    .replace(
+        /<p>\s*<(strong|b)>\s*Accepts players from:\s*<\/(strong|b)>.*?<\/p>/gi,
+        "",
+    )
+    .replace(
+        /<p[^>]*>\s*<(strong|b)[^>]*>\s*Last Update:\s*<\/(strong|b)>[\s\S]*?<\/p>/gi,
+        "",
+    )
+    .replace(
+        /<p>\s*<(strong|b)>.*?Reviews and Ratings\s*<\/(strong|b)>\s*<\/p>/gi,
+        "",
+    )
+    .replace(/<p>\s*\[casino_toc\]\s*<\/p>/gi, "")
+    .replaceAll("[casino_toc]", "") // Failsafe in case it's not in a <p> tag
+    .replace(/<p>\s*<(strong|b)>\s*Updated:\s*<\/(strong|b)>.*?<\/p>/gi, "")
+    .replace(/<h1[^>]*>[\s\S]*?<\/h1>/i, "")
+    .replaceAll("[year]", currentYear)
+---
+
+<Layout
+    title={`${post.title} | AU Casinos Online`}
+    seoTitle={yoastTitle}
+    description={yoastDesc}
+    schema={yoastSchema}
+    canonical={canonicalUrl}
+    robots={robotsTag}
+    keywords={focusKeyword}
+    author={authorName}
+>
+    <header class={isPost ? "post-hero" : "page-hero"}>
+        <div class={isPost ? "post-hero-container" : "page-hero-container"}>
+            <nav class="post-breadcrumbs" aria-label="breadcrumb">
+                {
+                    yoastBreadcrumbs.length > 0 ? (
+                        yoastBreadcrumbs.map((crumb: any) =>
+                            crumb.isLast ? (
+                                <span class="current" set:html={crumb.text} />
+                            ) : (
+                                <>
+                                    <a href={crumb.url} set:html={crumb.text} />
+                                    <span class="separator">›</span>
+                                </>
+                            ),
+                        )
+                    ) : (
+                        /* Fallback if Yoast breadcrumbs are missing */
+                        <>
+                            <a href="/">Home</a>
+                            <span class="separator">›</span>
+                            <span
+                                class="current"
+                                set:html={
+                                    focusKeyword
+                                        ? focusKeyword.charAt(0).toUpperCase() +
+                                          focusKeyword.slice(1)
+                                        : displayTitle
+                                }
+                            />
+                        </>
+                    )
+                }
+            </nav>
+
+            <h1
+                class={isPost ? "post-title" : "page-title"}
+                set:html={displayTitle}
+            />
+
+            <div class="post-meta-bar">
+                <div class="meta-author">
+                    <a
+                        href={authorLink}
+                        class="author-image-link"
+                        aria-label={`View ${authorName}'s profile`}
+                    >
+                        <img
+                            src={authorAvatar}
+                            alt={authorName}
+                            class="meta-avatar"
+                            referrerpolicy="no-referrer"
+                        />
+                    </a>
+                    <div>
+                        <span class="meta-name"
+                            >By <a href={authorLink} class="author-text-link"
+                                ><strong>{authorName}</strong></a
+                            ></span
+                        >
+                        <span class="meta-date">Updated: {formattedDate}</span>
+                    </div>
+                </div>
+
+                <div class="meta-share">
+                    {
+                        twitterLink && (
+                            <a
+                                href={twitterLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="share-btn twitter"
+                                aria-label="Twitter"
+                            >
+                                <i class="fa-brands fa-twitter" />
+                            </a>
+                        )
+                    }
+                    {
+                        facebookLink && (
+                            <a
+                                href={facebookLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="share-btn facebook"
+                                aria-label="Facebook"
+                            >
+                                <i class="fa-brands fa-facebook-f" />
+                            </a>
+                        )
+                    }
+                    {
+                        instagramLink && (
+                            <a
+                                href={instagramLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="share-btn instagram"
+                                aria-label="Instagram"
+                            >
+                                <i class="fa-brands fa-instagram" />
+                            </a>
+                        )
+                    }
+                    {
+                        linkedinLink && (
+                            <a
+                                href={linkedinLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="share-btn linkedin"
+                                aria-label="LinkedIn"
+                            >
+                                <i class="fa-brands fa-linkedin-in" />
+                            </a>
+                        )
+                    }
+                </div>
+            </div>
+        </div>
+    </header>
+    <main class={isPost ? "post-wrapper" : "page-wrapper"}>
+        <article
+            class={isPost
+                ? "post-container"
+                : "page-container cus-page-container"}
+        >
+            {
+                isPost && featuredImageUrl && (
+                    <div class="featured-image-wrapper">
+                        <img
+                            src={featuredImageUrl}
+                            alt={post.title}
+                            class="featured-image"
+                            referrerpolicy="no-referrer"
+                        />
+                    </div>
+                )
+            }
+
+            {
+                isPost && (
+                    <div
+                        class="cus-author-profiles"
+                        style="margin-bottom: 2rem; display: flex; gap: 1.5rem; align-items: center; justify-content: flex-start; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;"
+                    >
+                        <div
+                            class="cus-author-item"
+                            style="display: flex; gap: 1rem; align-items: center;"
+                        >
+                            <a
+                                href={reviewerLink}
+                                aria-label={`View ${reviewerName}'s profile`}
+                            >
+                                <Image
+                                    src={reviewerAvatar}
+                                    alt={`Reviewer ${reviewerName}`}
+                                    width={50}
+                                    height={50}
+                                    class="meta-avatar"
+                                />
+                            </a>
+                            <div>
+                                <span style="display: block; font-size: 0.9rem; color: #475569;">
+                                    Reviewed By{" "}
+                                    <a
+                                        href={reviewerLink}
+                                        style="color: #0f172a; text-decoration: none;"
+                                    >
+                                        <strong>{reviewerName}</strong>
+                                    </a>
+                                </span>
+                                <span style="display: block; font-size: 0.8rem; color: #64748b;">
+                                    Casino Expert
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            <div class="wp-content" set:html={fixedContent} />
+        </article>
+    </main>
+
+    {/* RELATED POSTS - Moved OUTSIDE the main tag to allow full width */}
+    {
+        isPost && relatedPosts.length > 0 && (
+            <section class="full-width-discovery-section">
+                <div class="discovery-container">
+                    <div class="discovery-columns">
+                        <div class="discovery-left-col">
+                            <h2 class="discovery-section-title">
+                                Read today's breaking stories
+                            </h2>
+                            <div class="breaking-stories-list">
+                                {breakingStories.map((story: any) => {
+                                    let relativeUri = story.uri
+                                        ? story.uri.replace(
+                                              /https?:\/\/[^\/]+/g,
+                                              "",
+                                          )
+                                        : "/"
+                                    const cleanSlug = relativeUri.replace(
+                                        /^\/|\/$/g,
+                                        "",
+                                    )
+                                    const storyLink = `/${cleanSlug}/`
+                                    const storyDate = new Date(
+                                        story.date,
+                                    ).toLocaleDateString("en-US", {
+                                        year: "numeric",
+                                        month: "short",
+                                        day: "numeric",
+                                    })
+
+                                    let storyImage =
+                                        story.featuredImage?.node?.sourceUrl ||
+                                        "https://via.placeholder.com/300x150"
+                                    try {
+                                        const parsedUrl = new URL(storyImage)
+                                        // 🚨 FIX: Extract relative path for proxying
+                                        storyImage = parsedUrl.pathname
+                                    } catch (e) {}
+
+                                    const authorObj = story.author?.node
+                                    const recAuthorName = authorObj
+                                        ? authorObj.firstName &&
+                                          authorObj.lastName
+                                            ? `${authorObj.firstName} ${authorObj.lastName}`
+                                            : authorObj.name
+                                        : "Editorial Team"
+                                    let recAuthorAvatar =
+                                        authorObj?.avatar?.url ||
+                                        `https://ui-avatars.com/api/?name=${encodeURIComponent(recAuthorName)}&background=f1f5f9&color=1e293b&bold=true`
+
+                                    return (
+                                        <div class="breaking-story-card">
+                                            <div class="breaking-story-image">
+                                                <a
+                                                    href={storyLink}
+                                                    class="thumbnail-link"
+                                                >
+                                                    <img
+                                                        src={storyImage}
+                                                        alt={
+                                                            story.featuredImage
+                                                                ?.node
+                                                                ?.altText ||
+                                                            story.title
+                                                        }
+                                                        loading="lazy"
+                                                        referrerpolicy="no-referrer"
+                                                    />
+                                                </a>
+                                            </div>
+                                            <div class="breaking-story-content">
+                                                <div class="card-meta-top">
+                                                    <span class="card-category">
+                                                        News
+                                                    </span>
+                                                    <span class="card-date">
+                                                        {storyDate}
+                                                    </span>
+                                                </div>
+                                                <a
+                                                    href={storyLink}
+                                                    class="card-title-link"
+                                                >
+                                                    <h3
+                                                        set:html={story.title}
+                                                    />
+                                                </a>
+                                                <div class="card-meta-bottom">
+                                                    <img
+                                                        src={recAuthorAvatar}
+                                                        alt={recAuthorName}
+                                                        class="card-author-avatar"
+                                                    />
+                                                    <span>
+                                                        {recAuthorName} • 10 min
+                                                        read
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+
+                        <div class="discovery-right-col">
+                            <h2 class="discovery-section-title">
+                                Discover our blogs
+                            </h2>
+                            <div class="discover-blogs-list">
+                                {blogPosts.map((blogPost: any) => {
+                                    let relativeUri = blogPost.uri
+                                        ? blogPost.uri.replace(
+                                              /https?:\/\/[^\/]+/g,
+                                              "",
+                                          )
+                                        : "/"
+                                    const cleanSlug = relativeUri.replace(
+                                        /^\/|\/$/g,
+                                        "",
+                                    )
+                                    const blogLink = `/${cleanSlug}/`
+                                    const blogDate = new Date(
+                                        blogPost.date,
+                                    ).toLocaleDateString("en-US", {
+                                        year: "numeric",
+                                        month: "short",
+                                        day: "numeric",
+                                    })
+
+                                    let blogImage =
+                                        blogPost.featuredImage?.node
+                                            ?.sourceUrl ||
+                                        "https://via.placeholder.com/150"
+                                    try {
+                                        const parsedUrl = new URL(blogImage)
+                                        // 🚨 FIX: Extract relative path for proxying
+                                        blogImage = parsedUrl.pathname
+                                    } catch (e) {}
+
+                                    const authorObj = blogPost.author?.node
+                                    const blogAuthorName = authorObj
+                                        ? authorObj.firstName &&
+                                          authorObj.lastName
+                                            ? `${authorObj.firstName} ${authorObj.lastName}`
+                                            : authorObj.name
+                                        : "Editorial Team"
+                                    let blogAuthorAvatar =
+                                        authorObj?.avatar?.url ||
+                                        `https://ui-avatars.com/api/?name=${encodeURIComponent(blogAuthorName)}&background=f1f5f9&color=1e293b&bold=true`
+
+                                    return (
+                                        <div class="blog-post-card">
+                                            <div class="blog-post-image">
+                                                <a href={blogLink}>
+                                                    <img
+                                                        src={blogImage}
+                                                        alt={
+                                                            blogPost
+                                                                .featuredImage
+                                                                ?.node
+                                                                ?.altText ||
+                                                            blogPost.title
+                                                        }
+                                                        loading="lazy"
+                                                        referrerpolicy="no-referrer"
+                                                    />
+                                                </a>
+                                            </div>
+                                            <div class="blog-post-content">
+                                                <a
+                                                    href={blogLink}
+                                                    class="blog-title-link"
+                                                >
+                                                    <h3
+                                                        set:html={
+                                                            blogPost.title
+                                                        }
+                                                    />
+                                                </a>
+                                                <div class="blog-meta">
+                                                    <div class="blog-meta-author">
+                                                        <img
+                                                            src={
+                                                                blogAuthorAvatar
+                                                            }
+                                                            alt={blogAuthorName}
+                                                            class="blog-author-avatar"
+                                                        />
+                                                        <span>
+                                                            {blogAuthorName} •{" "}
+                                                            {blogDate}
+                                                        </span>
+                                                    </div>
+                                                    <a
+                                                        href={blogLink}
+                                                        class="blog-read-more"
+                                                    >
+                                                        Read{" "}
+                                                        <i class="fa-solid fa-arrow-right" />
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        )
+    }
+</Layout>
+
+<script is:inline>
+    window.toggleTableOfContents = function (btn) {
+        const list = btn.nextElementSibling
+        const icon = btn.querySelector(".toc-icon")
+
+        if (list.style.display === "none") {
+            list.style.display = "block"
+            icon.style.transform = "rotate(180deg)"
+        } else {
+            list.style.display = "none"
+            icon.style.transform = "rotate(0deg)"
+        }
+    }
+
+    document.addEventListener("click", function (e) {
+        const link = e.target.closest(".toc-jump-link")
+        if (!link) return
+
+        e.preventDefault()
+
+        const targetId = link.getAttribute("href").substring(1)
+        const targetElement = document.getElementById(targetId)
+
+        if (targetElement) {
+            targetElement.scrollIntoView({ behavior: "smooth", block: "start" })
+            history.pushState(null, null, `#${targetId}`)
+        }
+    })
+
+    // Toggle Content Functions
+    window.toggleContent = function (btn) {
+        const content = btn.parentElement.nextElementSibling
+        if (content.style.display === "block") {
+            content.style.display = "none"
+            btn.innerText = "Show more"
+        } else {
+            content.style.display = "block"
+            btn.innerText = "Show less"
+        }
+    }
+</script>
+
+<style is:global>
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* =========================================
+       TABLE OF CONTENTS (TOC) STYLES
+    ========================================= */
+    .custom-toc {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.25rem 1.5rem;
+        margin: 2rem 0;
+        max-width: 100%;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .toc-toggle {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        background: none;
+        border: none;
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #0f172a;
+        cursor: pointer;
+        padding: 0;
+        font-family: inherit;
+    }
+
+    .toc-icon {
+        transition: transform 0.3s ease;
+        color: #64748b;
+    }
+
+    .toc-list {
+        list-style: none !important;
+        padding: 0 !important;
+        margin: 1rem 0 0 0 !important;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 1rem !important;
+    }
+
+    .toc-list li {
+        margin-bottom: 0.75rem;
+    }
+
+    .toc-list a {
+        color: #475569 !important;
+        text-decoration: none !important;
+        font-weight: 600;
+        font-size: 1rem;
+        transition:
+            color 0.2s ease,
+            padding-left 0.2s ease;
+        display: inline-block;
+    }
+
+    .toc-list a:hover {
+        color: #2563eb !important;
+        padding-left: 5px;
+    }
+
+    /* =========================================
+       POST HERO SECTION
+    ========================================= */
+    .post-hero {
+        background-color: #0f172a;
+        color: #ffffff;
+        padding: 4rem 1rem 3rem;
+        position: relative;
+        overflow: hidden;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath fill-rule='evenodd' d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 86c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm28-65c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm23-11c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm-6 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm29 21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM32 34c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zm60-35c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zM6 10c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zm90 60c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zm-40 20c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zm-20-40c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zM10 50c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zm80 40c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zm-40-20c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zm-20-40c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2z'/%3E%3C/g%3E%3C/svg%3E");
+    }
+    .post-hero::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+    }
+    .post-hero-container {
+        max-width: 800px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 2;
+    }
+    .post-title {
+        font-size: 2.8rem;
+        font-weight: 900;
+        line-height: 1.2;
+        margin: 0 0 2rem 0;
+        letter-spacing: -0.5px;
+        color: #ffffff;
+    }
+
+    /* =========================================
+       PAGE HERO SECTION (Specific to Pages)
+    ========================================= */
+    .page-hero {
+        background-color: #1a233a;
+        color: #ffffff;
+        padding: 3rem 1rem;
+        border-bottom: 1px solid #3a4459;
+    }
+    .page-hero-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 900;
+        line-height: 1.2;
+        margin: 0;
+        letter-spacing: -0.5px;
+        color: #ffffff;
+    }
+
+    /* Common Breadcrumbs */
+    .post-breadcrumbs {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        color: #94a3b8;
+        margin-bottom: 1.5rem;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+    .post-breadcrumbs a {
+        color: #60a5fa;
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+    .post-breadcrumbs a:hover {
+        color: #93c5fd;
+    }
+    .post-breadcrumbs .separator {
+        color: #475569;
+    }
+    .post-breadcrumbs .current {
+        color: #e2e8f0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 300px;
+    }
+
+    /* Post Meta Bar */
+    .post-meta-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid #1e293b;
+        padding-top: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+    }
+    .meta-author {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .author-image-link {
+        display: block;
+        transition: transform 0.2s ease;
+    }
+    .author-image-link:hover {
+        transform: scale(1.05);
+    }
+    .meta-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 2px solid #334155;
+        object-fit: cover;
+    }
+    .meta-name {
+        display: block;
+        font-size: 1rem;
+        color: #cbd5e1;
+    }
+    .author-text-link {
+        color: #ffffff;
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+    .author-text-link:hover {
+        color: #60a5fa;
+        text-decoration: underline;
+    }
+    .meta-date {
+        display: block;
+        font-size: 0.85rem;
+        color: #94a3b8;
+        margin-top: 0.2rem;
+    }
+
+    /* Share Buttons */
+    .meta-share {
+        display: flex;
+        gap: 0.75rem;
+    }
+    .share-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        text-decoration: none;
+        transition:
+            transform 0.2s ease,
+            filter 0.2s ease;
+    }
+    .share-btn.twitter {
+        background-color: #1da1f2;
+    }
+    .share-btn.facebook {
+        background-color: #1877f2;
+    }
+    .share-btn.instagram {
+        background: linear-gradient(
+            45deg,
+            #f09433 0%,
+            #e6683c 25%,
+            #dc2743 50%,
+            #cc2366 75%,
+            #bc1888 100%
+        );
+    }
+    .share-btn.linkedin {
+        background-color: #0077b5;
+    }
+    .share-btn:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.1);
+    }
+
+    /* =========================================
+       POST & PAGE CONTENT STYLING
+    ========================================= */
+    .post-wrapper {
+        background-color: #f8fafc;
+        padding: 0 1rem 5rem;
+    }
+    .page-wrapper {
+        background-color: #f8fafc;
+        padding: 2rem 1rem 5rem;
+    }
+
+    .post-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+        transform: translateY(-2rem);
+        padding: 2.5rem;
+    }
+
+    .page-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+        padding: 2.5rem;
+    }
+
+    .cus-faq-question {
+        font-weight: 600 !important;
+    }
+
+    .featured-image-wrapper {
+        margin: -2.5rem -2.5rem 2.5rem -2.5rem;
+        border-radius: 12px 12px 0 0;
+        overflow: hidden;
+    }
+
+    .wp-content p {
+        line-height: 1.8;
+        color: #334155;
+        font-size: 1.15rem;
+        margin-bottom: 1.75rem;
+    }
+    .wp-content h2 {
+        color: #0f172a;
+        margin-top: 3rem;
+        margin-bottom: 1.25rem;
+        font-weight: 500;
+        letter-spacing: -0.5px;
+        font-size: 2.2rem;
+        scroll-margin-top: 2rem;
+    }
+    .wp-content h3 {
+        color: #0f172a;
+        margin-top: 3rem;
+        margin-bottom: 1.25rem;
+        font-weight: 500;
+        letter-spacing: -0.5px;
+        font-size: 1.6rem;
+    }
+    .wp-content ul {
+        margin-bottom: 1.75rem;
+        color: #334155;
+        line-height: 1.8;
+        padding-left: 1.5rem;
+        font-size: 1.15rem;
+    }
+    .wp-content a {
+        color: #2563eb;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        font-weight: 600;
+    }
+    .wp-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        margin: 2rem 0;
+    }
+
+    /* =========================================
+       STEP-BY-STEP ORDERED LISTS
+    ========================================= */
+    .wp-content ol.wp-block-list {
+        list-style: none !important;
+        counter-reset: step-counter;
+        padding: 0 !important;
+        margin: 2.5rem 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1.25rem !important;
+    }
+    .wp-content ol.wp-block-list li {
+        position: relative !important;
+        background-color: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        padding: 1.5rem 1.5rem 1.5rem 4.5rem !important;
+        color: #475569 !important;
+        font-size: 1.05rem !important;
+        line-height: 1.6 !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02) !important;
+        counter-increment: step-counter;
+        transition:
+            transform 0.2s ease,
+            box-shadow 0.2s ease,
+            border-color 0.2s ease !important;
+    }
+    .wp-content ol.wp-block-list li:hover {
+        transform: translateY(-3px) !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05) !important;
+        border-color: #cbd5e1 !important;
+    }
+    .wp-content ol.wp-block-list li::before {
+        content: counter(step-counter) !important;
+        position: absolute !important;
+        left: 1.25rem !important;
+        top: 1.5rem !important;
+        width: 36px !important;
+        height: 36px !important;
+        background: linear-gradient(
+            135deg,
+            #3b82f6 0%,
+            #1d4ed8 100%
+        ) !important;
+        color: #ffffff !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-weight: 800 !important;
+        font-size: 1.1rem !important;
+        border-radius: 50% !important;
+        box-shadow: 0 4px 10px -2px rgba(37, 99, 235, 0.4) !important;
+    }
+    .wp-content ol.wp-block-list li strong {
+        display: block !important;
+        color: #0f172a !important;
+        font-size: 1.15rem !important;
+        font-weight: 500 !important;
+        margin-bottom: 0.25rem !important;
+        letter-spacing: -0.2px !important;
+    }
+    .wp-content ol.wp-block-list li br {
+        display: none !important;
+    }
+
+    /* =========================================
+       AUTHOR BIO / HIGHLIGHTED IMAGE BLOCK
+    ========================================= */
+    .wp-content figure.is-style-res-img-back figcaption {
+        font-size: 1.05rem !important;
+        color: #475569 !important;
+        line-height: 1.7 !important;
+        margin: 0 !important;
+        text-align: left !important;
+        font-weight: 500 !important;
+    }
+    p:empty {
+        display: none !important;
+    }
+
+    /* =========================================
+       NEW: RELATED BLOGS GRID 
+       (Matches your screenshot exactly)
+    ========================================= */
+    .related-blogs-container {
+        margin-top: 4rem;
+        padding: 2.5rem;
+        background-color: #f1f5f9; /* Light grey block */
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .related-blogs-title {
+        color: #0f172a;
+        font-size: 1.8rem;
+        font-weight: 900;
+        margin-top: 0;
+        margin-bottom: 2rem;
+        letter-spacing: -0.5px;
+    }
+
+    .related-blogs-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .related-blog-card {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .related-blog-card:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .related-blog-image {
+        flex: 0 0 150px; /* Fixed width for images */
+        height: 100px;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .related-blog-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.3s ease;
+    }
+
+    .related-blog-image:hover img {
+        transform: scale(1.05);
+    }
+
+    .related-blog-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .related-blog-link {
+        text-decoration: none;
+        color: #0f172a;
+        transition: color 0.2s ease;
+    }
+
+    .related-blog-link:hover {
+        color: #2563eb;
+    }
+
+    .related-blog-link h4 {
+        margin: 0 0 0.75rem 0;
+        font-size: 1.15rem;
+        font-weight: 800;
+        line-height: 1.4;
+    }
+
+    .related-blog-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .related-blog-author {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+        color: #475569;
+        font-weight: 600;
+    }
+
+    .related-avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .related-read-more {
+        color: #2563eb;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        transition: color 0.2s ease;
+    }
+
+    .related-read-more i {
+        font-size: 0.75rem;
+        transition: transform 0.2s ease;
+    }
+
+    .related-read-more:hover {
+        color: #1d4ed8;
+    }
+
+    .related-read-more:hover i {
+        transform: translateX(3px);
+    }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 900px) {
+        .post-title,
+        .page-title {
+            font-size: 2.2rem;
+        }
+        .post-container,
+        .page-container {
+            padding: 1.5rem;
+        }
+        .featured-image-wrapper {
+            margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+        }
+        .wp-content p {
+            font-size: 1.05rem;
+        }
+        .post-breadcrumbs .current {
+            max-width: 150px;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .wp-content ol.wp-block-list li {
+            padding: 1.25rem 1.25rem 1.25rem 3.75rem !important;
+        }
+        .wp-content ol.wp-block-list li::before {
+            left: 1rem !important;
+            top: 1.25rem !important;
+            width: 32px !important;
+            height: 32px !important;
+            font-size: 1rem !important;
+        }
+        .wp-content figure.is-style-res-img-back {
+            flex-direction: column !important;
+            text-align: center !important;
+            padding: 1.5rem 1rem !important;
+            gap: 1rem !important;
+        }
+        .wp-content figure.is-style-res-img-back figcaption {
+            text-align: center !important;
+        }
+
+        /* Related Posts Mobile tweaks */
+        .related-blogs-container {
+            padding: 1.5rem;
+        }
+        .related-blog-card {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1rem;
+        }
+        .related-blog-image {
+            height: 160px;
+            flex: none;
+            width: 100%;
+        }
+    }
+</style>

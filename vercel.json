@@ -1,0 +1,910 @@
+{
+  "rewrites": [
+    {
+      "source": "/wp-content/:path*",
+      "destination": "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/:path*"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/to",
+      "destination": "/finwiz-admin.php",
+      "permanent": false
+    },
+    {
+      "source": "/finwiz-admin",
+      "destination": "/finwiz-admin.php",
+      "permanent": false
+    },
+    {
+      "source": "/play/clubworld-hp",
+      "destination": "http://tracking.affiliateedge.eu/default.aspx?AffUserID=10973&casinoID=181",
+      "permanent": false
+    },
+    {
+      "source": "/play/lucky-red-hp",
+      "destination": "https://trace.affiliateedge.com/visit/?bta=36654&brand=lrc",
+      "permanent": false
+    },
+    {
+      "source": "/play/aladdins-gold-casino",
+      "destination": "https://trace.affiliateedge.com/visit/?bta=36654&brand=agc",
+      "permanent": false
+    },
+    {
+      "source": "/play/allstar-slots-casino",
+      "destination": "https://trace.affiliateedge.com/visit/?bta=36654&nci=5425",
+      "permanent": false
+    },
+    {
+      "source": "/land-based-casinos",
+      "destination": "/united-states",
+      "permanent": false
+    },
+    {
+      "source": "/play/Intertops-casino-hpt",
+      "destination": "http://affiliate.intertops.eu/processing/clickthrgh.asp?btag=a_12471b_1470",
+      "permanent": false
+    },
+    {
+      "source": "/play/jackpot-capital-casino-hpt",
+      "destination": "https://downloads.jackpotcapital.eu/affiliate/remote/aiddownload.asp?casinoID=272&gAID=50320&subGid=0&bannerID=14532",
+      "permanent": false
+    },
+    {
+      "source": "/play/slotastic-casino-hpt",
+      "destination": "http://downloads.slotastic.com/affiliate/remote/aiddownload.asp?casinoID=381&gAID=50323&subGid=0&bannerID=13467",
+      "permanent": false
+    },
+    {
+      "source": "/play/grande-vegas-casino-hpt",
+      "destination": "https://link.totalaffiliates.com/c/622743",
+      "permanent": false
+    },
+    {
+      "source": "/play/springbok-casino-hpt",
+      "destination": "https://wordpress-1621926-6409582.cloudwaysapps.com/",
+      "permanent": false
+    },
+    {
+      "source": "/play/thunder-bolt-hpt",
+      "destination": "https://wordpress-1621926-6409582.cloudwaysapps.com/",
+      "permanent": false
+    },
+    {
+      "source": "/play/yebo-casino-hpt",
+      "destination": "https://wordpress-1621926-6409582.cloudwaysapps.com/",
+      "permanent": false
+    },
+    {
+      "source": "/online-gambling-laws/capture-6",
+      "destination": "/online-gambling-laws/",
+      "permanent": false
+    },
+    {
+      "source": "/2016/09/26/hello-world-2",
+      "destination": "https://wordpress-1621926-6409582.cloudwaysapps.com/",
+      "permanent": false
+    },
+    {
+      "source": "/online-roulette-2",
+      "destination": "/online-roulette/",
+      "permanent": false
+    },
+    {
+      "source": "/casino-games/free-casino-games/shutterstock_439390204",
+      "destination": "/casino-games/free-casino-games/",
+      "permanent": false
+    },
+    {
+      "source": "/play/coolcat-hpt",
+      "destination": "https://www.coolcatlinks.com/click/7/3936/12600/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/planet7-hpt",
+      "destination": "https://www.p7promolinks.com/click/2/10455/21091/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/slots-of-vegas-hpt",
+      "destination": "http://www.slotsofvegaslinks.com/click/15/3885/12600/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/royal-ace-hpt",
+      "destination": "https://www.royalacelinks.com/click/3/10338/21091/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/raging-bull-hpt",
+      "destination": "https://www.ragingbullpromos.com/click/27/493/4975/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/lasvegas-casino-us",
+      "destination": "https://link.totalaffiliates.com/c/713773",
+      "permanent": false
+    },
+    {
+      "source": "/play/jackpot-wheel",
+      "destination": "http://promo.jackpotwheel.com/100-free/?cid=2B413N2",
+      "permanent": false
+    },
+    {
+      "source": "/play/sunpalace-us",
+      "destination": "https://link.totalaffiliates.com/c/646899",
+      "permanent": false
+    },
+    {
+      "source": "/uncategorized/page/3",
+      "destination": "/blog/",
+      "permanent": false
+    },
+    {
+      "source": "/author/abi",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/play/lasvegas-casino-logo-us",
+      "destination": "https://link.totalaffiliates.com/c/713773",
+      "permanent": false
+    },
+    {
+      "source": "/play/vegascasino-us",
+      "destination": "https://link.totalaffiliates.com/c/622743",
+      "permanent": false
+    },
+    {
+      "source": "/play/oldhavana-casino",
+      "destination": "https://oldhavanacasino.eu/56225/",
+      "permanent": false
+    },
+    {
+      "source": "/tables",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/play/drake",
+      "destination": "https://promos.drakecasino.eu/welcome2drake/?refer=17592",
+      "permanent": false
+    },
+    {
+      "source": "/play/gossip-slots",
+      "destination": "https://www.gossipslots.eu?refer=17593",
+      "permanent": false
+    },
+    {
+      "source": "/play/liberty-slots",
+      "destination": "https://link.slotsvendor.eu/c/2072",
+      "permanent": false
+    },
+    {
+      "source": "/play/lincoln-casino",
+      "destination": "https://link.slotsvendor.eu/c/2065",
+      "permanent": false
+    },
+    {
+      "source": "/play/slots-plus-us",
+      "destination": "https://link.totalaffiliates.com/c/725900",
+      "permanent": false
+    },
+    {
+      "source": "/online-casino-reviews",
+      "destination": "/casino-reviews/",
+      "permanent": false
+    },
+    {
+      "source": "/planet-7-casino-review-us-players",
+      "destination": "/planet-7-casino-review/",
+      "permanent": false
+    },
+    {
+      "source": "/play/casino-max",
+      "destination": "https://record.legendaffiliates.com/_kdwiDL1GYegdHrf4TDP9mWNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/hard-rock-atlantic-city-set-open-without-sportsbook",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/us-sports-betting-market-could-become-largest-in-the-world",
+      "destination": "/sports-betting/",
+      "permanent": false
+    },
+    {
+      "source": "/play/lucky-red",
+      "destination": "https://trace.affiliateedge.com/visit/?bta=36654&brand=lrc",
+      "permanent": false
+    },
+    {
+      "source": "/play/club-world",
+      "destination": "https://trace.affiliateedge.com/visit/?bta=36654&nci=5347",
+      "permanent": false
+    },
+    {
+      "source": "/play/high-noon",
+      "destination": "https://trace.affiliateedge.com/visit/?bta=36654&nci=5399",
+      "permanent": false
+    },
+    {
+      "source": "/play/manhattan-slots",
+      "destination": "https://trace.affiliateedge.com/visit/?bta=36654&nci=5440",
+      "permanent": false
+    },
+    {
+      "source": "/how-to-play-online-blackjack-2",
+      "destination": "/how-to-play-blackjack/",
+      "permanent": false
+    },
+    {
+      "source": "/united-states",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/united-states$",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/banking$",
+      "destination": "/casino-banking/",
+      "permanent": false
+    },
+    {
+      "source": "/banking",
+      "destination": "/casino-banking/",
+      "permanent": false
+    },
+    {
+      "source": "/ecash_merch.asp$",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/wp-content/uploads/2017/10/las-vegas-usa.pn$",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/wp-content/uploads/2017/10/las-vegas-usa$",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/download.asp$",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/play/silver-oaks",
+      "destination": "https://www.silveroaklinks.com/click/1/10439/21091/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/bovegas-casino",
+      "destination": "https://go.affiliatesleague.com/visit/?bta=36814&nci=29611&campaign=68141",
+      "permanent": false
+    },
+    {
+      "source": "/play/jumba-bet",
+      "destination": "https://www.jumbabet.com?cid=26WD860&mid=2228PJ88",
+      "permanent": false
+    },
+    {
+      "source": "/uncategorized",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/homepage_table/vegas-casino-online",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/english/contact.asp$",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/play/freespin",
+      "destination": "https://go.affiliatesleague.com/visit/?bta=36814&nci=29613&campaign=68141",
+      "permanent": false
+    },
+    {
+      "source": "/play/twoup-casino",
+      "destination": "https://go.affiliatesleague.com/visit/?bta=36814&nci=29615&campaign=68141",
+      "permanent": false
+    },
+    {
+      "source": "/play/irish-luck-casino",
+      "destination": "https://go.affiliatesleague.com/visit/?bta=36814&nci=29617&campaign=68141",
+      "permanent": false
+    },
+    {
+      "source": "/play/domgame-casino",
+      "destination": "https://go.affiliatesleague.com/visit/?bta=36814&nci=29616&campaign=68141",
+      "permanent": false
+    },
+    {
+      "source": "/play/crypto-reels-casino",
+      "destination": "https://record.rivierarewards.com/_QaB3lX_K2H1fWQTENI37dGNd7ZgqdRLk/10/",
+      "permanent": false
+    },
+    {
+      "source": "/play/reelsofjoy",
+      "destination": "https://record.rivierarewards.com/_QaB3lX_K2H1fWQTENI37dGNd7ZgqdRLk/10/",
+      "permanent": false
+    },
+    {
+      "source": "/play/slotsofvegas-casino",
+      "destination": "https://www.slotsofvegaslinks.com/click/15/4204/12600/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/cherryjackpot",
+      "destination": "https://record.legendaffiliates.com/_kdwiDL1GYegOMRDMpvVHzmNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/roaring21",
+      "destination": "https://record.legendaffiliates.com/_kdwiDL1GYei22a5QkwDt8GNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/red-dog-casino",
+      "destination": "https://record.toponepartners.com/_ScVkjN-Rwalr_ND_YXyCpWNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/buzz-luck-casino",
+      "destination": "https://trace.affiliateedge.com/visit/?bta=36654&brand=bzl",
+      "permanent": false
+    },
+    {
+      "source": "/play/wild-vegas-casino",
+      "destination": "https://www.wildvegaslinks.com/click/11/3908/12600/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/prism-casino",
+      "destination": "https://www.prismlinks.com/click/14/1255/12600/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/ruby-slots-casino",
+      "destination": "https://www.rubyslotslinks.com/click/13/4024/12600/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/palace-of-chance-casino",
+      "destination": "https://www.palaceofchancelinks.com/click/10/3766/12600/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/dreams-casino",
+      "destination": "https://www.dreamslinks.com/click/6/4025/12600/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/high-country",
+      "destination": "http://downloads.highcountrycasino.com/affiliate/remote/aiddownload.asp?casinoID=938&gAID=56225&subGid=0&bannerID=0",
+      "permanent": false
+    },
+    {
+      "source": "/play/club-player-casino",
+      "destination": "https://www.clubplayerlinks.com/click/9/4026/12600/1",
+      "permanent": false
+    },
+    {
+      "source": "/online-casino",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/online-casino-benefits",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/play/aladdins-gold-hp",
+      "destination": "https://trace.affiliateedge.com/visit/?bta=36654&brand=agc",
+      "permanent": false
+    },
+    {
+      "source": "/play/bingo-fest",
+      "destination": "https://record.vistagamingaffiliates.net/_o3IymBZX7XSYNevImT-MDGNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/bingo-spirit",
+      "destination": "https://record.vistagamingaffiliates.net/_o3IymBZX7XRD3TEmsPWI0WNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/cyber-spins",
+      "destination": "https://record.vistagamingaffiliates.net/_o3IymBZX7XTFHJllK_NOEWNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/aussie-play",
+      "destination": "https://record.toponepartners.com/_ScVkjN-RwanraMYPxMYS8mNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/slots-empire",
+      "destination": "https://record.toponepartners.com/_ScVkjN-RwakOMRDMpvVHzmNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/el-royale",
+      "destination": "https://record.toponepartners.com/_ScVkjN-RwalypJyhO2g1tWNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/cyberspins",
+      "destination": "https://record.vistagamingaffiliates.net/_o3IymBZX7XTFHJllK_NOEWNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/blackjack",
+      "destination": "/online-blackjack/",
+      "permanent": false
+    },
+    {
+      "source": "/roulette",
+      "destination": "/online-roulette/",
+      "permanent": false
+    },
+    {
+      "source": "/jumba-bet-casino-review",
+      "destination": "/casino-reviews/",
+      "permanent": false
+    },
+    {
+      "source": "/play/sports-casino",
+      "destination": "http://get.sportsandcasino.com/get/a/4421888",
+      "permanent": false
+    },
+    {
+      "source": "/betsoft-gaming",
+      "destination": "/software-providers/betsoft/",
+      "permanent": false
+    },
+    {
+      "source": "/rival-software",
+      "destination": "/software-providers/rival/",
+      "permanent": false
+    },
+    {
+      "source": "/play/hippo-casino",
+      "destination": "http://affiliates.luckyhippocasino.eu/affiliate/remote/aiddownload.asp?casinoID=949&gAID=56225&subGid=0&bannerID=22550",
+      "permanent": false
+    },
+    {
+      "source": "/play/crest-casino",
+      "destination": "https://record.vistagamingaffiliates.net/_w1a6M1cdlG5H0ro-ki_vp2Nd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/which-online-casino-has-the-fastest-withdrawal-time",
+      "destination": "/which-casino-has-the-fastest-withdrawal-time/",
+      "permanent": false
+    },
+    {
+      "source": "/play/cafe-casino-us",
+      "destination": "https://record.revenuenetwork.com/_7Z5ye18KQ6cWTzEdeSzpw2Nd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/cafe-casino.lv",
+      "destination": "https://record.revenuenetwork.com/_7Z5ye18KQ6cWTzEdeSzpw2Nd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/ignition-casino",
+      "destination": "https://record.revenuenetwork.com/_7Z5ye18KQ6erQPzF2DiSImNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/slotslv",
+      "destination": "https://record.revenuenetwork.com/_7Z5ye18KQ6dX-OnlyRvJXmNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/bovada",
+      "destination": "https://record.revenuenetwork.com/_7Z5ye18KQ6eZnvZqY1UR2mNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/golden-lion",
+      "destination": "https://go.affiliatesleague.com/visit/?bta=36814&nci=29607&campaign=68141",
+      "permanent": false
+    },
+    {
+      "source": "/play/supernova",
+      "destination": "https://go.affiliatesleague.com/visit/?bta=36814&nci=29606&campaign=68141",
+      "permanent": false
+    },
+    {
+      "source": "/play/eclipse",
+      "destination": "https://go.affiliatesleague.com/visit/?bta=36814&nci=29609&campaign=68141",
+      "permanent": false
+    },
+    {
+      "source": "/play/exclusive-casino",
+      "destination": "https://go.affiliatesleague.com/visit/?bta=36814&nci=29614&campaign=68141",
+      "permanent": false
+    },
+    {
+      "source": "/play/highway-casino",
+      "destination": "https://record.jackpot-partners.com/_kgQEZl9Y54L6PBA04iUMN2Nd7ZgqdRLk/2/?pg=0",
+      "permanent": false
+    },
+    {
+      "source": "/play/busr-casino",
+      "destination": "https://record.webpartners.co/_NtB1QSVhmWqWOx4zHaEN5WNd7ZgqdRLk/9/",
+      "permanent": false
+    },
+    {
+      "source": "/play/mybookie-casino",
+      "destination": "https://record.webpartners.co/_NtB1QSVhmWqVAv0U_Fv2nWNd7ZgqdRLk/9/",
+      "permanent": false
+    },
+    {
+      "source": "/play/myb-casino",
+      "destination": "https://record.webpartners.co/_NtB1QSVhmWqPb6HlHYETZ2Nd7ZgqdRLk/9/",
+      "permanent": false
+    },
+    {
+      "source": "/play/xbet-casino",
+      "destination": "https://record.webpartners.co/_NtB1QSVhmWo8TL4kmJ7MEGNd7ZgqdRLk/9/",
+      "permanent": false
+    },
+    {
+      "source": "/play/betonline-casino",
+      "destination": "https://record.commissionkings.ag/_MK29geVmL_nfkb3gg_bGdGNd7ZgqdRLk/9/",
+      "permanent": false
+    },
+    {
+      "source": "/play/sports-betting",
+      "destination": "https://record.commissionkings.ag/_MK29geVmL_nT2Fu8bIPGIGNd7ZgqdRLk/9/",
+      "permanent": false
+    },
+    {
+      "source": "/play/super-slots-casino",
+      "destination": "https://record.commissionkings.ag/_MK29geVmL_kgYyObb-IxMmNd7ZgqdRLk/9/",
+      "permanent": false
+    },
+    {
+      "source": "/play/rich-palms-casino",
+      "destination": "https://record.superiorshare.com/_TusvNThj_BHGymNLMU_AeGNd7ZgqdRLk/10/",
+      "permanent": false
+    },
+    {
+      "source": "/play/lucky-tiger-casino",
+      "destination": "https://record.superiorshare.com/_TusvNThj_BFURo-rjP9CI2Nd7ZgqdRLk/10/",
+      "permanent": false
+    },
+    {
+      "source": "/play/tiger-gaming",
+      "destination": "https://record.commissionkings.ag/_MK29geVmL_myRtIjHPVZtGNd7ZgqdRLk/9/",
+      "permanent": false
+    },
+    {
+      "source": "/play/wild-online-casino",
+      "destination": "https://record.wildcasinoaffiliate.ag/_MK29geVmL_n6PBA04iUMN2Nd7ZgqdRLk/9/",
+      "permanent": false
+    },
+    {
+      "source": "/play/comic-play-casino",
+      "destination": "https://record.jackpot-partners.com/_kgQEZl9Y54LlE-K0mpYMyWNd7ZgqdRLk/2/",
+      "permanent": false
+    },
+    {
+      "source": "/play/true-fortune-casino",
+      "destination": "https://go.truebetaffiliates.com/visit/?bta=35962&nci=5547&utm_campaign=CASINO%20US",
+      "permanent": false
+    },
+    {
+      "source": "/play/shazam-casino",
+      "destination": "https://record.superiorshare.com/_TusvNThj_BEZV93hC2dJ_GNd7ZgqdRLk/10/?pg=2",
+      "permanent": false
+    },
+    {
+      "source": "/play/extreme-casino",
+      "destination": "https://record.xmarkaffiliates.com/_xfzl4TRUwAjUOsjNOfgKeWNd7ZgqdRLk/3/",
+      "permanent": false
+    },
+    {
+      "source": "/play/brango-casino",
+      "destination": "https://record.xmarkaffiliates.com/_xfzl4TRUwAiVAv0U_Fv2nWNd7ZgqdRLk/3/",
+      "permanent": false
+    },
+    {
+      "source": "/play/yabby-casino",
+      "destination": "https://record.xmarkaffiliates.com/_xfzl4TRUwAiUcyqUL4Bc9GNd7ZgqdRLk/3/",
+      "permanent": false
+    },
+    {
+      "source": "/play/grand-rush",
+      "destination": "https://record.graphiteaffiliates.com/_YpoSR4bcDFu77L7zifyVX2Nd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/juicy-vegas",
+      "destination": "https://record.graphiteaffiliates.com/_YpoSR4bcDFsX6witB42GqWNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/betus-casino",
+      "destination": "https://record.revmasters.com/_9E0BOAU0a4TUOsjNOfgKeWNd7ZgqdRLk/2/",
+      "permanent": false
+    },
+    {
+      "source": "/play/las-atlantis",
+      "destination": "https://record.toponepartners.com/_ScVkjN-RwanlRqYtzC2ttWNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/cherry-gold",
+      "destination": "https://go.affiliatesleague.com/visit/?bta=36814&nci=29612&campaign=68141",
+      "permanent": false
+    },
+    {
+      "source": "/play-now/prive-city-casino",
+      "destination": "https://www.privecity.com/en",
+      "permanent": false
+    },
+    {
+      "source": "/play/4-wilds-casino",
+      "destination": "https://www.4wilds.com/en",
+      "permanent": false
+    },
+    {
+      "source": "/play/dazzle-casino",
+      "destination": "https://www.dazzlefortune.com/home",
+      "permanent": false
+    },
+    {
+      "source": "/play/spinfinity",
+      "destination": "https://record.legendaffiliates.com/_kdwiDL1GYejGs5YK48Vb6WNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/grande-vegas",
+      "destination": "https://link.affiliatecapital.com/c/435364",
+      "permanent": false
+    },
+    {
+      "source": "/play/slotastic-casino",
+      "destination": "https://link.affiliatecapital.com/c/435365",
+      "permanent": false
+    },
+    {
+      "source": "/play/jackpot-capital-casino",
+      "destination": "https://link.affiliatecapital.com/c/435366",
+      "permanent": false
+    },
+    {
+      "source": "/play/slotsroom",
+      "destination": "https://record.legendaffiliates.com/_kdwiDL1GYejYGgllr3Vm5GNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/slotsninja",
+      "destination": "https://record.legendaffiliates.com/_kdwiDL1GYehRZS2G957ZqGNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/limitless-casino",
+      "destination": "https://record.xmarkaffiliates.com/_xfzl4TRUwAihJjIwNC_yVWNd7ZgqdRLk/3/",
+      "permanent": false
+    },
+    {
+      "source": "/play/punt-casino",
+      "destination": "https://www.puntlinks.com/click/41/455/3496/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/crypto-loko",
+      "destination": "https://cryptolokolink.com/click/77/457/3496/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/kings-chance",
+      "destination": "https://www.kingschancelinks.com/click/43/322/1679/1/CasinoUS",
+      "permanent": false
+    },
+    {
+      "source": "/play/winstark",
+      "destination": "https://go.truebetaffiliates.com/visit/?bta=35652&nci=5658&utm_campaign=casinous",
+      "permanent": false
+    },
+    {
+      "source": "/play/kaboom",
+      "destination": "https://go.truebetaffiliates.com/visit/?bta=35652&nci=5635&utm_campaign=casinous",
+      "permanent": false
+    },
+    {
+      "source": "/play/red-cherry",
+      "destination": "https://record.income-network.com/_IxRSoTmCePEOMRDMpvVHzmNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/lady-luck",
+      "destination": "https://record.income-network.com/_IxRSoTmCePH6PBA04iUMN2Nd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/triple-seven",
+      "destination": "https://record.income-network.com/_IxRSoTmCePHKto_EPcZApGNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/inetbet",
+      "destination": "https://record.income-network.com/_IxRSoTmCePGVAv0U_Fv2nWNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/kudos-casino",
+      "destination": "https://record.income-network.com/_IxRSoTmCePEWqcfzuvZcQGNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/primaplay-casino",
+      "destination": "https://record.income-network.com/_IxRSoTmCePFhg6WO2I1rgWNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/slot-madness",
+      "destination": "https://www.slotmadnesslinks.com/click/60/10397/21091/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/captain-jack",
+      "destination": "https://www.captainjacklinks.com/click/5/10420/21091/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/slots-of-vegas-ndb",
+      "destination": "https://www.slotsofvegaslinks.com/click/15/4270/12600/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/thunderpick",
+      "destination": "https://go.thunder.partners/visit/?bta=36041&nci=5502",
+      "permanent": false
+    },
+    {
+      "source": "/play/planet7-ndb",
+      "destination": "https://www.planet7links.com/click/2/10189/16519/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/ducky-luck",
+      "destination": "http://get.duckyluck.ag/get/a/5152105",
+      "permanent": false
+    },
+    {
+      "source": "/play/raging-bull-ndb",
+      "destination": "https://www.ragingbulllinks.com/click/27/291/3500/1",
+      "permanent": true
+    },
+    {
+      "source": "/play/ruby-slots-ndb",
+      "destination": "https://www.rubyslotslinks.com/click/13/4041/12600/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/wild-vegas-ndb",
+      "destination": "https://www.wildvegaslinks.com/click/11/4232/12600/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/prism-ndb",
+      "destination": "https://www.prismlinks.com/click/14/4217/12600/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/palace-of-chance-ndb",
+      "destination": "https://www.palaceofchancelinks.com/click/10/4296/12600/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/club-player-ndb",
+      "destination": "https://www.clubplayerlinks.com/click/9/4263/12600/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/cool-cat-ndb",
+      "destination": "https://www.coolcatlinks.com/click/7/4093/12600/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/slot-madness-ndb",
+      "destination": "https://www.slotmadnesslinks.com/click/60/10408/16519/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/royal-ace-ndb",
+      "destination": "https://www.royalacelinks.com/click/3/10126/16519/1",
+      "permanent": true
+    },
+    {
+      "source": "/play/silver-oak-ndb",
+      "destination": "https://www.silveroaklinks.com/click/1/10401/16519/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/dreams-ndb",
+      "destination": "https://www.dreamslinks.com/click/6/4025/12600/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/captain-jack-ndb",
+      "destination": "https://www.captainjacklinks.com/click/5/10353/16519/1",
+      "permanent": false
+    },
+    {
+      "source": "/play/shazam-ndb-chip",
+      "destination": "https://record.superiorshare.com/_TusvNThj_BEz8P_QUY1PbGNd7ZgqdRLk/10/",
+      "permanent": false
+    },
+    {
+      "source": "/play/shazam-ndb-spins",
+      "destination": "https://record.superiorshare.com/_TusvNThj_BEvQEVUcMeklWNd7ZgqdRLk/10/",
+      "permanent": false
+    },
+    {
+      "source": "/play/lucky-hippo-ndb",
+      "destination": "https://affiliates.luckyhippocasino.eu/affiliate/remote/aiddownload.asp?casinoID=949&gAID=56225&subGid=2&bannerID=25855",
+      "permanent": false
+    },
+    {
+      "source": "/play/sun-palace-ndb",
+      "destination": "https://www.sunpalacecasino.eu/Remote/AidDownload.php?casinoID=236&gAID=56225&subGid=2&bannerID=25850",
+      "permanent": false
+    },
+    {
+      "source": "/play/vegas-casino-ndb",
+      "destination": "https://www.vegascasinoonline.eu/Remote/AidDownload.php?casinoID=234&gAID=56225&subGid=2&bannerID=25853",
+      "permanent": false
+    },
+    {
+      "source": "/play/las-vegas-usa-ndb",
+      "destination": "https://www.lasvegasusa.eu/Remote/AidDownload.php?casinoID=235&gAID=56225&subGid=2&bannerID=25849",
+      "permanent": false
+    },
+    {
+      "source": "/play/slots-plus-ndb",
+      "destination": "https://www.slotsplus.eu/Remote/AidDownload.php?casinoID=237&gAID=56225&subGid=2&bannerID=25852",
+      "permanent": false
+    },
+    {
+      "source": "/play/old-havana-ndb",
+      "destination": "https://downloads.oldhavanacasino.eu/affiliate/remote/aiddownload.asp?casinoID=715&gAID=56225&subGid=2&bannerID=25854",
+      "permanent": false
+    },
+    {
+      "source": "/play/vegas-aces",
+      "destination": "https://record.revmasters.com/_vv3E-UDykDRoZiEtOfHDE2Nd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/slots-paradise",
+      "destination": "https://record.revmasters.com/_vv3E-UDykDRqMwBAsL0sWWNd7ZgqdRLk/1/",
+      "permanent": false
+    },
+    {
+      "source": "/play/stake",
+      "destination": "http://stake.com/?c=3rJZ8ALy",
+      "permanent": false
+    }
+  ]
+}

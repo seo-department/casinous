@@ -1,0 +1,305 @@
+---
+import Layout from "../../layouts/Layout.astro";
+
+// 1. Tell Astro to generate paginated routes using getStaticPaths
+export async function getStaticPaths({ paginate }) {
+    // 🚨 DROPPED TO 40: 100 posts with srcSet images is too heavy and causes Cloudways to timeout!
+    const wpUrl = "https://wordpress-1621926-6409582.cloudwaysapps.com/graphql";
+
+    const response = await fetch(wpUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            query: `
+                query GetAllBlogs {
+                    posts(first: 40) {
+                        nodes {
+                            uri
+                            title
+                            excerpt
+                            date
+                            featuredImage {
+                                node {
+                                    sourceUrl
+                                    srcSet
+                                    altText
+                                }
+                            }
+                            categories {
+                                nodes {
+                                    name
+                                    slug
+                                }
+                            }
+                            author {
+                                node {
+                                    name
+                                    slug
+                                }
+                            }
+                        }
+                    }
+                }
+            `
+        })
+    });
+
+    const result = await response.json();
+    
+    // 🚨 Loudly throw an error in the terminal if WP rejects the query (instead of silently showing 0 posts)
+    if (result.errors) {
+        console.error("❌ GRAPHQL ERROR ON BLOG ARCHIVE:", JSON.stringify(result.errors, null, 2));
+        throw new Error("WordPress rejected the GraphQL query. The payload might be too large.");
+    }
+
+    const posts = result.data?.posts?.nodes || [];
+
+    // Paginate the array of posts, 12 items per page
+    return paginate(posts, { pageSize: 12 });
+}
+
+// 2. Astro passes the current page's data via the `page` prop
+const { page } = Astro.props;
+
+// --- HELPER FUNCTIONS ---
+const wpDomain = "https://wordpress-1621926-6409582.cloudwaysapps.com";
+
+const createAuthorSlug = (name: string | undefined) => {
+    if (!name) return "editorial-team";
+    return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+};
+
+const cleanImageUrl = (url: string | undefined) => {
+    if (!url) return "https://via.placeholder.com/300x150";
+    try { return new URL(url).pathname; } catch(e) { return url; }
+}
+
+const cleanSrcSet = (srcSet: string | undefined) => {
+    if (!srcSet) return undefined;
+    return srcSet.replaceAll(wpDomain, "");
+}
+
+const getRelativeUrl = (uri: string | undefined) => {
+    if (!uri) return "/";
+    return `/${uri.replace(/https?:\/\/[^\/]+/g, "").replace(/^\/|\/$/g, "")}/`;
+};
+
+const getCategoryUrl = (slug: string | undefined) => {
+    if (!slug) return "#";
+    if (slug === "blog") return "/blog/";
+    return `/category/${slug}/`;
+};
+
+
+const formatShortDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+---
+
+<Layout
+    title={`All News & Blogs - Page ${page.currentPage} | Casino US`}
+    description="Read the latest news, updates, and in-depth articles from the Casino US editorial team."
+>
+    <main class="category-container">
+        <header class="category-header">
+            <h1 class="category-title">
+                <span class="title-accent"></span> All News & Blogs
+            </h1>
+            <p class="category-desc">Catch up on the latest industry updates, casino reviews, and expert guides.</p>
+        </header>
+
+        {page.data.length === 0 ? (
+            <div class="no-posts">
+                <p>No posts found yet. Check back soon!</p>
+            </div>
+        ) : (
+            <div class="category-grid">
+                {page.data.map((post: any) => (
+                    <article class="grid-card">
+                        <a href={getRelativeUrl(post.uri)} class="grid-img-wrap">
+                            {post.featuredImage?.node?.sourceUrl ? (
+                                <img 
+                                    src={cleanImageUrl(post.featuredImage.node.sourceUrl)} 
+                                    srcset={cleanSrcSet(post.featuredImage.node.srcSet)}
+                                    sizes="(max-width: 768px) 100vw, 380px"
+                                    alt={post.featuredImage.node.altText || post.title} 
+                                    loading="lazy" 
+                                    referrerpolicy="no-referrer" 
+                                />
+                            ) : (
+                                <div class="placeholder-img" style="width: 100%; height: 100%; background: #e5e7eb;"></div>
+                            )}
+                        </a>
+                        <div class="card-content">
+                            <h2 class="sub-title">
+                                <a href={getRelativeUrl(post.uri)} set:html={post.title} />
+                            </h2>
+                            <div class="meta small-meta mt-1">
+                                <a href={getCategoryUrl(post.categories?.nodes[0]?.slug)} class="category hover-red">
+                                    {post.categories?.nodes[0]?.name || 'News'}
+                                </a>
+                                <span>•</span>
+                                <span>{formatShortDate(post.date)}</span>
+                                <span>•</span>
+                                <a href={`/about-us/${createAuthorSlug(post.author?.node?.name)}/`} class="hover-red" style="text-transform: uppercase;">
+                                    {post.author?.node?.name || 'Editorial Team'}
+                                </a>
+                            </div>
+                        </div>
+                    </article>
+                ))}
+            </div>
+        )}
+
+        {page.lastPage > 1 && (
+            <div class="pagination-wrapper">
+                {page.url.prev ? (
+                    <a href={page.url.prev} class="page-btn">&larr; Previous</a>
+                ) : (
+                    <span class="page-btn disabled">&larr; Previous</span>
+                )}
+                
+                <span class="page-info">Page {page.currentPage} of {page.lastPage}</span>
+                
+                {page.url.next ? (
+                    <a href={page.url.next} class="page-btn">Next &rarr;</a>
+                ) : (
+                    <span class="page-btn disabled">Next &rarr;</span>
+                )}
+            </div>
+        )}
+    </main>
+</Layout>
+
+<style>
+    /* Scoped CSS for Blog Archive Page */
+    .category-container {
+        max-width: 1280px;
+        margin: 4rem auto;
+        padding: 0 1rem;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: #111827;
+    }
+    .category-container a { text-decoration: none; color: inherit; transition: color 0.2s; }
+    .category-container a:hover { color: #dc2626; }
+    
+    .category-header {
+        margin-bottom: 3rem;
+        border-bottom: 2px solid #f3f4f6;
+        padding-bottom: 1.5rem;
+    }
+    .category-title {
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 800;
+        text-transform: uppercase;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .title-accent {
+        width: 24px;
+        height: 6px;
+        background-color: #dc2626;
+        display: inline-block;
+    }
+    .category-desc {
+        margin-top: 1rem;
+        font-size: 1.1rem;
+        color: #4b5563;
+    }
+
+    /* GRID REUSING YOUR HOMEPAGE STYLES */
+    .category-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+    @media (min-width: 640px) { .category-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1024px) { .category-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (min-width: 1280px) { .category-grid { grid-template-columns: repeat(4, 1fr); } }
+
+    .grid-card { display: flex; flex-direction: column; }
+    .grid-img-wrap {
+        width: 100%;
+        height: 200px;
+        border-radius: 6px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+        background: #f3f4f6;
+        display: block;
+    }
+    .grid-img-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s;
+    }
+    .grid-img-wrap:hover img { transform: scale(1.05); }
+
+    .sub-title {
+        font-size: 1.1rem;
+        font-weight: 800;
+        line-height: 1.3;
+        margin: 0 0 0.5rem 0;
+    }
+    .meta {
+        font-size: 0.75rem;
+        font-weight: bold;
+        color: #6b7280;
+        text-transform: uppercase;
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    .category { color: #dc2626; }
+    .hover-red:hover { color: #dc2626; }
+    .mt-1 { margin-top: 0.5rem; }
+
+    .no-posts {
+        padding: 4rem 0;
+        text-align: center;
+        color: #6b7280;
+        font-size: 1.2rem;
+        background: #f9fafb;
+        border-radius: 8px;
+        border: 1px dashed #e5e7eb;
+    }
+
+    /* PAGINATION STYLES */
+    .pagination-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1.5rem;
+        margin-top: 4rem;
+        padding-top: 2rem;
+        border-top: 2px solid #f3f4f6;
+    }
+    .page-btn {
+        padding: 0.6rem 1.5rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #111827;
+        background: #fff;
+        transition: all 0.2s ease;
+    }
+    .page-btn:not(.disabled):hover {
+        border-color: #dc2626;
+        color: #dc2626;
+        background: #fef2f2;
+    }
+    .page-btn.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        background: #f9fafb;
+    }
+    .page-info {
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: #4b5563;
+    }
+</style>

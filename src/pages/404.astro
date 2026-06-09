@@ -1,0 +1,95 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+// We explicitly tell search engines NOT to index the 404 page
+const robotsTag = "noindex, follow";
+---
+
+<Layout 
+    title="404 - Page Not Found | AU Casinos Online" 
+    seoTitle="404 - Page Not Found"
+    description="Oops! The page you are looking for cannot be found."
+    robots={robotsTag}
+>
+    <section class="cus-hero-section not-found-section">
+        <div class="cus-hero-container">
+            
+            <div class="cus-hero-badge">Error 404</div>
+            <h1 class="cus-hero-title">Looks like you're lost!</h1>
+            
+            <p class="error-message">
+                The page you are looking for might have been removed, had its name changed, or is temporarily unavailable. 
+                Don't worry, let's get you back on track.
+            </p>
+
+            <div class="action-buttons">
+                <a href="/" class="btn-primary">Return to Homepage</a>
+                <a href="/casino-reviews/" class="btn-secondary">Read Casino Reviews</a>
+            </div>
+
+        </div>
+    </section>
+
+</Layout>
+
+<style>
+    /* =========================================
+       404 PAGE STYLES
+    ========================================= */
+    .not-found-section {
+        /* Adds a bit more vertical padding to center it nicely on the screen */
+        padding: 6rem 1rem 8rem 1rem !important;
+        min-height: 70vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .error-message {
+        color: #64748b;
+        font-size: 1.15rem;
+        line-height: 1.7;
+        max-width: 600px;
+        margin: 0 auto 2.5rem auto;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-primary {
+        background-color: #2563eb;
+        color: #ffffff;
+        font-weight: 700;
+        padding: 0.85rem 1.75rem;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+    }
+
+    .btn-primary:hover {
+        background-color: #1d4ed8;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 8px -1px rgba(37, 99, 235, 0.3);
+    }
+
+    .btn-secondary {
+        background-color: #f1f5f9;
+        color: #1e293b;
+        font-weight: 700;
+        padding: 0.85rem 1.75rem;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border: 1px solid #e2e8f0;
+    }
+
+    .btn-secondary:hover {
+        background-color: #e2e8f0;
+        transform: translateY(-2px);
+    }
+</style>

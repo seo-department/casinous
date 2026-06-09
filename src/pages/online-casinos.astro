@@ -1,0 +1,4341 @@
+---
+import Layout from "../layouts/Layout.astro"
+
+// 1. Fetch BOTH the /online-casinos/ content AND the 8 recent posts in a single GraphQL query
+const wpUrl = "https://wordpress-1621926-6409582.cloudwaysapps.com/graphql"
+
+const response = await fetch(wpUrl, {
+	method: "POST",
+	headers: { "Content-Type": "application/json" },
+	body: JSON.stringify({
+		query: `
+            query GetOnlineCasinosAndPosts {
+                nodeByUri(uri: "/online-casinos/") {
+                    ... on Page {
+                        title
+                        content
+                        date
+                        modified
+                        seo {
+                            title metaDesc focuskw canonical metaRobotsNoindex metaRobotsNofollow schema { raw }
+                        }
+                        author {
+                            node {
+                                name
+                                firstName
+                                lastName
+                                avatar { url }
+                                seo { social { facebook twitter instagram linkedIn } }
+                            }
+                        }
+                    }
+                }
+                posts(first: 8) {
+                    nodes {
+                        uri
+                        title
+                        excerpt
+                        date
+                        featuredImage {
+                            node {
+                                sourceUrl
+                                altText
+                            }
+                        }
+                        author {
+                            node {
+                                name
+                                firstName
+                                lastName
+                                avatar { url }
+                            }
+                        }
+                    }
+                }
+            }
+        `,
+	}),
+})
+
+const result = await response.json()
+
+if (result.errors) {
+	console.error("❌ GRAPHQL ERROR:", JSON.stringify(result.errors, null, 2))
+	throw new Error("WordPress rejected the GraphQL query.")
+}
+
+// --- 2. PROCESS PAGE DATA ---
+const page = result.data?.nodeByUri
+const currentYear = new Date().getFullYear().toString()
+const yoastTitle = (page?.seo?.title || page?.title || "Casino US").replaceAll(
+	"[year]",
+	currentYear,
+)
+const yoastDesc = (page?.seo?.metaDesc || "").replaceAll("[year]", currentYear)
+
+// 🚨 FIX: Updated to match your new Cloudways App URL
+const wpDomain = "https://wordpress-1621926-6409582.cloudwaysapps.com"
+
+// Extract and clean the Schema so it uses the live domain
+let yoastSchema = page?.seo?.schema?.raw || undefined
+if (yoastSchema) {
+    yoastSchema = yoastSchema.replaceAll(wpDomain, "https://www.casinous.com")
+}
+
+// Hero Meta Data (Author)
+const authorObj = page?.author?.node
+const authorName = authorObj
+	? authorObj.firstName && authorObj.lastName
+		? `${authorObj.firstName} ${authorObj.lastName}`
+		: authorObj.name
+	: "Editorial Team"
+let authorAvatar =
+	authorObj?.avatar?.url ||
+	`https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=f1f5f9&color=1e293b&bold=true`
+const authorSlug = authorName
+	.toLowerCase()
+	.replace(/[^a-z0-9]+/g, "-")
+	.replace(/(^-|-$)+/g, "")
+const authorLink = `/about-us/${authorSlug}/`
+
+// Author Social Links
+const authorSocials = authorObj?.seo?.social || {}
+const formatSocial = (value: string | undefined, domain: string) => {
+	if (!value) return null
+	return value.startsWith("http")
+		? value
+		: `${domain}${value.replace(/^@/, "")}`
+}
+const authorTwitter = formatSocial(
+	authorSocials.twitter,
+	"https://twitter.com/",
+)
+const authorFacebook = formatSocial(
+	authorSocials.facebook,
+	"https://facebook.com/",
+)
+const authorInstagram = formatSocial(
+	authorSocials.instagram,
+	"https://instagram.com/",
+)
+const authorLinkedIn = formatSocial(
+	authorSocials.linkedIn,
+	"https://linkedin.com/in/",
+)
+
+// Reviewer Data
+const reviewerName = "Kylie Johnston"
+const reviewerAvatar =
+	"https://secure.gravatar.com/avatar/6a14bc8cd1f9dccc295508e407cc155adc20c6da88d2ca69ae89d86b917750a9?s=150&d=mm&r=g"
+const reviewerSlug = reviewerName
+	.toLowerCase()
+	.replace(/[^a-z0-9]+/g, "-")
+	.replace(/(^-|-$)+/g, "")
+const reviewerLink = `/about-us/${reviewerSlug}/`
+
+const rawDate = page?.modified || page?.date || new Date().toISOString()
+const formattedDate = new Date(rawDate).toLocaleDateString("en-US", {
+	year: "numeric",
+	month: "short",
+	day: "numeric",
+})
+
+// Clean the WordPress Content
+const rawContent = page?.content || ""
+const fixedContent = rawContent
+    .replace(/<h1[^>]*>[\s\S]*?<\/h1>/gi, "")
+    .replace(/src="[^"]*placeholder[^"]*"/gi, "")
+    .replaceAll('data-src="/wp-content/', 'src="/wp-content/')
+    .replaceAll('data-srcset="/wp-content/', 'srcset="/wp-content/')
+    
+    // 🚨 BULLETPROOF FIX: Globally strip the Cloudways domain from the entire HTML string.
+    // This catches internal links (href), main images (src), and all srcset variants.
+    .replaceAll(wpDomain, "") 
+
+    .replaceAll("<img ", '<img referrerpolicy="no-referrer" ')
+    .replace(/<p>\s*(&nbsp;)?\s*<\/p>/gi, "")
+    .replace(
+        /<strong>\s*Ranking of the Best Payment Methods\s*<\/strong>/gi,
+        "",
+    )
+    .replace(/<p>\s*\[casino_toc\]\s*<\/p>/gi, "")
+    .replaceAll("[casino_toc]", "") // Failsafe in case it's not in a <p> tag
+    .replaceAll("[year]", currentYear)
+
+// --- 3. PROCESS RECENT POSTS (For Breaking News Section) ---
+const recentPosts = result.data?.posts?.nodes || []
+const breakingStories = recentPosts.slice(0, 3)
+const blogPosts = recentPosts.slice(3, 7)
+---
+
+<Layout
+	title={yoastTitle}
+	seoTitle={yoastTitle}
+	description={yoastDesc}
+	schema={yoastSchema}
+>
+	<header class="home-hero new-split-hero">
+		<div class="home-hero-container">
+			<div class="hero-columns">
+				<div class="hero-left">
+					<h1
+						class="home-hero-title"
+						set:html={page?.title ||
+							"Best Online Casinos in the USA for Real Money"}
+					/>
+
+					<div class="hero-intro-box">
+						<div
+							id="cus-banner-1"
+							class="cus-banner"
+							aria-live="polite"
+						>
+							<p class="hero-lead-text">
+								<span class="cus-teaser">
+									CasinoUS.com is your trusted guide to the
+									best online casinos in the USA, featuring
+									expert-tested reviews that help American
+									players find licensed, legal and secure U.S.
+									casino sites for real-money gambling.
+								</span>
+								<button
+									id="cus-toggle-1"
+									class="show-more-link cus-toggle"
+									aria-expanded="false"
+									aria-controls="cus-hidden-1"
+									onclick="toggleCustomBlock(this, 'cus-hidden-1')"
+									>Show More <i
+										class="fa-solid fa-chevron-down"
+									></i></button
+								>
+							</p>
+
+							<div
+								id="cus-hidden-1"
+								class="cus-hidden"
+								style="display: none;"
+							>
+								<p>
+									Our team of U.S. casino experts focuses on
+									what truly matters to American players from
+									“best online casinos USA” and “real money
+									casino sites” to “fast payout online
+									casinos” and “mobile casinos for U.S.
+									players.” Every review is built on data,
+									testing and verified player feedback to help
+									you choose the safest, fastest-paying and
+									most rewarding casino sites online.
+								</p>
+
+								<p>
+									Here’s what our US online casino reviews
+									cover:
+								</p>
+								<ul class="hero-bullet-list">
+									<li>
+										<strong
+											>Online Slots and Casino Games:</strong
+										><br />Discover top-rated U.S. casino
+										sites offering premium game libraries
+										from real money slots and progressive
+										jackpots to blackjack, roulette and live
+										dealer games. Every online casino listed
+										is independently verified for fairness,
+										quality and player satisfaction.
+									</li>
+									<li>
+										<strong
+											>Fast &amp; Secure Casino Payouts:</strong
+										><br />Speed and trust define the best.
+										We highlight US trusted online casinos
+										known for the fastest payouts in
+										America, supporting Visa, Mastercard,
+										American Express, bank transfers and
+										crypto. Each casino review details
+										payout times, withdrawal limits and
+										transaction security.
+									</li>
+									<li>
+										<strong
+											>Casino Bonuses and Promotions:</strong
+										><br />Our analysts track exclusive US
+										casino bonuses, including welcome
+										packages, free spins, no-deposit bonuses
+										and reload rewards. Every offer is
+										verified for authenticity and value.
+									</li>
+									<li>
+										<strong
+											>Mobile and User Experience:</strong
+										><br />We test each legal US casino site
+										across iPhone, Android and tablet
+										devices to ensure flawless mobile
+										performance. Our reviews measure speed,
+										usability and secure mobile payments.
+									</li>
+									<li>
+										<strong>Safety and Legality:</strong><br
+										/>Every gambling site we feature is
+										licensed, regulated and compliant with
+										U.S. gambling laws, meeting strict
+										security and responsible gaming
+										standards.
+									</li>
+								</ul>
+
+								<p>
+									Explore our curated list of licensed and
+									legal online casinos in the USA and start
+									playing real-money casino games with
+									confidence, safety and peace of mind on
+									verified U.S. approved platforms.
+								</p>
+
+								<h2 style="color: #ffffff; margin-top: 2rem;">
+									Top 10 Online Casinos in America - Play Real
+									Money Games
+								</h2>
+
+								<table class="cus-table">
+									<thead>
+										<tr>
+											<th>Rank</th>
+											<th>Online Casino</th>
+											<th>Best For</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr>
+											<td data-label="Rank">1</td>
+											<td data-label="Online Casino"
+												>Vegas Aces</td
+											>
+											<td data-label="Best For"
+												>Trusted USA casino for
+												real-money slots + 250% welcome
+												bonus</td
+											>
+										</tr>
+										<tr>
+											<td data-label="Rank">2</td>
+											<td data-label="Online Casino"
+												>Sun Palace</td
+											>
+											<td data-label="Best For"
+												>Fast withdrawals + 300 free
+												spins welcome offer</td
+											>
+										</tr>
+										<tr>
+											<td data-label="Rank">3</td>
+											<td data-label="Online Casino"
+												><a
+													href="https://www.casinous.com/las-vegas-casinos/"
+													>Las Vegas</a
+												> USA</td
+											>
+											<td data-label="Best For"
+												>Licensed casino for secure
+												gameplay and $3,000 cash bonus</td
+											>
+										</tr>
+										<tr>
+											<td data-label="Rank">4</td>
+											<td data-label="Online Casino"
+												>High Country Casino</td
+											>
+											<td data-label="Best For"
+												>High-paying jackpots + low
+												wagering bonuses</td
+											>
+										</tr>
+										<tr>
+											<td data-label="Rank">5</td>
+											<td data-label="Online Casino"
+												>Vegas Casino Online</td
+											>
+											<td data-label="Best For"
+												>Instant payouts + 15x low
+												wagering requirements</td
+											>
+										</tr>
+										<tr>
+											<td data-label="Rank">6</td>
+											<td data-label="Online Casino"
+												>Red Dog Casino</td
+											>
+											<td data-label="Best For"
+												>U.S.-friendly platform with
+												verified fast payouts + $8,000
+												bonus</td
+											>
+										</tr>
+										<tr>
+											<td data-label="Rank">7</td>
+											<td data-label="Online Casino"
+												>Reels of Joy</td
+											>
+											<td data-label="Best For"
+												>Low deposits, 75 free spins,
+												and real-money rewards</td
+											>
+										</tr>
+										<tr>
+											<td data-label="Rank">8</td>
+											<td data-label="Online Casino"
+												>Cafe Casino</td
+											>
+											<td data-label="Best For"
+												><a
+													href="https://www.casinous.com/blog/bitcoin-gambling-uncertainty/"
+													>Bitcoin</a
+												> casino for U.S. players with $5,500
+												bonus + instant crypto payouts
+											</td>
+										</tr>
+										<tr>
+											<td data-label="Rank">9</td>
+											<td data-label="Online Casino"
+												>Golden Lion Casino</td
+											>
+											<td data-label="Best For"
+												>Licensed U.S. casino with 300%
+												deposit bonus + 98% payout rate</td
+											>
+										</tr>
+										<tr>
+											<td data-label="Rank">10</td>
+											<td data-label="Online Casino"
+												>Stake Casino</td
+											>
+											<td data-label="Best For"
+												>U.S. crypto casino with low
+												deposits and instant real-money
+												payouts</td
+											>
+										</tr>
+									</tbody>
+								</table>
+
+								<div class="table-responsive">
+									</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="hero-category-cards">
+						<a href="/online-slots/" class="hero-cat-card">
+							<div class="cat-icon">
+								<i
+									class="fa-solid fa-coins"
+									style="color: #f43f5e;"></i>
+							</div>
+							<div class="cat-title">Online Slots</div>
+							<div class="cat-sub">1000+ GAMES</div>
+						</a>
+
+						<a href="/casino-reviews/" class="hero-cat-card">
+							<div class="cat-icon">
+								<i
+									class="fa-solid fa-building-columns"
+									style="color: #cbd5e1;"></i>
+							</div>
+							<div class="cat-title">ONLINE CASINOS</div>
+							<div class="cat-sub">500+ BRANDS</div>
+						</a>
+
+						<a href="/casino-bonuses/" class="hero-cat-card">
+							<div class="cat-icon">
+								<i
+									class="fa-solid fa-gift"
+									style="color: #fbbf24;"></i>
+							</div>
+							<div class="cat-title">BONUSES</div>
+							<div class="cat-sub">1200+ PROMOS</div>
+						</a>
+
+						<a href="/mobile-casinos/" class="hero-cat-card">
+							<div class="cat-icon">
+								<i
+									class="fa-solid fa-cubes"
+									style="color: #a855f7;"></i>
+							</div>
+							<div class="cat-title">PROVIDERS</div>
+							<div class="cat-sub">100+ BRANDS</div>
+						</a>
+
+						<a href="/casino-games/" class="hero-cat-card">
+							<div class="cat-icon">
+								<i
+									class="fa-solid fa-book-open"
+									style="color: #3b82f6;"></i>
+							</div>
+							<div class="cat-title">CASINO GUIDES</div>
+							<div class="cat-sub">70+ ARTICLES</div>
+						</a>
+					</div>
+
+					<div class="hero-search-wrapper">
+                        <input
+                            type="text"
+                            placeholder="Search over 2000 bonuses, casinos and slots..."
+                            class="hero-search-input"
+                        />
+                        <button
+                            type="submit"
+                            class="hero-search-btn"
+                            aria-label="Search"
+                        >
+                            <i class="fa-solid fa-search"></i>
+                        </button>
+                    </div>
+				</div>
+
+				<div class="hero-right">
+					<div class="hero-cta-card">
+						<div class="gift-icon-wrapper shake-icon">
+							<i class="fa-solid fa-gift"></i>
+						</div>
+
+						<img
+							src="/wp-content/uploads/2025/03/las-vegas-usa-casino-usa-2.png"
+							alt="Las Vegas Casinos"
+							class="hero-mascot-img float-shake-img"
+							fetchpriority="high"
+							decoding="sync"
+						/>
+
+						<div class="hero-cta-content">
+							<h3>Exclusive Bonus</h3>
+							<p>Claim up to $5,000 + 100 Free Spins Today!</p>
+							<a
+								href="/play/lasvegas-casino-us"
+								target="_blank"
+								rel="nofollow noopener noreferrer"
+								class="play-now-btn breathing-btn"
+							>
+								Play Now
+							</a>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="hero-bottom-meta-section">
+				<div class="hero-disclaimer-box desktop-dis">
+					<div class="disclaimer-cl">
+						<p>
+							<b>Disclaimer:</b> 18+ | Gamble Responsibly - Gambling
+							should be treated as a form of entertainment rather than
+							a way to make real money. In the United States,
+							<button
+								class="show-more-link show-more-btn"
+								onclick="toggleContent(this)"
+								>Show More <i class="fa-solid fa-chevron-down"
+								></i></button
+							>
+						</p>
+						<div
+							class="content1"
+							style="display: none; margin-top: 1rem;"
+						>
+							<p>
+								<a
+									href="/gambling-laws/"
+									style="color: #60a5fa;"
+									>online gambling laws</a
+								> differ from state to state, so it is important
+								to confirm that you meet the minimum legal gambling
+								age and follow all applicable local regulations before
+								participating. Because gambling can become addictive,
+								we recommend setting personal limits and <a
+									href="/gambling-addiction/"
+									style="color: #60a5fa;"
+									>seeking professional support</a
+								> if necessary.
+							</p>
+							<p>
+								Certain links on CasinoUS are affiliate links,
+								meaning we may receive a commission at no extra
+								cost to you if you click a link and deposit at
+								one of our partner sites. Our reviews, guides,
+								and recommendations are created through
+								independent research and a careful editorial
+								process to ensure they remain accurate, fair,
+								and trustworthy. You can learn more about how we
+								evaluate sites on our <a
+									href="/how-we-rate-online-casinos/"
+									style="color: #60a5fa;">How We Rate page</a
+								>.
+							</p>
+							<p>
+								For complete transparency, please review our
+								Affiliate Disclosure. If you have any questions,
+								concerns, or feedback, don’t hesitate to reach
+								out to our team. Remember: Always enjoy gaming
+								responsibly and have fun, while making sure you
+								gamble within your means.
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</header>
+
+	<main class="home-wrapper" id="content">
+		<article class="home-container wp-content" set:html={fixedContent} />
+	</main>
+
+	{
+		recentPosts.length >= 4 && (
+			<section class="full-width-discovery-section">
+				<div class="discovery-container">
+					<div class="discovery-columns">
+						<div class="discovery-left-col">
+							<h2 class="discovery-section-title">
+								Read today's breaking stories
+							</h2>
+							<div class="breaking-stories-list">
+								{breakingStories.map((story: any) => {
+									// 🚨 FIX: Bulletproof Regex cleanly removes any domain to make the link relative
+									let relativeUri = story.uri
+										? story.uri.replace(
+												/https?:\/\/[^\/]+/g,
+												"",
+											)
+										: "/"
+									const cleanSlug = relativeUri.replace(
+										/^\/|\/$/g,
+										"",
+									)
+									const storyLink = `/${cleanSlug}/`
+
+									const storyDate = new Date(
+										story.date,
+									).toLocaleDateString("en-US", {
+										year: "numeric",
+										month: "short",
+										day: "numeric",
+									})
+
+									let storyImage = story.featuredImage?.node?.sourceUrl || "https://via.placeholder.com/300x150"
+
+									// 🚨 BULLETPROOF FIX: Extract only the path so Vercel proxies the image
+									try {
+										const parsedUrl = new URL(storyImage);
+										storyImage = parsedUrl.pathname; 
+									} catch (e) {}
+
+									const authorObj = story.author?.node
+									const recAuthorName = authorObj
+										? authorObj.firstName &&
+											authorObj.lastName
+											? `${authorObj.firstName} ${authorObj.lastName}`
+											: authorObj.name
+										: "Editorial Team"
+									let recAuthorAvatar =
+										authorObj?.avatar?.url ||
+										`https://ui-avatars.com/api/?name=${encodeURIComponent(recAuthorName)}&background=f1f5f9&color=1e293b&bold=true`
+
+									return (
+										<div class="breaking-story-card">
+											<div class="breaking-story-image">
+												<a
+													href={storyLink}
+													class="thumbnail-link"
+												>
+													<img
+														src={storyImage}
+														alt={
+															story.featuredImage
+																?.node
+																?.altText ||
+															story.title
+														}
+														loading="lazy"
+														referrerpolicy="no-referrer"
+													/>
+												</a>
+											</div>
+											<div class="breaking-story-content">
+												<div class="card-meta-top">
+													<span class="card-category">
+														News
+													</span>
+													<span class="card-date">
+														{storyDate}
+													</span>
+												</div>
+												<a
+													href={storyLink}
+													class="card-title-link"
+												>
+													<h3
+														set:html={story.title}
+													/>
+												</a>
+												<div class="card-meta-bottom">
+													<img
+														src={recAuthorAvatar}
+														alt={recAuthorName}
+														class="card-author-avatar"
+													/>
+													<span>
+														{recAuthorName} • 10 min
+														read
+													</span>
+												</div>
+											</div>
+										</div>
+									)
+								})}
+							</div>
+						</div>
+
+						<div class="discovery-right-col">
+							<h2 class="discovery-section-title">
+								Discover our blogs
+							</h2>
+							<div class="discover-blogs-list">
+								{blogPosts.map((blogPost: any) => {
+									// 🚨 FIX: Bulletproof Regex cleanly removes any domain to make the link relative
+									let relativeUri = blogPost.uri
+										? blogPost.uri.replace(
+												/https?:\/\/[^\/]+/g,
+												"",
+											)
+										: "/"
+									const cleanSlug = relativeUri.replace(
+										/^\/|\/$/g,
+										"",
+									)
+									const blogLink = `/${cleanSlug}/`
+
+									const blogDate = new Date(
+										blogPost.date,
+									).toLocaleDateString("en-US", {
+										year: "numeric",
+										month: "short",
+										day: "numeric",
+									})
+
+									let blogImage = blogPost.featuredImage?.node?.sourceUrl || "https://via.placeholder.com/150"
+
+									// 🚨 BULLETPROOF FIX: Use JS URL object to force the Cloudways domain
+									// 🚨 BULLETPROOF FIX: Extract only the path so Vercel proxies the image
+									try {
+										const parsedUrl = new URL(blogImage);
+										blogImage = parsedUrl.pathname; 
+									} catch (e) {}
+
+									const authorObj = blogPost.author?.node
+									const blogAuthorName = authorObj
+										? authorObj.firstName &&
+											authorObj.lastName
+											? `${authorObj.firstName} ${authorObj.lastName}`
+											: authorObj.name
+										: "Editorial Team"
+									let blogAuthorAvatar =
+										authorObj?.avatar?.url ||
+										`https://ui-avatars.com/api/?name=${encodeURIComponent(blogAuthorName)}&background=f1f5f9&color=1e293b&bold=true`
+
+									return (
+										<div class="blog-post-card">
+											<div class="blog-post-image">
+												<a href={blogLink}>
+													<img
+														src={blogImage}
+														alt={
+															blogPost
+																.featuredImage
+																?.node
+																?.altText ||
+															blogPost.title
+														}
+														loading="lazy"
+														referrerpolicy="no-referrer"
+													/>
+												</a>
+											</div>
+											<div class="blog-post-content">
+												<a
+													href={blogLink}
+													class="blog-title-link"
+												>
+													<h3
+														set:html={
+															blogPost.title
+														}
+													/>
+												</a>
+												<div class="blog-meta">
+													<div class="blog-meta-author">
+														<img
+															src={
+																blogAuthorAvatar
+															}
+															alt={blogAuthorName}
+															class="blog-author-avatar"
+														/>
+														<span>
+															{blogAuthorName} •{" "}
+															{blogDate}
+														</span>
+													</div>
+													<a
+														href={blogLink}
+														class="blog-read-more"
+													>
+														Read{" "}
+														<i class="fa-solid fa-arrow-right" />
+													</a>
+												</div>
+											</div>
+										</div>
+									)
+								})}
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+		)
+	}
+</Layout>
+
+<script is:inline>
+	// FIX: Explictly check visibility state so it never gets confused
+	window.toggleCustomBlock = function (btn, targetId) {
+		const hiddenBlock = document.getElementById(targetId)
+		if (!hiddenBlock) return
+
+		const isVisible =
+			window.getComputedStyle(hiddenBlock).display === "block"
+
+		if (isVisible) {
+			// Collapse
+			hiddenBlock.style.display = "none"
+			btn.innerHTML = 'Show More <i class="fa-solid fa-chevron-down"></i>'
+			btn.setAttribute("aria-expanded", "false")
+		} else {
+			// Expand
+			hiddenBlock.style.display = "block"
+			btn.innerHTML = 'Show Less <i class="fa-solid fa-chevron-up"></i>'
+			btn.setAttribute("aria-expanded", "true")
+		}
+	}
+
+	// FIX: New toggle for the Disclaimer Block
+	window.toggleContent = function (btn) {
+		const container = btn.closest(".disclaimer-cl")
+		const content = container.querySelector(".content1")
+		if (!content) return
+
+		const isVisible = window.getComputedStyle(content).display === "block"
+
+		if (isVisible) {
+			// Collapse
+			content.style.display = "none"
+			btn.innerHTML = 'Show More <i class="fa-solid fa-chevron-down"></i>'
+		} else {
+			// Expand
+			content.style.display = "block"
+			btn.innerHTML = 'Show Less <i class="fa-solid fa-chevron-up"></i>'
+		}
+	}
+</script>
+
+<style is:global>
+	/* =========================================
+       HERO DISCLAIMER BOX
+    ========================================= */
+
+	.hero-disclaimer-box .disclaimer-cl {
+		max-width: 100%;
+	}
+
+	/* Base Paragraph Styling */
+	.hero-disclaimer-box p {
+		color: #cbd5e1 !important; /* Soft light slate to match image */
+		font-size: 0.95rem !important;
+		line-height: 1.6 !important;
+		margin: 0 !important;
+	}
+
+	/* Bold 'Disclaimer:' text */
+	.hero-disclaimer-box b {
+		color: #ffffff;
+		font-weight: 800;
+		letter-spacing: 0.3px;
+	}
+
+	/* Inline 'Show More' Button */
+	.hero-disclaimer-box button.show-more-btn {
+		background: transparent !important;
+		border: none !important;
+		color: #60a5fa !important; /* Modern vibrant blue */
+		font-size: 0.95rem !important;
+		font-weight: 700 !important;
+		font-family: inherit !important;
+		cursor: pointer !important;
+		padding: 0 0 0 0.3rem !important;
+		display: inline-flex !important;
+		align-items: center !important;
+		gap: 0.35rem !important;
+		transition: color 0.2s ease !important;
+		vertical-align: baseline !important;
+	}
+
+	.hero-disclaimer-box button.show-more-btn:hover {
+		color: #93c5fd !important; /* Lighter blue on hover */
+	}
+
+	.hero-disclaimer-box button.show-more-btn i {
+		font-size: 0.8rem;
+	}
+
+	/* Expanded Content Links */
+	.hero-disclaimer-box .content1 a {
+		color: #60a5fa !important;
+		text-decoration: none !important;
+		font-weight: 600 !important;
+		transition: color 0.2s ease !important;
+	}
+
+	.hero-disclaimer-box .content1 a:hover {
+		color: #93c5fd !important;
+		text-decoration: underline !important;
+	}
+
+	/* Spacing for hidden paragraphs once expanded */
+	.hero-disclaimer-box .content1 p {
+		margin-top: 1rem !important;
+	}
+
+	/* =========================================
+       MODERN HERO CTA CARD (Right Column)
+    ========================================= */
+	.hero-cta-card {
+		position: relative;
+		background: linear-gradient(
+			145deg,
+			rgba(30, 41, 59, 0.8),
+			rgba(15, 23, 42, 0.95)
+		);
+		border: 1px solid #2b4033;
+		border-radius: 24px;
+		padding: 3rem 2rem 2.5rem; /* Extra top padding to make room for gift icon */
+		text-align: center;
+		box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+		max-width: 360px;
+		margin: 0 auto;
+		backdrop-filter: blur(10px);
+	}
+
+	/* Overlapping Shaking Gift Icon */
+	.gift-icon-wrapper {
+		position: absolute;
+		top: -30px;
+		left: 50%;
+		transform: translateX(-50%);
+		background: #eab308; /* Vivid Gold/Yellow */
+		color: #000000;
+		width: 65px;
+		height: 65px;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 1.8rem;
+		box-shadow: 0 10px 25px rgba(234, 179, 8, 0.4);
+		border: 4px solid #050505; /* Matches hero background to look punched-out */
+		z-index: 10;
+	}
+
+	.shake-icon {
+		animation: quickShake 2.5s infinite cubic-bezier(0.36, 0.07, 0.19, 0.97)
+			both;
+	}
+
+	@keyframes quickShake {
+		0%,
+		100% {
+			transform: translateX(-50%) rotate(0deg);
+		}
+		10%,
+		30%,
+		50%,
+		70%,
+		90% {
+			transform: translateX(-50%) rotate(-10deg);
+		}
+		20%,
+		40%,
+		60%,
+		80% {
+			transform: translateX(-50%) rotate(10deg);
+		}
+	}
+
+	/* Floating/Shaking Mascot Image inside Card */
+	.hero-mascot-img.float-shake-img {
+		max-width: 180px;
+		height: auto;
+		margin: 0 auto 1.5rem auto;
+		filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.4));
+		animation: floatShake 5s ease-in-out infinite;
+	}
+
+	@keyframes floatShake {
+		0%,
+		100% {
+			transform: translateY(0) rotate(0deg);
+		}
+		25% {
+			transform: translateY(-10px) rotate(-3deg);
+		}
+		75% {
+			transform: translateY(-10px) rotate(3deg);
+		}
+	}
+
+	/* Card Content */
+	.hero-cta-content h3 {
+		color: #ffffff;
+		font-size: 1.5rem;
+		font-weight: 900;
+		margin-bottom: 0.5rem;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+	}
+
+	.hero-cta-content p {
+		color: #94a3b8;
+		font-size: 0.95rem;
+		margin-bottom: 1.75rem;
+		line-height: 1.4;
+	}
+
+	/* Breathing Play Now Button */
+	.play-now-btn.breathing-btn {
+		display: inline-block;
+		background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+		color: #ffffff !important;
+		font-weight: 900;
+		font-size: 1.1rem;
+		text-transform: uppercase;
+		letter-spacing: 1px;
+		padding: 1rem 2.5rem;
+		border-radius: 50px;
+		text-decoration: none;
+		width: 100%;
+		box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+		animation: buttonBreathe 2s infinite;
+		transition: transform 0.2s ease;
+	}
+
+	.play-now-btn.breathing-btn:hover {
+		transform: scale(1.05); /* Slight pop on hover */
+	}
+
+	@keyframes buttonBreathe {
+		0% {
+			transform: scale(0.96);
+			box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+		}
+		50% {
+			transform: scale(1);
+			box-shadow: 0 0 0 15px rgba(34, 197, 94, 0);
+		}
+		100% {
+			transform: scale(0.96);
+			box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+		}
+	}
+
+	.hero-cta-content {
+		border-top: 1px solid #385443;
+		border-radius: 15px 15px 0px 0px;
+	}
+
+	/* =========================================
+       HOMEPAGE HERO SECTION
+    ========================================= */
+	header.home-hero {
+		background-color: #020617;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 1600 800'%3E%3Crect fill='%23020617' width='1600' height='800'/%3E%3Cg fill-opacity='0.12'%3E%3Ccircle fill='%23fbbf24' cx='1200' cy='200' r='450'/%3E%3Ccircle fill='%2310b981' cx='400' cy='600' r='500'/%3E%3Ccircle fill='%230ea5e9' cx='800' cy='400' r='350'/%3E%3C/g%3E%3C/svg%3E") !important;
+		background-size: cover;
+		background-position: center;
+		background-repeat: no-repeat;
+		color: #fff;
+		position: relative;
+		overflow: hidden;
+		padding: 2rem 1rem 1rem;
+	}
+
+	.home-hero-container {
+		max-width: 1200px;
+		margin: 0 auto;
+		text-align: center;
+		position: relative;
+		z-index: 2;
+	}
+
+	.home-hero-title {
+		font-size: 2.5rem;
+		font-weight: 900;
+		margin: 0 0 1.5rem 0;
+		line-height: 1.1;
+		letter-spacing: -1px;
+	}
+
+	/* Intro Box (Expandable) & Disclaimer Styles */
+	.hero-intro-box {
+		padding: 1.25rem 2rem;
+		background: rgba(255, 255, 255, 0.03);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: 12px;
+		margin-bottom: 1.5rem;
+		text-align: left;
+	}
+
+	.hero-disclaimer-box {
+		max-width: 1200px;
+		margin: 0 auto 0rem;
+		font-size: 0.95rem;
+		color: #94a3b8;
+		line-height: 1.6;
+		text-align: left;
+	}
+
+	.hero-intro-box p,
+	.hero-disclaimer-box p {
+		color: #cbd5e1 !important;
+		line-height: 1.6;
+		margin-bottom: 1rem;
+	}
+
+	.hero-intro-box ul {
+		text-align: left;
+		color: #cbd5e1;
+		margin-bottom: 1.5rem;
+		padding-left: 1.5rem;
+		line-height: 1.6;
+	}
+
+	.hero-intro-box li {
+		margin-bottom: 0.75rem;
+	}
+
+	.hero-intro-box strong,
+	.hero-disclaimer-box b,
+	.hero-disclaimer-box strong {
+		color: #fff;
+	}
+
+	/* Custom Table inside the Hero */
+	.table-responsive {
+		overflow-x: auto;
+		margin-top: 1rem;
+	}
+	.cus-table {
+		width: 100%;
+		border-collapse: collapse;
+		margin-bottom: 1rem;
+	}
+	.cus-table th,
+	.cus-table td {
+		padding: 12px;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+	}
+	.cus-table th {
+		background: rgba(255, 255, 255, 0.05);
+		font-weight: bold;
+	}
+
+	/* Convert link into a functional button */
+	button.show-more-link {
+		background: none;
+		border: none;
+		cursor: pointer;
+		font-family: inherit;
+		font-size: inherit;
+		padding: 0;
+		color: #60a5fa;
+		font-weight: 700;
+		margin-left: 0.4rem;
+		white-space: nowrap;
+		transition: color 0.2s ease;
+	}
+
+	button.show-more-link:hover {
+		color: #93c5fd;
+	}
+	button.show-more-link i {
+		font-size: 0.8rem;
+		margin-left: 0.2rem;
+	}
+
+	/* AUTHOR META BAR */
+	.home-hero-meta {
+		display: inline-flex;
+		justify-content: center;
+		align-items: center;
+		gap: 6rem;
+		padding-top: 0rem;
+		flex-wrap: wrap;
+	}
+
+	.meta-profile {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		text-align: left;
+	}
+
+	.meta-avatar {
+		width: 100px;
+		height: 100px;
+		border-radius: 50%;
+		border: 2px solid #3b82f6;
+		object-fit: cover;
+		transition: transform 0.2s ease;
+	}
+	.meta-avatar:hover {
+		transform: scale(1.05);
+	}
+
+	.meta-icon {
+		width: 100px;
+		height: 100px;
+		border-radius: 50%;
+		background: rgba(255, 255, 255, 0.05);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 1.5rem;
+		color: #93c5fd;
+	}
+
+	.meta-info {
+		display: flex;
+		flex-direction: column;
+	}
+	.meta-role {
+		font-size: 0.75rem;
+		color: #94a3b8;
+		font-weight: 700;
+		letter-spacing: 1px;
+		text-transform: uppercase;
+		margin-bottom: 0.2rem;
+	}
+
+	.meta-name-link {
+		text-decoration: none;
+	}
+	.meta-name {
+		font-size: 12px;
+		font-weight: 400;
+		color: #ffffff;
+		transition: color 0.2s ease;
+	}
+	.meta-name-link:hover .meta-name {
+		color: #60a5fa;
+	}
+
+	/* Social Icons under author */
+	.meta-socials {
+		display: flex;
+		gap: 0.5rem;
+		margin-top: 0.35rem;
+	}
+	.meta-socials a {
+		color: #94a3b8;
+		font-size: 0.9rem;
+		transition: color 0.2s ease;
+	}
+	.meta-socials a:hover {
+		color: #60a5fa;
+	}
+
+	/* =========================================
+       HOMEPAGE CONTENT STYLES
+    ========================================= */
+	.home-wrapper {
+		background-color: #f8fafc;
+		padding: 0 0 5rem 0;
+	}
+	.home-container {
+		max-width: 1200px;
+		margin: 0 auto;
+		padding: 3rem 1rem 2rem;
+	}
+	p:empty {
+		display: none !important;
+	}
+	.home-container > *:first-child {
+		margin-top: 0 !important;
+	}
+
+	/* =========================================
+   TABLE OF CONTENTS (JUMP LINKS)
+========================================= */
+	.toc-wrapper {
+		background-color: #f8fafc;
+		border: 1px solid #e2e8f0;
+		border-radius: 12px;
+		margin: 0rem 0;
+		box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+		overflow: hidden;
+		max-width: 100%;
+	}
+
+	.info-tooltip svg {
+		display: none;
+	}
+
+	/* =========================================
+       CASINO CARDS WRAPPER
+    ========================================= */
+	.cus-hp-cards-wrapper {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr); /* Forces 4 cards side-by-side */
+		gap: 0.5rem;
+		margin: 1rem 0;
+		padding: 1rem 0; /* Removed the dark background to match the clean white look */
+	}
+
+	/* =========================================
+       INDIVIDUAL CASINO CARD
+    ========================================= */
+	.cus-hp-card {
+		background: #ffffff;
+		border-radius: 12px;
+		border: 1px solid #e2e8f0;
+		box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); /* Soft, natural shadow */
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+		transition:
+			transform 0.2s ease,
+			box-shadow 0.2s ease;
+	}
+
+	.cus-hp-card:hover {
+		transform: translateY(-4px);
+		box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+	}
+
+	/* =========================================
+       VERTICAL TABS CONTAINER
+    ========================================= */
+	.container-wrapper {
+		display: flex;
+		background: #ffffff;
+		border: 1px solid #e2e8f0;
+		border-radius: 12px;
+		overflow: hidden;
+		box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05);
+		margin: 3rem 0;
+		min-height: 400px;
+	}
+
+	/* =========================================
+       SIDEBAR MENU
+    ========================================= */
+	.sidebar-menu {
+		width: 260px;
+		background: #f8fafc;
+		border-right: 1px solid #e2e8f0;
+		padding: 2rem 0;
+		flex-shrink: 0;
+	}
+
+	.sidebar-nav-list {
+		list-style: none !important;
+		padding: 0 !important;
+		margin: 0 !important;
+	}
+
+	.sidebar-nav-item {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		padding: 1rem 2rem;
+		cursor: pointer;
+		color: #475569;
+		font-weight: 600;
+		font-size: 1rem;
+		border-left: 4px solid transparent;
+		transition: all 0.2s ease;
+	}
+
+	.sidebar-nav-item:hover {
+		background: #f1f5f9;
+		color: #0f172a;
+	}
+
+	/* Active Tab State */
+	.sidebar-nav-item.active {
+		border-left-color: #2563eb; /* Blue highlight bar */
+		color: #2563eb;
+		background: #ffffff;
+	}
+
+	.sidebar-icon {
+		font-size: 1.25rem;
+	}
+
+	/* =========================================
+       CONTENT AREA
+    ========================================= */
+	.tab-content-wrapper {
+		flex: 1;
+		padding: 3rem 3.5rem;
+		background: #ffffff;
+	}
+
+	.tab-content {
+		display: none;
+		animation: fadeTabIn 0.3s ease;
+	}
+
+	.tab-content.active {
+		display: block;
+	}
+
+	@keyframes fadeTabIn {
+		from {
+			opacity: 0;
+			transform: translateX(10px);
+		}
+		to {
+			opacity: 1;
+			transform: translateX(0);
+		}
+	}
+
+	.tab-content h3 {
+		font-size: 1.8rem;
+		font-weight: 900;
+		color: #0f172a;
+		margin-top: 0;
+		margin-bottom: 1rem;
+		letter-spacing: -0.5px;
+	}
+
+	.tab-content h4 {
+		font-size: 1.3rem;
+		font-weight: 800;
+		color: #1e293b;
+		margin-top: 2rem;
+		margin-bottom: 1rem;
+	}
+
+	.tab-content p {
+		font-size: 1.05rem;
+		color: #475569;
+		line-height: 1.7;
+		margin-bottom: 1.5rem;
+	}
+
+	/* =========================================
+       GREEN FEATURE BOX (Alert Info)
+    ========================================= */
+	.tab-content .alert.alert-info {
+		background-color: #f0fdf4;
+		border: none;
+		border-left: 4px solid #10b981; /* Dark green accent */
+		border-radius: 6px;
+		padding: 1.5rem;
+		margin: 2rem 0;
+		list-style: none !important;
+	}
+
+	.tab-content .alert.alert-info li {
+		position: relative;
+		padding-left: 1.75rem;
+		margin-bottom: 1.25rem;
+		font-size: 1rem;
+		color: #334155;
+		line-height: 1.6;
+	}
+
+	.tab-content .alert.alert-info li:last-child {
+		margin-bottom: 0;
+	}
+
+	/* Custom Green Checkmark */
+	.tab-content .alert.alert-info li::before {
+		content: "";
+		position: absolute;
+		left: 0;
+		top: 4px;
+		width: 16px;
+		height: 16px;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+		background-size: contain;
+		background-repeat: no-repeat;
+	}
+
+	.tab-content .alert.alert-info li strong {
+		color: #0f172a;
+		font-weight: 800;
+	}
+
+	/* =========================================
+       MOBILE RESPONSIVENESS
+    ========================================= */
+	@media (max-width: 900px) {
+		.container-wrapper {
+			flex-direction: column;
+		}
+
+		/* Turn sidebar into horizontal scroll on mobile */
+		.sidebar-menu {
+			width: 100%;
+			border-right: none;
+			border-bottom: 1px solid #e2e8f0;
+			padding: 0;
+			overflow-x: auto;
+			-webkit-overflow-scrolling: touch;
+		}
+
+		.sidebar-nav-list {
+			display: flex;
+			flex-wrap: nowrap;
+		}
+
+		.sidebar-nav-item {
+			white-space: nowrap;
+			padding: 1rem 1.5rem;
+			border-left: none;
+			border-bottom: 4px solid transparent;
+		}
+
+		.sidebar-nav-item.active {
+			border-left-color: transparent;
+			border-bottom-color: #2563eb;
+		}
+
+		.tab-content-wrapper {
+			padding: 2rem 1.5rem;
+		}
+
+		.tab-content h3 {
+			font-size: 1.5rem;
+		}
+	}
+
+	/* Card Header (Logo Area) */
+	.cus-hp-card-header {
+		height: 110px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 1.5rem;
+		background: #ffffff;
+		border-bottom: 2px solid #326fd3; /* Creates the distinct line below the logo */
+	}
+
+	.cus-hp-card-header img {
+		max-height: 60px;
+		max-width: 100%;
+		object-fit: contain;
+	}
+
+	/* Star Ratings */
+	.cus-hp-stars {
+		color: #fbbf24; /* Solid Yellow/Gold */
+		font-size: 1.15rem;
+		text-align: center;
+		margin: 1.25rem 0 0.5rem 0;
+		letter-spacing: 2px;
+	}
+
+	/* Hide the old offer text (It is not present in your new screenshot) */
+	.cus-hp-offer {
+		display: none !important;
+	}
+
+	/* Feature List */
+	.cus-hp-list {
+		list-style: none !important;
+		padding: 0 1.5rem !important;
+		margin: 0 0 1.5rem 0 !important;
+		flex-grow: 1; /* Pushes the button to the bottom evenly */
+	}
+
+	.hero-intro-box span.cus-teaser {
+        color: #fff !important;
+    }
+
+    .hero-intro-box button#cus-toggle-1 {
+        color: #1ebb58 !important;
+    }
+
+
+	.cus-toggle:hover {
+    background-color: unset !important;
+}
+
+button.show-more-link.show-more-btn {
+    font-size: 10px !important;
+}
+
+.disclaimer-cl p {
+    font-size: 14px !important;
+    font-style: italic;
+}
+
+.disclaimer-cl b {
+    color: #fff !important;
+}
+
+.desktop-dis .disclaimer-cl {
+    background-color: #17253c;
+    border: 1px solid #1c3d3c;
+    border-left: 4px solid #20be5a;}
+
+	.cus-hp-list li {
+		font-size: 0.85rem;
+		color: #334155;
+		margin-bottom: 0.85rem;
+		display: flex;
+		align-items: flex-start;
+		gap: 0.5rem;
+		line-height: 1.4;
+	}
+
+	   .desktop-dis .disclaimer-cl {
+
+        margin: 3px 0;
+
+    }
+
+	/* Hide the default WordPress emoji checkmark */
+	.cus-hp-list li img.emoji {
+		display: none !important;
+	}
+
+	/* Inject the exact light-green circular checkmark from the screenshot */
+	.cus-hp-list li::before {
+		content: "";
+		display: inline-block;
+		width: 16px;
+		height: 16px;
+		min-width: 16px;
+		margin-top: 2px;
+		background-color: #eaf6ed; /* Light green circle background */
+		border-radius: 50%;
+		/* Custom SVG green checkmark */
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+		background-size: 10px;
+		background-position: center;
+		background-repeat: no-repeat;
+	}
+
+	/* Play Now Button */
+	.cus-hp-button {
+		display: block;
+		margin: auto 1.5rem 1.5rem;
+		padding: 0.8rem;
+		text-align: center;
+		/* Exact Blue-to-Teal gradient from the screenshot */
+		background: linear-gradient(90deg, #2563eb 0%, #0d9488 100%);
+		color: #ffffff !important;
+		text-decoration: none !important;
+		font-weight: 800;
+		font-size: 0.95rem;
+		border-radius: 30px; /* Fully rounded pill shape */
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+		transition: filter 0.2s ease;
+	}
+
+	.cus-hp-button:hover {
+		filter: brightness(1.1); /* Slight glow on hover */
+	}
+
+	/* Responsive adjustments */
+	@media (max-width: 1024px) {
+		.cus-hp-cards-wrapper {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+
+	@media (max-width: 600px) {
+		.cus-hp-cards-wrapper {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	div#tocBody li {
+		border-bottom: 1px solid #e2e8f0;
+	}
+
+	.toc-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 1.25rem 1.5rem;
+		background-color: #ffffff;
+		cursor: pointer;
+		font-size: 1.2rem;
+		font-weight: 800;
+		color: #0f172a;
+		transition: background-color 0.2s ease;
+	}
+
+	.toc-header:hover {
+		background-color: #f1f5f9;
+	}
+
+	.toc-arrow {
+		font-size: 0.8rem;
+		color: #64748b;
+		transition: transform 0.3s ease;
+	}
+
+	.toc-body {
+		padding: 0 1.5rem 1.5rem 1.5rem;
+		border-top: 1px solid #e2e8f0;
+		display: none; /* Hidden by default, toggled via JS */
+	}
+
+	/* 2-Column layout for desktop to make the long list look organized */
+	.toc-body ul {
+		list-style: none !important;
+		padding: 1rem 0 0 0 !important;
+		margin: 0 !important;
+		column-count: 1;
+	}
+
+	@media (min-width: 768px) {
+		.toc-body ul {
+			column-count: 2;
+			column-gap: 2.5rem;
+		}
+	}
+
+	.toc-body li {
+		margin-bottom: 0.85rem;
+		break-inside: avoid; /* Prevents items from splitting across columns */
+		position: relative;
+		padding-left: 1.25rem;
+	}
+
+	/* Custom modern bullet point */
+	.toc-body li::before {
+		content: "•";
+		color: #3b82f6;
+		font-weight: bold;
+		position: absolute;
+		left: 0;
+		top: -1px;
+		font-size: 1.2rem;
+	}
+
+	.toc-body a {
+		color: #475569 !important;
+		text-decoration: none !important;
+		font-weight: 600;
+		font-size: 0.95rem;
+		line-height: 1.4;
+		display: inline-block;
+		transition:
+			color 0.2s ease,
+			transform 0.2s ease;
+	}
+
+	.toc-body a:hover {
+		color: #2563eb !important;
+		transform: translateX(4px); /* Slight slide to the right on hover */
+	}
+
+	/* =========================================
+       FULL-WIDTH DISCOVERY SECTION 
+    ========================================= */
+	.full-width-discovery-section {
+		width: 100%;
+		background-color: #ffffff;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23e2e8f0' fill-opacity='0.2'%3E%3Cpath d='M0 0h20v20H0V0zm20 20h20v20H20V20z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+		padding: 1rem 1rem;
+		border-top: 1px solid #e2e8f0;
+	}
+
+	.cus-banner {
+		max-width: 100% !important;
+		background: linear-gradient(180deg, #08374a, #1a233a) !important;
+	}
+
+	.discovery-container {
+		max-width: 1200px;
+		margin: 0 auto;
+	}
+	.discovery-columns {
+		display: flex;
+		gap: 3rem;
+		align-items: flex-start;
+	}
+	.discovery-section-title {
+		font-size: 2.2rem;
+		font-weight: 900;
+		color: #0f172a;
+		margin-top: 0;
+		margin-bottom: 2.5rem;
+		letter-spacing: -1px;
+	}
+
+	/* LEFT COL: BREAKING STORIES */
+	.discovery-left-col {
+		flex: 1;
+	}
+	.breaking-stories-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+	.breaking-story-card {
+		display: flex;
+		gap: 1.5rem;
+		align-items: flex-start;
+		border-bottom: 1px solid #e2e8f0;
+		padding-bottom: 1.5rem;
+	}
+	.breaking-story-card:last-child {
+		border-bottom: none;
+		padding-bottom: 0;
+	}
+	.breaking-story-image {
+		flex: 0 0 250px;
+		position: relative;
+		border-radius: 8px;
+		overflow: hidden;
+		height: 140px;
+	}
+	.breaking-story-image img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		transition: transform 0.3s ease;
+	}
+	.breaking-story-image:hover img {
+		transform: scale(1.05);
+	}
+	.breaking-story-content {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		height: 100%;
+		min-height: 140px;
+	}
+	.card-meta-top {
+		display: flex;
+		justify-content: space-between;
+		font-size: 0.8rem;
+		color: #64748b;
+		font-weight: 600;
+		margin-bottom: 0.5rem;
+	}
+	.card-category {
+		color: #3b82f6;
+		font-weight: 800;
+	}
+	.card-title-link {
+		text-decoration: none;
+		color: #0f172a;
+	}
+	.card-title-link h3 {
+		margin: 0 0 0.5rem 0;
+		font-size: 1.25rem;
+		font-weight: 800;
+		line-height: 1.3;
+		transition: color 0.2s ease;
+	}
+	.card-title-link:hover h3 {
+		color: #2563eb;
+	}
+	.card-meta-bottom {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-size: 0.8rem;
+		color: #64748b;
+		font-weight: 600;
+		margin-top: auto;
+	}
+	.card-author-avatar {
+		width: 24px;
+		height: 24px;
+		border-radius: 50%;
+		object-fit: cover;
+	}
+
+	/* RIGHT COL: DISCOVER BLOGS */
+	.discovery-right-col {
+		flex: 0 0 450px;
+		background: #f1f5f9;
+		border-radius: 12px;
+		padding: 2.5rem;
+		border: 1px solid #e2e8f0;
+	}
+	.discover-blogs-list {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+	}
+	.blog-post-card {
+		display: flex;
+		gap: 1rem;
+		align-items: center;
+		border-bottom: 1px solid #e2e8f0;
+		padding-bottom: 1.5rem;
+	}
+	.blog-post-card:last-child {
+		border-bottom: none;
+		padding-bottom: 0;
+	}
+	.blog-post-image {
+		flex: 0 0 100px;
+		height: 75px;
+		border-radius: 8px;
+		overflow: hidden;
+	}
+	.blog-post-image img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+	.blog-post-content {
+		flex: 1;
+	}
+	.blog-title-link {
+		text-decoration: none;
+		color: #0f172a;
+		display: block;
+		margin-bottom: 0.5rem;
+	}
+	.blog-title-link h3 {
+		margin: 0;
+		font-size: 1rem;
+		font-weight: 800;
+		line-height: 1.4;
+		transition: color 0.2s ease;
+	}
+	.blog-title-link:hover h3 {
+		color: #2563eb;
+	}
+	.blog-meta {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		font-size: 0.75rem;
+		color: #64748b;
+		font-weight: 600;
+	}
+	.blog-meta-author {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	.blog-author-avatar {
+		width: 20px;
+		height: 20px;
+		border-radius: 50%;
+		object-fit: cover;
+	}
+	.blog-read-more {
+		color: #2563eb;
+		text-decoration: none;
+		font-weight: 800;
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		transition: color 0.2s ease;
+	}
+	.blog-read-more i {
+		font-size: 0.7rem;
+		transition: transform 0.2s ease;
+	}
+	.blog-read-more:hover {
+		color: #1d4ed8;
+	}
+	.blog-read-more:hover i {
+		transform: translateX(3px);
+	}
+
+	/* Mobile Responsiveness */
+	@media (max-width: 1000px) {
+		.discovery-columns {
+			flex-direction: column;
+			gap: 3rem;
+		}
+		.discovery-right-col {
+			flex: 1;
+			width: 100%;
+		}
+		.discovery-container {
+			padding: 0 1rem;
+		}
+		.home-hero-meta {
+			gap: 1.5rem;
+			flex-direction: column;
+			align-items: flex-start;
+		}
+	}
+	@media (max-width: 600px) {
+		.home-hero-title {
+			font-size: 2.2rem;
+		}
+		.breaking-story-card {
+			flex-direction: column;
+			align-items: stretch;
+			gap: 1rem;
+		}
+		.breaking-story-image {
+			flex: none;
+			width: 100%;
+			height: 180px;
+		}
+		.discovery-section-title {
+			font-size: 1.8rem;
+			margin-bottom: 1.5rem;
+		}
+	}
+
+	.page_header {
+		display: none !important;
+	}
+
+	/* =========================================
+       PRO TIP BOX (DARK ACCENT THEME)
+       *Applied to existing HTML structure*
+    ========================================= */
+	.tip-box-container {
+		background-color: #0f172a; /* Deep dark slate/blue */
+		border: none;
+		border-left: 5px solid #3b82f6; /* Bright blue left accent border */
+		border-radius: 8px;
+		padding: 1.5rem 2rem;
+		margin: 2.5rem 0;
+		box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+	}
+
+	/* Style the "Pro Tip" label at the top */
+	.toplabel-out {
+		margin-bottom: 0.5rem;
+	}
+
+	.toplabel-out-pick {
+		display: inline-block;
+	}
+
+	.toplabel-out-pick strong {
+		color: #60a5fa; /* Vibrant light blue */
+		font-size: 1rem;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	/* Typography & Layout inside the box */
+	.row-author {
+		margin: 0;
+	}
+
+	.col-tipcolumn {
+		padding: 0;
+	}
+
+	/* Target the "From Captain Skyjack:" text to match the header */
+	.col-tipcolumn p strong {
+		color: #60a5fa; /* Match the light blue */
+		font-weight: 800;
+		text-transform: uppercase;
+		margin-right: 0.25rem;
+	}
+
+	/* The actual quote text */
+	.col-tipcolumn p {
+		color: #e2e8f0; /* Off-white for easy reading on dark background */
+		font-size: 1.1rem;
+		line-height: 1.7;
+		margin: 0;
+	}
+
+	.col-tipcolumn p em {
+		font-style: italic;
+		color: #e2e8f0;
+	}
+
+	/* =========================================
+       NEW SPLIT HERO LAYOUT (Dark Theme)
+    ========================================= */
+	header.new-split-hero {
+		background-color: #050505; /* Deep black background */
+		/* Optional: Add a dark subtle background pattern or radial gradient here */
+		background-image: radial-gradient(
+			circle at right center,
+			rgba(22, 101, 52, 0.15) 0%,
+			transparent 50%
+		);
+		color: #ffffff;
+		padding: 4rem 1rem 2rem;
+		text-align: left; /* Force left alignment */
+	}
+
+	.hero-columns {
+		display: flex;
+		align-items: center;
+		gap: 3rem;
+		margin-bottom: 0rem;
+	}
+
+	.hero-left {
+		flex: 1 1 75%;
+		max-width: 800px;
+	}
+
+	.hero-right {
+		flex: 1 1 40%;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		position: relative;
+	}
+
+	.hero-left {
+		margin-top: -20px;
+	}
+
+	/* Target the mascot image */
+	.hero-mascot-img {
+		max-width: 100%;
+		height: auto;
+		filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.5));
+		animation: floatMascot 6s ease-in-out infinite;
+	}
+
+	@keyframes floatMascot {
+		0% {
+			transform: translateY(0px);
+		}
+		50% {
+			transform: translateY(-15px);
+		}
+		100% {
+			transform: translateY(0px);
+		}
+	}
+
+	
+
+	/* Left Column Typography */
+	.hero-left .home-hero-title {
+		font-size: 29px !important;
+		font-weight: 600;
+		margin-bottom: 1.5rem;
+		line-height: 1.2;
+		letter-spacing: -1px;
+	}
+
+	/* Remove the box design from the intro to match the screenshot */
+	.hero-left .hero-intro-box {
+		background: transparent;
+		border: none;
+		padding: 0;
+		margin-bottom: 2.5rem;
+	}
+
+	.hero-lead-text {
+		font-size: 1.15rem;
+		color: #e2e8f0;
+		line-height: 1.6;
+	}
+
+	.hero-bullet-list {
+		padding-left: 1.5rem;
+		color: #cbd5e1;
+		margin-bottom: 1.5rem;
+	}
+
+	.hero-bullet-list li {
+		margin-bottom: 0.75rem;
+		line-height: 1.6;
+	}
+
+	/* =========================================
+       CATEGORY CARDS ROW
+    ========================================= */
+	.hero-category-cards {
+		display: grid;
+		grid-template-columns: repeat(5, 1fr);
+		gap: 0.75rem;
+		margin-bottom: 2rem;
+	}
+
+	.hero-cat-card {
+		background: rgba(6, 78, 59, 0.4); /* Dark translucent green */
+		border: 1px solid #166534; /* Green border */
+		border-radius: 8px;
+		padding: 1rem 0.5rem;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		text-align: center;
+		text-decoration: none;
+		transition: all 0.2s ease;
+	}
+
+	.hero-cat-card:hover {
+		background: rgba(6, 78, 59, 0.8);
+		border-color: #22c55e;
+		transform: translateY(-3px);
+	}
+
+	.cat-icon {
+		font-size: 1.8rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.cat-title {
+		color: #ffffff;
+		font-size: 0.75rem;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+		margin-bottom: 0.2rem;
+	}
+
+	.cat-sub {
+		color: #4ade80; /* Light neon green */
+		font-size: 0.7rem;
+		font-weight: 600;
+	}
+
+	/* =========================================
+       SEARCH BAR
+    ========================================= */
+	.hero-search-wrapper {
+		display: flex;
+		background: rgba(0, 0, 0, 0.6);
+		border: 1px solid #166534;
+		border-radius: 8px;
+		overflow: hidden;
+		max-width: 100%;
+		box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+	}
+
+	.hero-search-input {
+		flex: 1;
+		background: transparent;
+		border: none;
+		padding: 1.25rem 1.5rem;
+		color: #ffffff;
+		font-size: 1rem;
+		outline: none;
+	}
+
+	.hero-search-input::placeholder {
+		color: #64748b;
+	}
+
+	.hero-search-btn {
+		background: #eab308; /* Yellow accent */
+		color: #000000;
+		border: none;
+		padding: 0 1.5rem;
+		font-size: 1.2rem;
+		cursor: pointer;
+		transition: background 0.2s ease;
+	}
+
+	.hero-search-btn:hover {
+		background: #facc15;
+	}
+
+	/* =========================================
+       BOTTOM META & DISCLAIMER
+    ========================================= */
+	.hero-bottom-meta-section {
+		border-top: 1px solid rgba(255, 255, 255, 0.1);
+		padding-top: 2rem;
+		margin-top: 2rem;
+	}
+
+	/* Responsive Adjustments */
+	@media (max-width: 1024px) {
+		.hero-columns {
+			flex-direction: column;
+		}
+		.hero-right {
+			order: -1; /* Puts the mascot above the text on mobile */
+			max-width: 350px;
+			margin: 0 auto;
+		}
+		.hero-category-cards {
+			grid-template-columns: repeat(3, 1fr);
+		}
+	}
+
+	@media (max-width: 600px) {
+		.hero-left .home-hero-title {
+			font-size: 2.2rem;
+		}
+		.hero-category-cards {
+			grid-template-columns: repeat(2, 1fr);
+		}
+		.hero-search-input {
+			padding: 1rem;
+			font-size: 0.9rem;
+		}
+	}
+
+	/* Mobile Adjustments */
+	@media (max-width: 600px) {
+		.tip-box-container {
+			padding: 1.25rem 1.5rem;
+		}
+		.col-tipcolumn p {
+			font-size: 1rem;
+		}
+	}
+	figure.wp-block-image.alignright.size-medium.is-style-default img {
+		float: right;
+	}
+
+	/* Container for the tabs */
+	.top-mu-cus-tabs {
+		display: flex;
+		justify-content: center;
+		flex-wrap: wrap;
+		background-color: #fff; /* Light gray background */
+		padding: 0.5rem;
+		border-radius: 12px;
+		gap: 0.5rem;
+		margin: 0 auto 1.5rem auto;
+		max-width: 100%;
+	}
+
+	strong {
+		font-weight: 500 !important;
+	}
+
+	/* Individual Tab Styling */
+	.top-mu-cus-tab {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.6rem 1.25rem;
+		border-radius: 8px;
+		cursor: pointer;
+		font-weight: 700;
+		font-size: 0.95rem;
+		color: #64748b;
+		transition: all 0.2s ease;
+	}
+
+	.top-mu-cus-tab i {
+		font-style: normal;
+		font-size: 1.1rem;
+	}
+
+	.top-mu-cus-tab:hover {
+		color: #334155;
+	}
+
+	/* Active Tab */
+	.top-mu-cus-tab.active {
+		background-color: #ffffff;
+		color: #2563eb; /* Modern Blue */
+		box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+	}
+
+	/* Content Box Outline */
+	.top-mu-cus-content-box {
+		background-color: #ffffff;
+		border: 1px solid #e2e8f0;
+		border-radius: 12px;
+		padding: 2.5rem;
+		box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+		color: #475569;
+		line-height: 1.8;
+		font-size: 1.05rem;
+	}
+
+	/* Hide inactive content */
+	.top-mu-cus-content {
+		display: none;
+		animation: fadeInTab 0.3s ease-in-out;
+	}
+
+	.top-mu-cus-content.active {
+		display: block;
+	}
+
+	.top-mu-cus-content strong {
+		color: #0f172a;
+		font-weight: 800;
+	}
+
+	@keyframes fadeInTab {
+		from {
+			opacity: 0;
+			transform: translateY(5px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	/* * GREEN SUCCESS BANNER 
+     * (Add class="cus-success-banner" to that last paragraph in your HTML!) 
+     */
+	.cus-success-banner {
+		background-color: #f0fdf4;
+		border-left: 4px solid #10b981;
+		padding: 1.25rem 1.5rem;
+		border-radius: 6px;
+		margin-top: 1.5rem;
+		color: #334155;
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.cus-success-banner::before {
+		content: "";
+		display: block;
+		min-width: 24px;
+		height: 24px;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 1 1-5.93-9.14'%3E%3C/path%3E%3Cpolyline points='22 4 12 14.01 9 11.01'%3E%3C/polyline%3E%3C/svg%3E");
+		background-size: contain;
+		background-repeat: no-repeat;
+	}
+
+	/* Mobile Adjustments */
+	@media (max-width: 768px) {
+		.top-mu-cus-tabs {
+			display: flex;
+			width: 100%;
+			max-width: 100%;
+		}
+		.top-mu-cus-tab {
+			flex: 1 1 auto;
+			justify-content: center;
+			padding: 0.5rem;
+			font-size: 0.85rem;
+		}
+		.top-mu-cus-content-box {
+			padding: 1.5rem;
+		}
+	}
+
+	.crd-sd-logo {
+		border-bottom: 1px solid #e2e8f0;
+		padding-bottom: 5px;
+		width: 100%;
+	}
+
+	/* =========================================
+       GAMES/CASINO GRID (.home-games-hh)
+    ========================================= */
+	/* Target the grid wrapper securely */
+	div[class*="home-games-hh"] > div {
+		display: grid !important;
+		grid-template-columns: repeat(4, 1fr) !important;
+		gap: 1.5rem !important;
+		padding: 2rem 0 !important;
+	}
+
+	/* Individual Card */
+	div[class*="home-games-hh"] > div > div {
+		background: #ffffff !important;
+		border: 1px solid #e2e8f0 !important;
+		border-radius: 16px !important;
+		padding: 2rem 1.5rem 5rem 1.5rem !important; /* Extra bottom padding so the button fits perfectly */
+		display: flex !important;
+		flex-direction: column !important;
+		align-items: center !important;
+		text-align: center !important;
+		box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.05) !important;
+		transition:
+			transform 0.3s ease,
+			box-shadow 0.3s ease,
+			border-color 0.3s ease !important;
+		position: relative !important;
+	}
+
+	div[class*="home-games-hh"] > div > div:hover {
+		transform: translateY(-6px) !important;
+		box-shadow: 0 15px 30px -5px rgba(37, 99, 235, 0.15) !important;
+		border-color: #cbd5e1 !important;
+	}
+
+	/* Image Wrapper & Image */
+	div[class*="home-games-hh"] > div > div > a:first-child {
+		display: flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+		height: 75px !important;
+		margin-bottom: 1.25rem !important;
+		width: 100% !important;
+	}
+
+	div[class*="home-games-hh"] > div > div img {
+		max-height: 100% !important;
+		width: auto !important;
+		object-fit: contain !important;
+		border-radius: 0 !important;
+	}
+
+	/* Casino Name (.g-name) */
+	div[class*="home-games-hh"] .g-name {
+		font-size: 1.2rem !important;
+		font-weight: 900 !important;
+		color: #0f172a !important;
+		margin: 0 0 0.5rem 0 !important;
+		letter-spacing: -0.5px !important;
+	}
+
+	/* Bonus Text (Styled as a modern green promo pill) */
+	div[class*="home-games-hh"] .g-name + p {
+		font-size: 0.9rem !important;
+		font-weight: 700 !important;
+		color: #10b981 !important; /* Vibrant Emerald Green */
+		margin: 0 0 1.5rem 0 !important;
+		background: #ecfdf5 !important;
+		padding: 0.35rem 0.85rem !important;
+		border-radius: 6px !important;
+		display: inline-block !important;
+		border: 1px dashed #6ee7b7 !important;
+	}
+
+	/* Button Container (Pinned to bottom) */
+	div[class*="home-games-hh"] > div > div > p:last-child {
+		position: absolute !important;
+		bottom: 1.5rem !important;
+		left: 0 !important;
+		right: 0 !important;
+		display: flex !important;
+		justify-content: center !important;
+		margin: 0 !important;
+		padding: 0 1.5rem !important;
+	}
+
+	/* Play Now Button (Premium Gradient) */
+	div[class*="home-games-hh"] > div > div > p:last-child a {
+		background: linear-gradient(
+			135deg,
+			#2563eb 0%,
+			#1d4ed8 100%
+		) !important;
+		color: #ffffff !important;
+		text-decoration: none !important;
+		font-weight: 800 !important;
+		font-size: 0.95rem !important;
+		padding: 0.75rem 1rem !important;
+		border-radius: 30px !important; /* Modern Pill Shape */
+		text-transform: uppercase !important;
+		letter-spacing: 0.5px !important;
+		border: none !important;
+		width: 100% !important;
+		text-align: center !important;
+		box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
+		transition:
+			filter 0.2s ease,
+			transform 0.2s ease !important;
+	}
+
+	div[class*="home-games-hh"] > div > div > p:last-child a:hover {
+		filter: brightness(1.1) !important;
+		transform: translateY(-2px) !important;
+	}
+
+	/* Responsive Design */
+	@media (max-width: 1024px) {
+		div[class*="home-games-hh"] > div {
+			grid-template-columns: repeat(2, 1fr) !important;
+		}
+	}
+
+	@media (max-width: 600px) {
+		div[class*="home-games-hh"] > div {
+			grid-template-columns: 1fr !important;
+			padding: 1rem 0 !important;
+		}
+	}
+	.tw-shadow-primary.tw-bg-white.tw-rounded-lg.tw-gap-4.tw-px-2\.5.tw-py-5.tw-flex.tw-flex-col.tw-relative
+		a {
+		border-bottom: 1px solid #d5d5d5;
+	}
+
+	/* =========================================
+       GAME CATEGORIES GRID (.home-p-g)
+    ========================================= */
+	/* Override the grid container to 4 columns */
+	.home-p-g > div.tw-grid {
+		display: grid !important;
+		grid-template-columns: repeat(4, 1fr) !important;
+		gap: 1.5rem !important;
+		padding: 2rem 0 !important;
+	}
+
+	/* Target the actual card wrapper */
+	.home-p-g .tw-shadow-primary {
+		background: #ffffff !important;
+		border: 1px solid #e2e8f0 !important;
+		border-radius: 16px !important;
+		padding: 2rem 1.5rem !important;
+		display: flex !important;
+		flex-direction: column !important;
+		align-items: center !important;
+		text-align: center !important;
+		box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+		transition:
+			transform 0.3s ease,
+			box-shadow 0.3s ease,
+			border-color 0.3s ease !important;
+		height: 100% !important;
+		margin: 0 !important; /* Overrides the my-4 class */
+		cursor: pointer;
+	}
+
+	/* Card Hover Effect */
+	.home-p-g .tw-shadow-primary:hover {
+		transform: translateY(-5px) !important;
+		box-shadow: 0 15px 30px -5px rgba(37, 99, 235, 0.15) !important;
+		border-color: #cbd5e1 !important;
+	}
+
+	/* Circular Background for the Icons */
+	.home-p-g .tw-bg-imgbackground {
+		background: #1a233a !important; /* Soft slate gray */
+		width: 100px !important;
+		height: 100px !important;
+		border-radius: 50% !important; /* Makes it a perfect circle */
+		display: flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+		margin: 0 auto 1.5rem auto !important;
+		padding: 1.25rem !important;
+		transition:
+			background-color 0.3s ease,
+			transform 0.3s ease !important;
+	}
+
+	/* Icon Hover Effect */
+	.home-p-g .tw-shadow-primary:hover .tw-bg-imgbackground {
+		background: #132132 !important; /* Turns soft blue on card hover */
+		transform: scale(1.08) !important;
+	}
+
+	.home-p-g img {
+		max-height: 100% !important;
+		max-width: 100% !important;
+		object-fit: contain !important;
+	}
+
+	p.author-link-box {
+		display: none;
+	}
+
+	/* Game Title Typography */
+	.home-p-g p {
+		font-size: 1.15rem !important;
+		font-weight: 800 !important;
+		color: #0f172a !important;
+		margin: 0 !important;
+		letter-spacing: -0.5px !important;
+		transition: color 0.3s ease !important;
+	}
+
+	.home-p-g .tw-shadow-primary:hover p {
+		color: #2563eb !important; /* Text turns blue on hover */
+	}
+
+	/* =========================================
+       RESPONSIVE ADJUSTMENTS
+    ========================================= */
+	@media (max-width: 1024px) {
+		.home-p-g > div.tw-grid {
+			grid-template-columns: repeat(3, 1fr) !important;
+		}
+	}
+
+	@media (max-width: 768px) {
+		.home-p-g > div.tw-grid {
+			grid-template-columns: repeat(2, 1fr) !important;
+			gap: 1rem !important;
+		}
+		.home-p-g .tw-shadow-primary {
+			padding: 1.5rem 1rem !important;
+		}
+		.home-p-g .tw-bg-imgbackground {
+			width: 80px !important;
+			height: 80px !important;
+			padding: 1rem !important;
+			margin-bottom: 1rem !important;
+		}
+		.home-p-g p {
+			font-size: 1rem !important;
+		}
+	}
+	/* =========================================
+       FAQ ACCORDION (.faq-1)
+    ========================================= */
+	.faq-container {
+		max-width: 100%;
+		margin: 4rem auto;
+	}
+
+	.faq-main-title {
+		font-size: 2.2rem;
+		font-weight: 900;
+		color: #0f172a;
+		text-align: center;
+		margin-bottom: 2.5rem;
+		letter-spacing: -1px;
+	}
+
+	.faq-answer {
+		display: none; /* Hidden by default */
+	}
+	.faq-item.active .faq-answer {
+		display: block; /* Shown when parent has 'active' class */
+	}
+	.faq-question {
+		cursor: pointer;
+		width: 100%;
+		/* Add your other styles here */
+	}
+
+	.faq-item {
+		background: #ffffff;
+		border: 1px solid #e2e8f0;
+		border-radius: 12px;
+		margin-bottom: 1rem;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+		overflow: hidden;
+		transition: box-shadow 0.3s ease;
+	}
+
+	.faq-item:hover {
+		box-shadow: 0 6px 12px rgba(37, 99, 235, 0.08);
+	}
+
+	.faq-question {
+		width: 100%;
+		text-align: left;
+		background: none;
+		border: none;
+		padding: 1.5rem;
+		font-size: 1.15rem;
+		font-weight: 800;
+		color: #1e293b;
+		cursor: pointer;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		transition: color 0.2s ease;
+	}
+
+	.faq-question:hover {
+		color: #2563eb;
+	}
+
+	.faq-question i {
+		font-size: 1rem;
+		color: #94a3b8;
+		transition:
+			transform 0.3s ease,
+			color 0.2s ease;
+	}
+
+	.faq-item.active .faq-question {
+		color: #2563eb;
+		border-bottom: 1px solid #f1f5f9;
+	}
+
+	.faq-item.active .faq-question i {
+		transform: rotate(180deg);
+		color: #2563eb;
+	}
+
+	.faq-answer {
+		display: none; /* Hidden by default */
+		padding: 0px;
+		background: #f8fafc;
+		color: #475569;
+		font-size: 1.05rem;
+		line-height: 1.7;
+	}
+
+	.faq-item h3 {
+		padding: 8px !important;
+	}
+
+	.faq-answer-inner p {
+		padding: 8px;
+	}
+
+	.toc-wrapper {
+		margin-top: -28px !important;
+		margin-bottom: -20px !important;
+	}
+
+	.faq-answer p {
+		margin-top: 0;
+		margin-bottom: 1rem;
+	}
+
+	.faq-answer p:last-child {
+		margin-bottom: 0;
+	}
+
+	.faq-answer ul {
+		margin: 0 0 1rem 0;
+		padding-left: 1.5rem;
+		list-style-type: none; /* We use the emojis as bullets */
+	}
+
+	.faq-answer ul li {
+		margin-bottom: 0.5rem;
+	}
+
+	/* Mobile Adjustments */
+	@media (max-width: 600px) {
+		.faq-main-title {
+			font-size: 1.8rem;
+		}
+		.faq-question {
+			font-size: 1.05rem;
+			padding: 1.25rem;
+		}
+		.faq-answer {
+			padding: 1.25rem;
+			font-size: 1rem;
+		}
+	}
+
+	/* Container holds the icon and positions the popup */
+	.cus-tooltip-container {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		cursor: help; /* Changes cursor to a question mark */
+		margin-bottom: 0rem;
+	}
+
+	/* The (i) icon styling */
+	.cus-info-icon {
+		color: #94a3b8; /* Soft slate gray */
+		font-size: 1.25rem;
+		transition: color 0.2s ease;
+	}
+
+	/* Darken icon when hovered */
+	.cus-tooltip-container:hover .cus-info-icon {
+		color: #3b82f6; /* Nice blue highlight on hover */
+	}
+
+	/* The actual text box (hidden by default) */
+	.cus-tooltip-content {
+		position: absolute;
+		top: 100%;
+		left: 0; /* Aligns the box with the left side of the icon */
+		margin-top: 12px;
+		width: max-content;
+		max-width: 450px; /* Prevents the text from getting too wide */
+		background-color: #ffffff;
+		color: #475569;
+		font-size: 0.85rem;
+		line-height: 1.6;
+		padding: 16px;
+		border: 1px solid #e2e8f0;
+		border-radius: 8px;
+		box-shadow:
+			0 10px 15px -3px rgba(0, 0, 0, 0.1),
+			0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+		/* Animation defaults */
+		opacity: 0;
+		visibility: hidden;
+		transform: translateY(-5px);
+		transition:
+			opacity 0.3s ease,
+			transform 0.3s ease,
+			visibility 0.3s ease;
+		z-index: 100; /* Keeps it above your casino cards */
+	}
+
+	/* The little triangle pointing up to the icon */
+	.cus-tooltip-content::before {
+		content: "";
+		position: absolute;
+		top: -6px;
+		left: 6px; /* Adjust this to center the arrow under the icon */
+		width: 10px;
+		height: 10px;
+		background-color: #ffffff;
+		border-top: 1px solid #e2e8f0;
+		border-left: 1px solid #e2e8f0;
+		transform: rotate(45deg);
+	}
+
+	/* Show the tooltip on hover */
+	.cus-tooltip-container:hover .cus-tooltip-content {
+		opacity: 1;
+		visibility: visible;
+		transform: translateY(0);
+	}
+
+	/* Mobile responsiveness so it doesn't break the screen width */
+	@media (max-width: 600px) {
+		.cus-tooltip-content {
+			max-width: 300px;
+			/* If the icon is on the far right of the screen, you may need to change left: 0 to right: 0 */
+		}
+	}
+
+	/* =========================================
+       LEGAL & SAFETY SECTION STYLES
+    ========================================= */
+	.legal-safety-wrapper {
+		max-width: 100%;
+		margin: 0 auto;
+		color: #475569;
+		font-size: 1.1rem;
+		line-height: 1.7;
+	}
+
+	.legal-safety-wrapper h2 {
+		font-size: 2.2rem;
+		font-weight: 900;
+		color: #0f172a;
+		margin: 3rem 0 1.5rem 0;
+		letter-spacing: -0.5px;
+	}
+
+	ul.modern-check-list li {
+		background: #fff;
+	}
+
+	.section-subtitle {
+		font-size: 1.5rem;
+		font-weight: 800;
+		color: #1e293b;
+		margin: 2.5rem 0 1.5rem 0;
+		border-bottom: 2px solid #e2e8f0;
+		padding-bottom: 0.5rem;
+	}
+
+	.legal-safety-wrapper p {
+		margin-bottom: 1.5rem;
+	}
+
+	.legal-safety-wrapper strong {
+		color: #0f172a;
+		font-weight: 700;
+	}
+
+	/* Featured Image */
+	.modern-featured-image {
+		margin: 2.5rem 0;
+		border-radius: 16px;
+		overflow: hidden;
+		box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+		border: 1px solid #e2e8f0;
+	}
+
+	.modern-featured-image img {
+		width: 100%;
+		height: auto;
+		display: block;
+	}
+
+	/* Jurisdiction Cards Grid */
+	.license-cards-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+		gap: 1.5rem;
+		margin: 2rem 0;
+	}
+
+	.top-mu-cus-tab {
+		width: 19%;
+	}
+
+	/* Ensure the cards can hold absolute positioned badges */
+	.cus-hp-card {
+		position: relative;
+	}
+
+	/* Base modern UI styling for all 4 badges */
+	.cus-hp-card:nth-child(1)::before,
+	.cus-hp-card:nth-child(2)::before,
+	.cus-hp-card:nth-child(3)::before,
+	.cus-hp-card:nth-child(4)::before {
+		position: absolute;
+		top: -6px;
+		left: 3px;
+		padding: 6px 12px;
+		font-size: 11px;
+		font-family:
+			system-ui,
+			-apple-system,
+			sans-serif;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+		border-radius: 20px; /* Modern pill shape */
+		box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+		z-index: 10;
+	}
+
+	/* 1. Sun Palace - Best Casino This Month (Gold Gradient) */
+	.cus-hp-card:nth-child(1)::before {
+		content: "Best This Month";
+		background: linear-gradient(135deg, #ffdf00, #ff9500);
+		color: #1a1a1a;
+	}
+
+	/* Main Wrapper */
+	.cus-hp-state-casinos {
+		font-family:
+			system-ui,
+			-apple-system,
+			sans-serif;
+		color: #334155;
+		max-width: 100%;
+		margin: 0 auto;
+		padding: 20px 0;
+	}
+
+	/* Modern Section Headings with Gradient Underline */
+	.cus-hp-section-heading {
+		font-size: 1.5rem;
+		font-weight: 700;
+		color: #0f172a;
+		margin: 3rem 0 1.5rem 0;
+		padding-bottom: 0.5rem;
+		border-bottom: 2px solid #e2e8f0;
+		position: relative;
+	}
+
+	/* Gradient accent line on the headings */
+	.cus-hp-section-heading::after {
+		content: "";
+		position: absolute;
+		bottom: -2px;
+		left: 0;
+		width: 80px;
+		height: 2px;
+		background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+	}
+
+	/* Remove margin for the very first heading */
+	.cus-hp-state-casinos .cus-hp-section-heading:first-child {
+		margin-top: 0;
+	}
+
+	/* Responsive Grid Layout */
+	.cus-hp-casino-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+		gap: 1.5rem;
+	}
+
+	/* Main Container */
+	.cus-hp-types-wrapper {
+		font-family:
+			system-ui,
+			-apple-system,
+			sans-serif;
+		max-width: 100%;
+		margin: 2rem auto;
+		color: #334155;
+	}
+
+	/* Section Title */
+	.cus-hp-section-title {
+		font-size: 2rem;
+		font-weight: 800;
+		color: #0f172a;
+		margin-bottom: 1rem;
+	}
+
+	/* Intro Paragraph */
+	.cus-hp-intro-text {
+		font-size: 1.05rem;
+		line-height: 1.6;
+		color: #475569;
+		margin-bottom: 2.5rem;
+		max-width: 800px;
+	}
+
+	/* Grid Layout for Cards */
+	.cus-hp-types-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+		gap: 1.5rem;
+		margin-bottom: 2.5rem;
+	}
+
+	/* Individual Cards */
+	.cus-hp-type-card {
+		background: #ffffff;
+		border: 1px solid #e2e8f0;
+		border-radius: 12px;
+		padding: 1.5rem;
+		position: relative;
+		overflow: hidden;
+		box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+		transition:
+			transform 0.2s ease,
+			box-shadow 0.2s ease;
+	}
+
+	/* Hover Effect */
+	.cus-hp-type-card:hover {
+		transform: translateY(-4px);
+		box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+	}
+
+	/* Color Accent Bar on the Left of each Card */
+	.cus-hp-type-card::before {
+		content: "";
+		position: absolute;
+		left: 0;
+		top: 0;
+		bottom: 0;
+		width: 4px;
+		background: #3b82f6; /* Blue accent */
+		border-top-left-radius: 12px;
+		border-bottom-left-radius: 12px;
+	}
+
+	/* Card Headings */
+	.cus-hp-type-heading {
+		font-size: 1.2rem;
+		font-weight: 700;
+		color: #1e293b;
+		margin: 0 0 0.75rem 0;
+	}
+
+	/* Card Paragraphs */
+	.cus-hp-type-card p {
+		font-size: 0.95rem;
+		line-height: 1.6;
+		color: #64748b;
+		margin: 0;
+	}
+
+	/* Tip Callout Box */
+	.cus-hp-tip-box {
+		background: linear-gradient(
+			135deg,
+			#f0fdf4,
+			#dcfce7
+		); /* Soft green gradient */
+		border-left: 4px solid #22c55e; /* Bright green border */
+		padding: 1.25rem 1.5rem;
+		border-radius: 0 8px 8px 0;
+		color: #166534;
+		font-size: 0.95rem;
+		line-height: 1.5;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+	}
+
+	.cus-hp-tip-box strong {
+		color: #15803d;
+		font-size: 1rem;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+		margin-right: 0.5rem;
+	}
+
+	/* Container Reset */
+	.cus-hp-rg-wrapper {
+		font-family:
+			system-ui,
+			-apple-system,
+			sans-serif;
+		color: #334155;
+		line-height: 1.6;
+		margin: 2rem auto;
+	}
+
+	/* Headings */
+	.cus-hp-section-title {
+		font-size: 2rem;
+		font-weight: 800;
+		color: #0f172a;
+		margin-bottom: 1rem;
+	}
+
+	.cus-hp-sub-title {
+		font-size: 1.5rem;
+		font-weight: 700;
+		color: #1e293b;
+		margin: 2rem 0 1rem;
+		padding-bottom: 0.5rem;
+		border-bottom: 2px solid #e2e8f0;
+	}
+
+	/* Typography Utilities */
+	.cus-hp-intro-text {
+		font-size: 1.1rem;
+		color: #475569;
+	}
+	.cus-hp-text-muted {
+		color: #64748b;
+	}
+	.cus-hp-mt-4 {
+		margin-top: 1.5rem;
+	}
+
+	/* Grid for Tools */
+	.cus-hp-tools-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+		gap: 1.5rem;
+		margin-top: 1.5rem;
+	}
+
+	/* Individual Tool Card */
+	.cus-hp-tool-card {
+		background: #f8fafc;
+		border: 1px solid #e2e8f0;
+		border-top: 4px solid #8b5cf6; /* Purple accent for tools */
+		border-radius: 8px;
+		padding: 1.5rem;
+		transition: transform 0.2s ease;
+	}
+
+	.cus-hp-tool-card:hover {
+		transform: translateY(-3px);
+		box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+	}
+
+	.cus-hp-tool-card h4 {
+		margin: 0 0 0.75rem;
+		font-size: 1.1rem;
+		color: #0f172a;
+	}
+
+	.cus-hp-tool-card p {
+		margin: 0;
+		font-size: 0.95rem;
+	}
+
+	/* Self-Exclusion Info Box */
+	.cus-hp-exclusion-box {
+		background: #fffbeb; /* Subtle yellow/warning tint */
+		border: 1px solid #fde68a;
+		border-left: 4px solid #f59e0b; /* Orange warning accent */
+		border-radius: 8px;
+		padding: 1.5rem 2rem;
+		margin: 3rem 0;
+	}
+
+	.cus-hp-exclusion-box h3 {
+		color: #92400e;
+		margin-top: 0;
+		margin-bottom: 1rem;
+		font-size: 1.3rem;
+	}
+
+	.cus-hp-exclusion-box p {
+		margin-bottom: 0.75rem;
+		color: #451a03;
+	}
+	.cus-hp-exclusion-box p:last-child {
+		margin-bottom: 0;
+	}
+
+	/* Serious Help/Contact Banner */
+	.cus-hp-help-banner {
+		background: #1e293b; /* Dark slate */
+		color: #f1f5f9;
+		padding: 2rem;
+		border-radius: 12px;
+		margin-bottom: 3rem;
+	}
+
+	.cus-hp-help-banner h3 {
+		color: #ffffff;
+		margin-top: 0;
+		border-bottom: 1px solid #334155;
+		padding-bottom: 0.75rem;
+		margin-bottom: 1rem;
+	}
+
+	/* Contact Grid */
+	.cus-hp-contact-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+		gap: 1rem;
+		margin-top: 1.5rem;
+	}
+
+	/* Contact Pills */
+	.cus-hp-contact-pill {
+		background: #334155;
+		color: #f8fafc;
+		text-decoration: none;
+		padding: 0.75rem 1rem;
+		border-radius: 6px;
+		font-size: 0.9rem;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		transition: background 0.2s;
+		border: 1px solid #475569;
+	}
+
+	.cus-hp-contact-pill:hover {
+		background: #475569;
+		color: #ffffff;
+	}
+
+	.cus-hp-contact-pill strong {
+		color: #93c5fd; /* Light blue accent for names */
+	}
+
+	/* Customer Support Section Setup */
+	.cus-hp-support-section {
+		padding-top: 2rem;
+		border-top: 1px solid #e2e8f0;
+	}
+
+	.cus-hp-shortcode-wrap {
+		margin-top: 2rem;
+	}
+
+	/* Main Wrapper */
+	.cus-hp-contact-wrapper {
+		font-family:
+			system-ui,
+			-apple-system,
+			sans-serif;
+		max-width: 100%;
+		margin: 3rem auto;
+	}
+
+	/* Contact Title */
+	.cus-hp-contact-title {
+		font-size: 1.5rem;
+		font-weight: 800;
+		color: #0f172a;
+		margin-bottom: 1.25rem;
+	}
+
+	/* The Grey Contact Card */
+	.cus-hp-contact-info-card {
+		background: #f8fafc; /* Very light slate grey */
+		border: 1px solid #e2e8f0;
+		border-radius: 12px;
+		padding: 1.5rem;
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+	}
+
+	/* Responsive Desktop Layout (3 Columns) */
+	@media (min-width: 600px) {
+		.cus-hp-contact-info-card {
+			flex-direction: row;
+			justify-content: space-between;
+			align-items: flex-start;
+		}
+	}
+
+	/* Individual Data Blocks */
+	.cus-hp-contact-item {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+	}
+
+	/* Uppercase Micro-Labels */
+	.cus-hp-contact-label {
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		font-weight: 700;
+		color: #64748b; /* Muted slate */
+	}
+
+	/* Primary Values */
+	.cus-hp-contact-value {
+		font-size: 1rem;
+		color: #1e293b;
+		line-height: 1.5;
+	}
+
+	/* Clickable Links */
+	.cus-hp-contact-link {
+		color: #2563eb; /* Accessible blue */
+		text-decoration: none;
+		font-weight: 600;
+		transition: color 0.2s ease;
+	}
+
+	.cus-hp-contact-link:hover {
+		color: #1d4ed8; /* Darker blue on hover */
+		text-decoration: underline;
+	}
+
+	/* Subtle Footer Disclaimer */
+	.cus-hp-disclaimer {
+		margin-top: 1.5rem;
+		padding-top: 1.5rem;
+		border-top: 1px solid #e2e8f0;
+	}
+
+	.cus-hp-disclaimer p {
+		font-size: 0.85rem;
+		color: #64748b;
+		font-style: italic;
+		line-height: 1.6;
+		margin: 0;
+	}
+
+	/* Container Reset for the UX section */
+	.cus-hp-ux-section {
+		font-family:
+			system-ui,
+			-apple-system,
+			sans-serif;
+		color: #334155;
+		line-height: 1.6;
+		max-width: 100%;
+		margin: 2rem auto;
+	}
+
+	/* Main Section Headings */
+	.cus-hp-ux-section h2 {
+		font-size: 2rem;
+		font-weight: 600;
+		color: #0f172a;
+		margin-top: 3rem;
+		margin-bottom: 1.25rem;
+		padding-bottom: 0.5rem;
+		border-bottom: 2px solid #e2e8f0;
+	}
+
+	/* Base Paragraph Styling */
+	.cus-hp-ux-section p {
+		font-size: 1.05rem;
+		margin-bottom: 1.25rem;
+		color: #475569;
+	}
+
+	.cus-hp-help-banner p {
+		color: #f1f5f9 !important;
+	}
+
+	/* Bold text inside lists (Why It Matters) */
+	.cus-hp-ux-section .wp-block-list strong {
+		color: #0f172a;
+		font-weight: 700;
+	}
+
+	/* --- Summary Section Styling --- */
+	/* Target the paragraphs immediately following the Summary heading */
+	#summary + p,
+	#summary + p + p,
+	#summary + p + p + p,
+	#summary + p + p + p + p {
+		font-size: 1.1rem;
+		line-height: 1.7;
+	}
+
+	/* Create a highlight box effect for the summary conclusion */
+	#summary + p + p + p + p {
+		background: #f0f9ff;
+		border-left: 4px solid #0ea5e9;
+		padding: 1.25rem;
+		border-radius: 0 8px 8px 0;
+		color: #0c4a6e;
+		font-weight: 500;
+		margin-top: 2rem;
+	}
+
+	/* Accordion Specific Overrides (If needed alongside Tailwind) */
+	/* This ensures the toggle icon state works if Tailwind isn't handling the visual arrow rotation */
+	.twaccbutton::after {
+		content: "+";
+		font-size: 1.5rem;
+		font-weight: 400;
+		line-height: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: #64748b;
+	}
+
+	.twaccbutton:not(.collapsed)::after {
+		content: "−"; /* Minus sign for expanded state */
+		color: #0f172a;
+	}
+
+	/* Modern Card Styling */
+	.cus-hp-casino-card {
+		background: #ffffff;
+		border: 1px solid #e2e8f0;
+		border-radius: 12px;
+		padding: 1.5rem;
+		box-shadow:
+			0 4px 6px -1px rgba(0, 0, 0, 0.05),
+			0 2px 4px -1px rgba(0, 0, 0, 0.03);
+		transition:
+			transform 0.2s ease,
+			box-shadow 0.2s ease,
+			border-color 0.2s ease;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.cus-hp-card {
+		/* Base white background */
+		background-color: #ffffff;
+
+		/* Subtle Dark Dots */
+		background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='2' cy='2' r='1.5' fill='rgba(0, 0, 0, 0.03)'/%3E%3C/svg%3E");
+		background-repeat: repeat;
+	}
+
+	/* Hover "Lift" Effect */
+	.cus-hp-casino-card:hover {
+		transform: translateY(-4px);
+		box-shadow:
+			0 10px 15px -3px rgba(0, 0, 0, 0.1),
+			0 4px 6px -2px rgba(0, 0, 0, 0.05);
+		border-color: #cbd5e1;
+	}
+
+	/* Casino Title */
+	.cus-hp-casino-name {
+		font-size: 1.125rem;
+		font-weight: 700;
+		color: #1e293b;
+		margin-bottom: 0.75rem;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	/* Decorative dot next to the Casino Title */
+	.cus-hp-casino-name::before {
+		content: "";
+		display: inline-block;
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background: #3b82f6; /* Blue accent */
+	}
+
+	/* Casino Description Text */
+	.cus-hp-casino-desc {
+		font-size: 0.95rem;
+		line-height: 1.6;
+		color: #475569;
+		margin: 0;
+	}
+
+	/* Emphasized text inside descriptions */
+	.cus-hp-casino-desc strong {
+		color: #0f172a;
+		font-weight: 600;
+	}
+	/* 2. Reels of Joy - New Casino (Blue Gradient) */
+	.cus-hp-card:nth-child(2)::before {
+		content: "New Casino";
+		background: linear-gradient(135deg, #00c6ff, #0072ff);
+		color: #ffffff;
+	}
+
+	/* 3. Raging Bull - Trending Casino (Red/Orange Gradient) */
+	.cus-hp-card:nth-child(3)::before {
+		content: "Trending Casino";
+		background: linear-gradient(135deg, #ff416c, #ff4b2b);
+		color: #ffffff;
+	}
+
+	/* 4. Wild Casino - Best Payout Casino (Green Gradient) */
+	.cus-hp-card:nth-child(4)::before {
+		content: "Best Payout Casino";
+		background: linear-gradient(135deg, #11998e, #38ef7d);
+		color: #ffffff;
+	}
+
+	.license-card {
+		background: #ffffff;
+		border: 1px solid #e2e8f0;
+		border-top: 4px solid #3b82f6; /* Blue Accent Top */
+		border-radius: 10px;
+		padding: 1.5rem;
+		box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+		transition:
+			transform 0.2s ease,
+			box-shadow 0.2s ease;
+	}
+
+	.license-card:hover {
+		transform: translateY(-4px);
+		box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1);
+	}
+
+	/* --- Adjust Left Column (Breaking Stories) Sizing --- */
+
+/* Reduce padding inside the breaking story cards */
+.breaking-story-card {
+    padding: 16px !important;
+    gap: 16px !important; 
+    margin-bottom: 12px !important; /* Tighter gap between rows */
+}
+
+/* Shrink the thumbnail image slightly */
+.breaking-story-image {
+    width: 220px !important; /* Reduced from default */
+    min-width: 220px !important;
+}
+
+.breaking-story-image img {
+    height: 120px !important; /* Forces a shorter height */
+    object-fit: cover !important;
+}
+
+/* Reduce the spacing inside the content area */
+.breaking-story-content {
+    gap: 6px !important;
+}
+
+/* Shrink the top meta text (News / Date) */
+.card-meta-top {
+    margin-bottom: 2px !important;
+}
+
+.card-category, 
+.card-date {
+    font-size: 11px !important;
+}
+
+/* Shrink the main title */
+.card-title-link h3 {
+    font-size: 16px !important;
+    line-height: 1.3 !important;
+    font-weight: 700 !important; /* Removed strong, just using CSS bold */
+    margin: 0 !important;
+}
+
+/* Shrink the bottom author meta */
+.card-meta-bottom {
+    margin-top: 4px !important;
+}
+
+.card-meta-bottom span {
+    font-size: 12px !important;
+}
+
+.card-author-avatar {
+    width: 24px !important;
+    height: 24px !important;
+}
+
+	.license-card h4 {
+		font-size: 1.15rem;
+		font-weight: 800;
+		color: #0f172a;
+		margin: 0 0 0.75rem 0;
+	}
+
+	.license-card p {
+		margin: 0;
+		font-size: 0.95rem;
+		color: #475569;
+	}
+
+	/* Custom Green Checkmark List */
+	.modern-check-list {
+		list-style: none;
+		padding: 0;
+		margin: 0 0 2rem 0;
+	}
+
+	.modern-check-list li {
+		position: relative;
+		padding-left: 2.25rem;
+		margin-bottom: 1.25rem;
+		background: #f8fafc;
+		border: 1px solid #e2e8f0;
+		border-radius: 8px;
+		padding: 1.25rem 1.25rem 1.25rem 3rem;
+	}
+
+	.modern-check-list li::before {
+		content: "";
+		position: absolute;
+		left: 1rem;
+		top: 1.35rem;
+		width: 20px;
+		height: 20px;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+		background-size: contain;
+		background-repeat: no-repeat;
+	}
+
+	.modern-check-list li strong {
+		color: #2563eb;
+		display: block;
+		margin-bottom: 0.25rem;
+		font-size: 1.05rem;
+	}
+
+	/* Two-Column Checkmark List Modifier */
+	@media (min-width: 768px) {
+		.modern-check-list.two-col-list {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 1rem;
+		}
+		.modern-check-list.two-col-list li {
+			margin-bottom: 0;
+		}
+	}
+
+	/* Custom Numbered List */
+	.modern-num-list {
+		counter-reset: custom-counter;
+		list-style: none;
+		padding: 0;
+		margin: 0 0 2.5rem 0;
+	}
+
+	.modern-num-list li {
+		position: relative;
+		padding-left: 3.5rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.modern-num-list li::before {
+		counter-increment: custom-counter;
+		content: counter(custom-counter);
+		position: absolute;
+		left: 0;
+		top: 0;
+		width: 32px;
+		height: 32px;
+		background: #2563eb;
+		color: #ffffff;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: 800;
+		font-size: 1rem;
+		box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+	}
+
+	/* Pro Tip Box (Dark Theme previously established) */
+	.custom-pro-tip-box {
+		background-color: #0f172a;
+		border-left: 5px solid #3b82f6;
+		border-radius: 8px;
+		padding: 1.75rem 2rem;
+		margin: 3rem 0;
+		box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+	}
+
+	.pro-tip-header {
+		color: #60a5fa;
+		font-weight: 800;
+		font-size: 1.05rem;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-bottom: 0.75rem;
+	}
+
+	.pro-tip-content p {
+		color: #e2e8f0 !important;
+		font-style: italic;
+		font-size: 1.15rem;
+		line-height: 1.7;
+		margin: 0 !important;
+	}
+
+	/* Mobile Responsive Updates */
+	@media (max-width: 600px) {
+		.legal-safety-wrapper h2 {
+			font-size: 1.8rem;
+		}
+		.section-subtitle {
+			font-size: 1.3rem;
+		}
+		.modern-check-list li {
+			padding: 1rem 1rem 1rem 2.5rem;
+		}
+		.modern-check-list li::before {
+			left: 0.75rem;
+			top: 1.1rem;
+		}
+	}
+
+	/* =========================================
+       MAIN ARTICLE CONTENT WRAPPER
+    ========================================= */
+	.cus-casino-article-wrapper {
+		max-width: 100%;
+		margin: 0 auto;
+		color: #475569;
+		font-size: 1.1rem;
+		line-height: 1.75;
+	}
+
+	.cus-casino-article-wrapper h2 {
+		font-size: 2.2rem;
+		font-weight: 900;
+		color: #0f172a;
+		margin: 3.5rem 0 1.5rem 0;
+		letter-spacing: -0.5px;
+	}
+
+	.cus-casino-article-wrapper h3 {
+		font-size: 1.6rem;
+		font-weight: 800;
+		color: #1e293b;
+		margin: 2.5rem 0 1.25rem 0;
+	}
+
+	.cus-casino-article-wrapper p {
+		margin-bottom: 1.5rem;
+	}
+
+	.cus-casino-article-wrapper strong {
+		color: #0f172a;
+		font-weight: 800;
+	}
+
+	/* Primary Featured Image */
+	.cus-casino-featured-image {
+		margin: 0 0 3rem 0;
+		border-radius: 16px;
+		overflow: hidden;
+		box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.15);
+		border: 1px solid #e2e8f0;
+	}
+
+	.cus-casino-featured-image img {
+		width: 100%;
+		height: auto;
+		display: block;
+	}
+
+	/* =========================================
+       COMPACT REGULATOR GRID (State List)
+    ========================================= */
+	.cus-casino-grid-list {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+		gap: 0.75rem;
+		padding: 0;
+		margin: 1.5rem 0 3rem 0;
+		list-style: none;
+	}
+
+	.cus-casino-grid-list li {
+		background: #f8fafc;
+		border: 1px solid #e2e8f0;
+		padding: 0.85rem 1.25rem;
+		border-radius: 8px;
+		font-size: 0.95rem;
+		color: #334155;
+	}
+
+	.cus-casino-grid-list li strong {
+		color: #2563eb;
+		margin-right: 0.25rem;
+	}
+
+	/* =========================================
+       TEXT WRAP & FLOATING IMAGES
+    ========================================= */
+	.cus-casino-float-container::after {
+		content: "";
+		display: table;
+		clear: both;
+	}
+
+	.cus-casino-float-image.right {
+		float: right;
+		margin: 0.5rem 0 1.5rem 2rem;
+		max-width: 300px;
+		border-radius: 12px;
+		overflow: hidden;
+		box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.1);
+		border: 1px solid #e2e8f0;
+	}
+
+	.cus-casino-float-image img {
+		width: 100%;
+		height: auto;
+		display: block;
+	}
+
+	/* =========================================
+       CUSTOM GREEN CHECKMARK LIST
+    ========================================= */
+	.cus-casino-check-list {
+		list-style: none;
+		padding: 0;
+		margin: 1.5rem 0;
+	}
+
+	.cus-casino-check-list li {
+		position: relative;
+		padding-left: 2rem;
+		margin-bottom: 0.85rem;
+		font-size: 1.05rem;
+	}
+
+	.cus-casino-check-list li::before {
+		content: "";
+		position: absolute;
+		left: 0;
+		top: 6px;
+		width: 18px;
+		height: 18px;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+		background-size: contain;
+		background-repeat: no-repeat;
+	}
+
+	/* =========================================
+       SLOTS HIGHLIGHT BOX (Numbered List)
+    ========================================= */
+	.cus-casino-highlight-box {
+		background: #fff;
+		border: 1px solid #e2e8f0;
+		border-radius: 12px;
+		padding: 2.5rem;
+		margin: 2rem 0 3rem 0;
+		box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.5);
+	}
+
+	ul.cus-casino-num-list li {
+		border-bottom: 1px solid #e5e5e5;
+		padding-bottom: 4px;
+	}
+
+	header.home-hero {
+		border-bottom: 1px solid #1fbd59;
+	}
+
+	.top-mu-cus-tabs {
+		border: 1px solid #e2e8f0;
+	}
+
+	.top-mu-cus-tab {
+		border-right: 1px solid #e2e8f0;
+		background: #f1f5f9;
+	}
+
+	.meta-icon {
+		border: 2px solid #3b81f4 !important;
+	}
+
+	ul.cus-casino-grid-list {
+		background: #fff;
+		padding: 10px;
+		border-radius: 8px;
+	}
+
+	.cus-casino-num-list {
+		counter-reset: highlight-counter;
+		list-style: none;
+		padding: 0;
+		margin: 0;
+	}
+
+	.cus-casino-num-list li {
+		position: relative;
+		padding-left: 3rem;
+		margin-bottom: 1.25rem;
+		font-size: 1.05rem;
+	}
+
+	.cus-casino-num-list li:last-child {
+		margin-bottom: 0;
+	}
+
+	.cus-casino-num-list li::before {
+		counter-increment: highlight-counter;
+		content: counter(highlight-counter);
+		position: absolute;
+		left: 0;
+		top: 0;
+		width: 28px;
+		height: 28px;
+		background: #2563eb;
+		color: #ffffff;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: 800;
+		font-size: 0.9rem;
+		box-shadow: 0 3px 8px rgba(37, 99, 235, 0.3);
+	}
+
+	/* =========================================
+       MOBILE RESPONSIVENESS
+    ========================================= */
+	@media (max-width: 768px) {
+		.cus-casino-float-image.right {
+			float: none;
+			margin: 0 auto 2rem auto;
+			max-width: 100%;
+		}
+
+		.cus-casino-article-wrapper h2 {
+			font-size: 1.8rem;
+			margin: 2.5rem 0 1.25rem 0;
+		}
+
+		.cus-casino-highlight-box {
+			padding: 1.5rem;
+		}
+
+		.cus-casino-num-list li {
+			padding-left: 2.5rem;
+		}
+	}
+
+	/* Container & Layout */
+	.faq-container {
+		max-width: 100%;
+		margin: 2rem auto;
+		font-family:
+			system-ui,
+			-apple-system,
+			sans-serif;
+	}
+
+	.faq-main-title {
+		font-size: 2rem;
+		font-weight: 800;
+		color: #0f172a;
+		margin-bottom: 2rem;
+		text-align: center;
+	}
+
+	.faq-item {
+		border-bottom: 1px solid #e2e8f0;
+	}
+
+	.faq-item h3 {
+		margin: 0;
+		padding: 0;
+	}
+
+	/* Toggle Button Styling */
+	.faq-question {
+		width: 100%;
+		text-align: left;
+		background: none;
+		border: none;
+		padding: 1.25rem 0;
+		font-size: 1.1rem;
+		font-weight: 600;
+		color: #1e293b;
+		cursor: pointer;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		transition: color 0.2s ease;
+	}
+
+	.faq-question:hover {
+		color: #3b82f6; /* Blue hover effect */
+	}
+
+	/* Chevron Icon Animation */
+	.faq-question i {
+		transition: transform 0.3s ease;
+		color: #64748b;
+	}
+
+	.faq-question[aria-expanded="true"] i {
+		transform: rotate(180deg);
+	}
+
+	/* Answer Sliding Animation (Using CSS Grid) */
+	.faq-answer {
+		display: grid;
+		grid-template-rows: 0fr;
+		transition: grid-template-rows 0.3s ease-out;
+	}
+
+	/* When the parent faq-item has the 'active' class, expand the answer */
+	.faq-item.active .faq-answer {
+		grid-template-rows: 1fr;
+	}
+
+	.faq-answer-inner {
+		overflow: hidden;
+	}
+
+	/* Spacing inside the answer */
+	.faq-answer-inner p {
+		margin-top: 0;
+		margin-bottom: 1.25rem;
+		color: #475569;
+		line-height: 1.6;
+	}
+
+	.faq-answer-inner ul {
+		margin-top: 0;
+		margin-bottom: 1.25rem;
+		color: #475569;
+		padding-left: 1.5rem;
+	}
+
+	.faq-answer-inner li {
+		margin-bottom: 0.5rem;
+	}
+
+    /* 1. Target the outer container to create a card layout */
+div.tw-flex:has(> div.tw-bg-imgbackground) {
+  align-items: center;
+  gap: 16px;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb; /* Light gray border */
+  border-radius: 12px;
+  padding: 16px;
+  max-width: 350px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+div.tw-flex:has(> div.tw-bg-imgbackground):hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* 2. Fix the image wrapper (override the tw-mb-2 to align it in a row) */
+div.tw-bg-imgbackground.tw-mb-2 {
+  margin-bottom: 0 !important;
+  width: 75px;
+  height: 75px;
+  flex-shrink: 0;
+  padding: 10px !important;
+}
+
+/* 3. Force the image to scale proportionally instead of cropping */
+div.tw-bg-imgbackground img.tw-object-cover {
+  object-fit: contain !important;
+  height: 100% !important;
+  width: 100% !important;
+}
+
+/* 4. Remove the top padding from the text wrapper to center it */
+div.tw-flex > div.tw-pt-3 {
+  padding-top: 0 !important;
+  flex: 1;
+}
+
+/* 5. Style the typography (escape the . in tw-mb-2.5) */
+div.tw-pt-3 > p.tw-mb-2\.5 {
+  margin-bottom: 0 !important;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937; /* Dark slate text */
+}
+
+/* 1. Base Card Styling & Layout Fixes */
+div.tw-shadow-primary.tw-bg-white.tw-rounded-lg {
+  /* Add extra padding at the bottom so the absolute button doesn't cover the text */
+  padding-bottom: 75px !important; 
+  text-align: center;
+  border: 1px solid #f3f4f6; /* Subtle border */
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+/* Add a smooth lift effect on hover */
+div.tw-shadow-primary.tw-bg-white.tw-rounded-lg:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 2. Casino Name (.g-name) */
+p.g-name {
+  font-size: 1.25rem !important; /* 20px */
+  font-weight: 800 !important;
+  color: #111827 !important; /* Dark Slate */
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.25rem !important;
+}
+
+/* 3. Bonus Offer Text (Targets the <p> immediately after the name) */
+div.tw-shadow-primary > p:nth-of-type(2) {
+  font-size: 0.875rem !important; /* 14px */
+  font-weight: 600 !important;
+  color: #059669 !important; /* High-converting Green */
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* 4. Play Now CTA Button */
+div.tw-shadow-primary a.tw-absolute.tw-bottom-5 {
+  /* Transform from an outlined button to a solid CTA */
+  background-color: #ea580c !important; /* Eye-catching Orange */
+  color: #ffffff !important;
+  border: none !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  
+  /* Force perfect centering for absolute positioning */
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 85% !important; /* Button spans most of the card width */
+  
+  box-shadow: 0 4px 6px rgba(234, 88, 12, 0.25) !important;
+  transition: background-color 0.2s, transform 0.2s !important;
+}
+
+/* CTA Hover State */
+div.tw-shadow-primary a.tw-absolute.tw-bottom-5:hover {
+  background-color: #c2410c !important; /* Darker orange */
+  transform: translateX(-50%) scale(1.03) !important;
+}
+
+/* 5. Image Polish */
+div.tw-shadow-primary img {
+  border: 1px solid #f3f4f6;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+
+</style>
+
+<script>
+	document.addEventListener("DOMContentLoaded", () => {
+		const tabs = document.querySelectorAll(".top-mu-cus-tab")
+		const contents = document.querySelectorAll(".top-mu-cus-content")
+
+		tabs.forEach(tab => {
+			tab.addEventListener("click", () => {
+				// Remove active class from all tabs and contents
+				tabs.forEach(t => t.classList.remove("active"))
+				contents.forEach(c => c.classList.remove("active"))
+
+				// Add active class to clicked tab (using 'tab' instead of 'this')
+				tab.classList.add("active")
+
+				// Find target ID and show corresponding content
+				const targetId = tab.getAttribute("data-target")
+				if (targetId) {
+					const targetContent = document.getElementById(targetId)
+					if (targetContent) {
+						targetContent.classList.add("active")
+					}
+				}
+			})
+		})
+	})
+</script>
+
+<script>
+	// JS Logic for the Horizontal Bonus Slider
+	document.addEventListener("DOMContentLoaded", () => {
+		const sliderWrapper = document.getElementById("crd-sd-wrapper")
+		const leftArrow = document.getElementById("left-arrow")
+		const rightArrow = document.getElementById("right-arrow")
+
+		if (sliderWrapper && leftArrow && rightArrow) {
+			// Scroll roughly one card width + the gap
+			const scrollAmount = 280
+
+			leftArrow.addEventListener("click", () => {
+				sliderWrapper.scrollBy({
+					left: -scrollAmount,
+					behavior: "smooth",
+				})
+			})
+
+			rightArrow.addEventListener("click", () => {
+				sliderWrapper.scrollBy({
+					left: scrollAmount,
+					behavior: "smooth",
+				})
+			})
+		}
+	})
+</script>
+
+<script>
+	document.addEventListener("DOMContentLoaded", () => {
+		const faqQuestions = document.querySelectorAll(".faq-question")
+
+		faqQuestions.forEach(question => {
+			question.addEventListener("click", () => {
+				const currentItem = question.closest(".faq-item")
+				const isExpanded =
+					question.getAttribute("aria-expanded") === "true"
+
+				// Optional: Close all other FAQs when one is clicked (Accordion style)
+				document.querySelectorAll(".faq-item").forEach(item => {
+					item.classList.remove("active")
+					// Added ? below to prevent TS null errors
+					item.querySelector(".faq-question")?.setAttribute(
+						"aria-expanded",
+						"false",
+					)
+				})
+
+				// Toggle the clicked FAQ
+				if (!isExpanded) {
+					// Added ? below
+					currentItem?.classList.add("active")
+					question.setAttribute("aria-expanded", "true")
+				} else {
+					// Added ? below
+					currentItem?.classList.remove("active")
+					question.setAttribute("aria-expanded", "false")
+				}
+			})
+		})
+	})
+</script>
+
+<script>
+	document.addEventListener('DOMContentLoaded', () => {
+    
+    // 1. STRIP THE LINKS FROM SIDEBAR TABS
+    // Find every 'a' tag that lives inside a '.sidebar-text' span
+    const sidebarLinks = document.querySelectorAll('.sidebar-nav-item .sidebar-text a');
+    
+    sidebarLinks.forEach(link => {
+        // Replace the entire <a> tag with just the text inside of it
+        link.replaceWith(link.textContent);
+    });
+
+    // ... [Your existing tab-switching and mobile-scroll code goes here] ...
+
+});
+</script>

@@ -7,18 +7,21 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "node scripts/build-redirects.mjs && astro build",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
     "@astrojs/react": "^5.0.2",
+    "@astrojs/vercel": "^10.0.7",
     "@tailwindcss/vite": "^4.2.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "astro": "^6.1.2",
+    "fast-xml-parser": "^5.6.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "redis": "^5.12.1",
     "tailwindcss": "^4.2.2"
   }
 }

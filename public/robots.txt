@@ -1,0 +1,13 @@
+User-agent: *
+Disallow: /play/
+Disallow: */play/*
+Disallow: /wp-admin/
+Disallow: /*?s=   
+Disallow: /profile/   
+Disallow: /about-us/paul-jacobs/
+Disallow: /about-us/about-us-paul-jacobs/
+Disallow: /about-us/about-us-about-us-paul-jacobs/
+Disallow: /author/paul/
+Disallow: /about-us/paul/
+
+Sitemap: https://www.casinous.com/sitemap.xml
