@@ -66,6 +66,13 @@ const wpDomain = "https://wordpress-1621926-6409582.cloudwaysapps.com";
 
 const createAuthorSlug = (name: string | undefined) => {
     if (!name) return "editorial-team";
+
+    // Manual slug overrides (display name -> custom slug)
+    const slugOverrides: Record<string, string> = {
+        "David Cooper": "dave-cooper",
+    };
+    if (slugOverrides[name]) return slugOverrides[name];
+
     return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
 };
 

@@ -3911,6 +3911,161 @@ figure.wp-block-image img,
         flex-direction: column;
         align-items: flex-start;
     }
+
+    .featured-image-wrapper {
+    display: none !important;
+}
+
+
+/* Scope: this exact table. Change to .entry-content table if you want it global. */
+table[width="624"] {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.95rem;
+    color: #111827;
+    margin: 2rem 0;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden; /* keeps rounded corners clean */
+}
+
+/* Kill the inline width="" attributes so columns flex */
+table[width="624"] td {
+    width: auto !important;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: middle;
+    text-align: left;
+}
+
+/* Header = first row */
+table[width="624"] tr:first-child td {
+    background: #111827;
+    color: #fff;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.03em;
+    border-bottom: 3px solid #dc2626; /* brand red accent */
+}
+table[width="624"] tr:first-child td strong { color: #fff; }
+
+/* Zebra striping on the body rows */
+table[width="624"] tr:nth-child(even):not(:first-child) td {
+    background: #f9fafb;
+}
+
+/* Row hover */
+table[width="624"] tr:not(:first-child):hover td {
+    background: #fef2f2;
+}
+
+/* Position column: a touch of emphasis */
+table[width="624"] td:first-child {
+    font-weight: 600;
+    color: #374151;
+    white-space: nowrap;
+}
+
+/* Last row: drop the trailing border */
+table[width="624"] tr:last-child td { border-bottom: none; }
+
+/* ---- MOBILE ---- */
+@media (max-width: 600px) {
+    table[width="624"] {
+        font-size: 0.85rem;
+        margin: 1.25rem 0;
+    }
+    table[width="624"] td {
+        padding: 0.6rem 0.65rem;
+    }
+    table[width="624"] tr:first-child td {
+        font-size: 0.7rem;
+    }
+}
+
+/* Very narrow phones: allow horizontal scroll as a fallback */
+@media (max-width: 380px) {
+    table[width="624"] {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+    }
+}
+
+
+/* Scope: tables wrapped in a <figure>. Tighten to your content wrapper if needed. */
+figure {
+    margin: 2rem 0;
+    overflow: hidden;
+}
+
+figure table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.95rem;
+    color: #111827;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+figure table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #f3f4f6;
+    border-right: 1px solid #f3f4f6;
+    vertical-align: top;
+    text-align: left;
+}
+figure table td:last-child { border-right: none; }
+
+/* Column header row */
+figure table thead td {
+    background: #111827;
+    color: #fff;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.03em;
+    border-bottom: 3px solid #dc2626; /* brand red accent */
+    border-right-color: rgba(255,255,255,0.12);
+}
+figure table thead td strong { color: #fff; }
+
+/* First column = row labels */
+figure table tbody td:first-child {
+    background: #f9fafb;
+    font-weight: 600;
+    color: #374151;
+    width: 30%;
+}
+figure table tbody td:first-child strong { font-weight: 600; }
+
+/* Row hover (skips the label cell highlight overlap nicely) */
+figure table tbody tr:hover td { background: #fef2f2; }
+figure table tbody tr:hover td:first-child { background: #fde8e8; }
+
+/* Drop trailing border */
+figure table tbody tr:last-child td { border-bottom: none; }
+
+/* ---- MOBILE ---- */
+@media (max-width: 600px) {
+    figure table { font-size: 0.85rem; }
+    figure table td { padding: 0.65rem 0.7rem; }
+    figure table thead td { font-size: 0.7rem; }
+    figure table tbody td:first-child { width: 34%; } /* labels need room */
+}
+
+@media (max-width: 380px) {
+    figure table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    figure table tbody td:first-child { width: auto; white-space: nowrap; }
+}
+
     .cus-banking-card:hover {
         transform: translateY(-4px);
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
