@@ -1,30 +1,174 @@
 ---
-interface Props {
+export interface Props {
     title: string
     description?: string
     seoTitle?: string
-    schema?: string
     canonical?: string
     robots?: string
     keywords?: string
     author?: string
+    ogImage?: string
 }
 
 const {
     title,
     description = "Your trusted guide to the fastest online casinos in the USA.",
     seoTitle,
-    schema,
     canonical,
-    robots = "index, follow", // Default to indexing
+    robots = "index, follow",
     keywords,
     author,
+    ogImage = "/images/casinous-logo-usa-lg.png",
 } = Astro.props
 
 const finalTitle = seoTitle ? seoTitle : title
-
-// Auto-generate a self-referencing canonical URL if Yoast doesn't provide a custom one
 const canonicalURL = canonical || Astro.url.href
+
+// ---- WP menu types ----------------------------------------------------
+interface WPMenuItemRaw {
+    id: string
+    label: string
+    url: string
+    parentId: string | null
+    cssClasses: string[]
+    description: string | null
+}
+
+interface MenuMeta {
+    icon: string | null
+    color: string
+    column: string | null
+}
+
+interface MenuNode extends MenuMeta {
+    id: string
+    label: string
+    url: string
+    isMega: boolean
+    isViewAll: boolean
+    children: MenuNode[]
+}
+
+// ---- Config -----------------------------------------------------------
+const WP_GRAPHQL_URL =
+    import.meta.env.WP_GRAPHQL_URL ||
+    "https://wordpress-1621926-6409582.cloudwaysapps.com/graphql"
+const MENU_LOCATION = "PRIMARY"
+const DEFAULT_ICON_COLOR = "#cbd5e1"
+
+// ---- Fetch --------------------------------------------------------------
+async function fetchMenuItems(): Promise<WPMenuItemRaw[]> {
+    const query = `
+    query GetHeaderMenu {
+      menuItems(where: { location: ${MENU_LOCATION} }, first: 100) {
+        nodes {
+          id
+          label
+          url
+          parentId
+          cssClasses
+          description
+        }
+      }
+    }
+  `
+
+    try {
+        const res = await fetch(WP_GRAPHQL_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query }),
+        })
+
+        if (!res.ok) {
+            console.error(
+                `WP menu fetch failed: ${res.status} ${res.statusText}`,
+            )
+            return []
+        }
+
+        const json = await res.json()
+
+        if (json.errors) {
+            console.error("WPGraphQL menu errors:", json.errors)
+            return []
+        }
+
+        return json?.data?.menuItems?.nodes ?? []
+    } catch (err) {
+        console.error("Failed to fetch WP nav menu:", err)
+        return []
+    }
+}
+
+// ---- Metadata parsing -----------------------------------------------------
+function parseMeta(description: string | null): MenuMeta {
+    if (!description) {
+        return { icon: null, color: DEFAULT_ICON_COLOR, column: null }
+    }
+    try {
+        const parsed = JSON.parse(description)
+        return {
+            icon: parsed.icon ?? null,
+            color: parsed.color ?? DEFAULT_ICON_COLOR,
+            column: parsed.column ?? null,
+        }
+    } catch {
+        return { icon: null, color: DEFAULT_ICON_COLOR, column: null }
+    }
+}
+
+// ---- Build tree ------------------------------------------------------------
+function buildMenuTree(rawItems: WPMenuItemRaw[]): MenuNode[] {
+    const byParent = new Map<string | null, WPMenuItemRaw[]>()
+    rawItems.forEach(item => {
+        const key = item.parentId ?? null
+        if (!byParent.has(key)) byParent.set(key, [])
+        byParent.get(key)!.push(item)
+    })
+
+    function toNode(item: WPMenuItemRaw): MenuNode {
+        const meta = parseMeta(item.description)
+        const classes = item.cssClasses ?? []
+        const children = (byParent.get(item.id) ?? []).map(toNode)
+
+        return {
+            id: item.id,
+            label: item.label,
+            url: item.url,
+            icon: meta.icon,
+            color: meta.color,
+            column: meta.column,
+            isMega: classes.includes("mega-menu"),
+            isViewAll: classes.includes("view-all"),
+            children,
+        }
+    }
+
+    return (byParent.get(null) ?? []).map(toNode)
+}
+
+// ---- Group mega-menu children into columns (this was missing) -------------
+function groupByColumn(
+    children: MenuNode[],
+): { title: string | null; items: MenuNode[] }[] {
+    const columns: { title: string | null; items: MenuNode[] }[] = []
+    const index = new Map<string | null, number>()
+
+    children.forEach(child => {
+        const key = child.column
+        if (!index.has(key)) {
+            index.set(key, columns.length)
+            columns.push({ title: key, items: [] })
+        }
+        columns[index.get(key)!].items.push(child)
+    })
+
+    return columns
+}
+
+const rawMenu = await fetchMenuItems()
+const menuTree = buildMenuTree(rawMenu)
 ---
 
 <!doctype html>
@@ -38,32 +182,43 @@ const canonicalURL = canonical || Astro.url.href
         {robots && <meta name="robots" content={robots} />}
         {keywords && <meta name="keywords" content={keywords} />}
         {author && <meta name="author" content={author} />}
+        <link rel="canonical" href={canonicalURL} />
+
         <link rel="icon" type="image/png" href="/images/favicon-cus.png" />
 
-        <link rel="canonical" href={canonicalURL} />
-        <link rel="preload" href="/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <!-- Open Graph -->
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={finalTitle} />
+        <meta property="og:description" content={description} />
+        <meta property="og:image" content={ogImage} />
+        <meta property="og:url" content={canonicalURL} />
+        <meta property="og:site_name" content="Casino US" />
 
-        <noscript>
-            <link rel="stylesheet" href="/css/all.min.css">
-        </noscript>
+        <!-- Twitter Card -->
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={finalTitle} />
+        <meta name="twitter:description" content={description} />
+        <meta name="twitter:image" content={ogImage} />
 
-        {schema && <script type="application/ld+json" set:html={schema} />}
+        <link
+            rel="preload"
+            href="/css/all.min.css"
+            as="style"
+            onload="this.onload=null;this.rel='stylesheet'"
+        />
+        <noscript><link rel="stylesheet" href="/css/all.min.css" /></noscript>
 
         <link
             rel="preconnect"
             href="https://cdnjs.cloudflare.com"
             crossorigin
         />
-
-        <!-- Updated to 6.5.2 for X logo support -->
         <link
             rel="preload"
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
             as="style"
             onload="this.onload=null;this.rel='stylesheet'"
         />
-
-        <!-- Updated to 6.5.2 for X logo support -->
         <noscript>
             <link
                 rel="stylesheet"
@@ -126,160 +281,124 @@ const canonicalURL = canonical || Astro.url.href
 
                 <div class="header-right">
                     <nav class="header-nav">
-                        <a href="/" class="nav-link">
-                            <i class="fa-solid fa-house" style="color: #0ea5e9;"
-                            ></i> Home
-                        </a>
+                        {
+                            menuTree.map(item => {
+                                // No children → plain link (e.g. "Online Slots")
+                                if (item.children.length === 0) {
+                                    return (
+                                        <a href={item.url} class="nav-link">
+                                            {item.icon && (
+                                                <i
+                                                    class={item.icon}
+                                                    style={`color: ${item.color};`}
+                                                />
+                                            )}{" "}
+                                            <span set:html={item.label} />
+                                        </a>
+                                    )
+                                }
 
-                        <div class="nav-dropdown">
-                            <button class="nav-dropdown-toggle">
-                                <a href="/casino-games/"><i
-                                    class="fa-solid fa-building-columns"
-                                    style="color: #cbd5e1;"></i> Casinos <i
-                                    class="fa-solid fa-chevron-down"></i></a>
-                            </button>
-                            <div class="nav-dropdown-menu">
-                                <a href="/online-casinos/"
-                                    ><i
-                                        class="fa-solid fa-sack-dollar"
-                                        style="color: #22c55e;"></i> Online Casinos</a
-                                >
-                                <a href="/best-payout-casinos/"
-                                    ><i
-                                        class="fa-solid fa-sack-dollar"
-                                        style="color: #eab308;"></i> Best Payout</a
-                                >
-                                <a href="/fastest-payout-casinos/"
-                                    ><i
-                                        class="fa-solid fa-bolt"
-                                        style="color: #eab308;"></i> Fastest Payout</a
-                                >
-                                <a href="/high-roller-casinos/"
-                                    ><i
-                                        class="fa-solid fa-crown"
-                                        style="color: #fbbf24;"></i> High Roller</a
-                                >
-                                <a href="/casino-reviews/"
-                                    ><i
-                                        class="fa-solid fa-star"
-                                        style="color: #facc15;"></i> Reviews</a
-                                >
-                            </div>
-                        </div>
+                                // Mega-menu → multi-column dropdown
+                                if (item.isMega) {
+                                    const columns = groupByColumn(item.children)
+                                    return (
+                                        <div class="nav-dropdown">
+                                            <button class="nav-dropdown-toggle">
+                                                <a href={item.url}>
+                                                    {item.icon && (
+                                                        <i
+                                                            class={item.icon}
+                                                            style={`color: ${item.color};`}
+                                                        />
+                                                    )}{" "}
+                                                    <span
+                                                        set:html={item.label}
+                                                    />{" "}
+                                                    <i class="fa-solid fa-chevron-down" />
+                                                </a>
+                                            </button>
+                                            <div class="nav-dropdown-menu mega-menu">
+                                                {columns.map(col => (
+                                                    <div class="mega-column">
+                                                        {col.title && (
+                                                            <span class="mega-title">
+                                                                {col.title}
+                                                            </span>
+                                                        )}
+                                                        {col.items.map(child =>
+                                                            child.isViewAll ? (
+                                                                <a
+                                                                    href={
+                                                                        child.url
+                                                                    }
+                                                                    class="view-all"
+                                                                >
+                                                                    <span
+                                                                        set:html={
+                                                                            child.label
+                                                                        }
+                                                                    />{" "}
+                                                                    &rarr;
+                                                                </a>
+                                                            ) : (
+                                                                <a
+                                                                    href={
+                                                                        child.url
+                                                                    }
+                                                                >
+                                                                    <span
+                                                                        set:html={
+                                                                            child.label
+                                                                        }
+                                                                    />
+                                                                </a>
+                                                            ),
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )
+                                }
 
-                        <div class="nav-dropdown">
-                            <button class="nav-dropdown-toggle">
-                                <a href="/casino-games/"><i
-                                    class="fa-solid fa-dice"
-                                    style="color: #f43f5e;"></i> Games <i
-                                    class="fa-solid fa-chevron-down"></i></a>
-                            </button>
-                            <div class="nav-dropdown-menu mega-menu">
-                                <div class="mega-column">
-                                    <span class="mega-title">Table Games</span>
-                                    <a href="/online-blackjack/"
-                                        >Online Blackjack</a
-                                    >
-                                    <a href="/online-roulette/"
-                                        >Online Roulette</a
-                                    >
-                                    <a href="/online-baccarat/"
-                                        >Online Baccarat</a
-                                    >
-                                    <a href="/online-craps/">Online Craps</a>
-                                    <a href="/online-sic-bo/">Sic Bo Online</a>
-                                </div>
-                                <div class="mega-column">
-                                    <span class="mega-title">Card & Live</span>
-                                    <a href="/online-poker/">Online Poker</a>
-                                    <a href="/video-poker/">Video Poker</a>
-                                    <a href="/live-casinos/">Live Dealer</a>
-                                    <a href="/casino-games/" class="view-all"
-                                        >View All Games &rarr;</a
-                                    >
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="nav-dropdown">
-                            <button class="nav-dropdown-toggle">
-                                <a href="/casino-bonuses/"><i
-                                    class="fa-solid fa-gift"
-                                    style="color: #fbbf24;"></i> Bonuses <i
-                                    class="fa-solid fa-chevron-down"></i></a>
-                            </button>
-                            <div class="nav-dropdown-menu mega-menu">
-                                <div class="mega-column">
-                                    <span class="mega-title">Top Offers</span>
-                                    <a href="/welcome-bonus/">Welcome Bonuses</a
-                                    >
-                                    <a href="/no-deposit-bonus/"
-                                        >No Deposit Bonuses</a
-                                    >
-                                    <a href="/free-spin-bonus/">Free Spins</a>
-                                    <a href="/cashback-bonuses/"
-                                        >Cashback Bonuses</a
-                                    >
-                                </div>
-                                <div class="mega-column">
-                                    <span class="mega-title"
-                                        >Player Rewards</span
-                                    >
-                                    <a href="/no-wagering-bonuses/">No Wager</a>
-                                    <a href="/low-wagering-bonuses/"
-                                        >Low Wager</a
-                                    >
-                                    <a href="/vip-programs/">VIP Programs</a>
-                                    <a href="/loyalty-programs/"
-                                        >Loyalty Programs</a
-                                    >
-                                    <a href="/casino-bonuses/" class="view-all"
-                                        >View All &rarr;</a
-                                    >
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="nav-dropdown">
-                            <button class="nav-dropdown-toggle">
-                                <a href="/mobile-casinos/"><i
-                                    class="fa-solid fa-mobile-screen-button"
-                                    style="color: #3b82f6;"></i> Mobile <i
-                                    class="fa-solid fa-chevron-down"></i></a>
-                            </button>
-                            <div class="nav-dropdown-menu">
-                                <a href="/android-casinos/"
-                                    ><i
-                                        class="fa-brands fa-android"
-                                        style="color: #a4c639;"></i> Android</a
-                                >
-                                <a href="/mobile-casinos/apple/"
-                                    ><i
-                                        class="fa-brands fa-apple"
-                                        style="color: #f1f5f9;"></i> Apple / iOS</a
-                                >
-                                <a href="/ipad-casinos/"
-                                    ><i
-                                        class="fa-solid fa-tablet-screen-button"
-                                        style="color: #94a3b8;"></i> iPad</a
-                                >
-                            </div>
-                        </div>
-
-                        <a href="/online-slots/" class="nav-link">
-                            <i class="fa-solid fa-coins" style="color: #a855f7;"
-                            ></i> Online Slots
-                        </a>
-                        <a href="/sports-betting/" class="nav-link">
-                            <i
-                                class="fa-solid fa-trophy"
-                                style="color: #eab308;"></i> Sports Betting
-                        </a>
+                                // Simple dropdown → flat list of links with icons
+                                return (
+                                    <div class="nav-dropdown">
+                                        <button class="nav-dropdown-toggle">
+                                            <a href={item.url}>
+                                                {item.icon && (
+                                                    <i
+                                                        class={item.icon}
+                                                        style={`color: ${item.color};`}
+                                                    />
+                                                )}{" "}
+                                                <span set:html={item.label} />{" "}
+                                                <i class="fa-solid fa-chevron-down" />
+                                            </a>
+                                        </button>
+                                        <div class="nav-dropdown-menu">
+                                            {item.children.map(child => (
+                                                <a href={child.url}>
+                                                    {child.icon && (
+                                                        <i
+                                                            class={child.icon}
+                                                            style={`color: ${child.color};`}
+                                                        />
+                                                    )}{" "}
+                                                    <span
+                                                        set:html={child.label}
+                                                    />
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )
+                            })
+                        }
                     </nav>
                 </div>
             </div>
         </header>
-
         <main>
             <slot />
         </main>
@@ -412,62 +531,65 @@ const canonicalURL = canonical || Astro.url.href
             Arial, sans-serif;
     }
 
-
     /* Grid Container Spacing */
-.tw-grid {
-    gap: 20px !important;
-    margin-bottom: 40px !important;
-}
+    .tw-grid {
+        gap: 20px !important;
+        margin-bottom: 40px !important;
+    }
 
-/* Individual Card Styling */
-.tw-shadow-primary {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05) !important;
-    border: 1px solid #e5e7eb !important;
-    background-color: #ffffff !important;
-    border-radius: 8px !important;
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out !important;
-}
+    span.header-menu-icon_active {
+        display: ruby !important;
+    }
 
-/* Card Hover Effect */
-.tw-shadow-primary:hover {
-    transform: translateY(-4px) !important;
-    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1) !important;
-}
+    /* Individual Card Styling */
+    .tw-shadow-primary {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05) !important;
+        border: 1px solid #e5e7eb !important;
+        background-color: #ffffff !important;
+        border-radius: 8px !important;
+        transition:
+            transform 0.2s ease-in-out,
+            box-shadow 0.2s ease-in-out !important;
+    }
 
-/* Button Wrapper Styling */
+    /* Card Hover Effect */
+    .tw-shadow-primary:hover {
+        transform: translateY(-4px) !important;
+        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1) !important;
+    }
 
+    /* Button Wrapper Styling */
 
-/* Link/Text Styling Inside the Button */
-.tw-bg-colorset1 a {
-    color: #ffffff !important;
-    font-size: 15px !important;
-    font-weight: 600 !important;
-    text-decoration: none !important;
-    padding: 12px 10px !important;
-    display: block !important;
-    transition: background-color 0.3s ease !important;
-}
+    /* Link/Text Styling Inside the Button */
+    .tw-bg-colorset1 a {
+        color: #ffffff !important;
+        font-size: 15px !important;
+        font-weight: 600 !important;
+        text-decoration: none !important;
+        padding: 12px 10px !important;
+        display: block !important;
+        transition: background-color 0.3s ease !important;
+    }
 
-/* Button Hover State */
-.tw-bg-colorset1 a:hover {
-    background-color: #1d4ed8 !important; /* Darker Blue on Hover */
-    color: #ffffff !important;
-}
+    /* Button Hover State */
+    .tw-bg-colorset1 a:hover {
+        background-color: #1d4ed8 !important; /* Darker Blue on Hover */
+        color: #ffffff !important;
+    }
 
-p.has-text-align-left {
-    position: relative !important;
-    padding-left: 20px !important; /* Creates space for the bullet */
-}
+    p.has-text-align-left {
+        position: relative !important;
+        padding-left: 20px !important; /* Creates space for the bullet */
+    }
 
-p.has-text-align-left::before {
-    content: "\2022" !important; /* This is the CSS code for a bullet • */
-    position: absolute !important;
-    left: 0 !important;
-    color: #2563eb !important; /* Change this hex code to make the bullet any color you want */
-    font-size: 1.2em !important; /* Makes the bullet slightly larger */
-    line-height: 1 !important;
-}
-
+    p.has-text-align-left::before {
+        content: "\2022" !important; /* This is the CSS code for a bullet • */
+        position: absolute !important;
+        left: 0 !important;
+        color: #2563eb !important; /* Change this hex code to make the bullet any color you want */
+        font-size: 1.2em !important; /* Makes the bullet slightly larger */
+        line-height: 1 !important;
+    }
 
     .cus-casino-card {
         background: #fff;
@@ -570,7 +692,6 @@ p.has-text-align-left::before {
         float: right !important;
     }
 
-
     .cus-casino-header {
         display: flex;
         align-items: center;
@@ -608,71 +729,70 @@ p.has-text-align-left::before {
         font-weight: 700;
     }
     .cus-votes {
-    display: none;
-}
-
-div#frequentlyaskedquestions {
-    padding: 13px !important;
-}
-
-.tw-shadow-primary.tw-bg-white.tw-rounded-lg.tw-px-6.tw-py-5.tw-flex.tw-flex-col.tw-justify-between.tw-relative {
-    padding: 12px !important;
-    margin-bottom: 13px;
-}
-
-img, 
-figure.wp-block-image img, 
-.wp-block-image img {
-    max-width: 100% !important;
-    height: auto !important;
-    display: block; /* Removes weird bottom spacing */
-    box-sizing: border-box !important;
-}
-
-/* Fix for right/left aligned images that break narrow mobile columns */
-@media (max-width: 768px) {
-    .alignright, 
-    .alignleft {
-        float: none !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
-        text-align: center;
-    }
-}
-
-
-@media (max-width: 768px) {
-    /* Make sure the wrapper has enough bottom padding so the bar doesn't touch the cards */
-    .crd-sd-wrapper {
-        padding-bottom: 25px !important; 
-        scrollbar-width: thin !important; /* Enables thin scrollbar in Firefox */
-        scrollbar-color: #cbd5e1 transparent !important; /* Firefox thumb and track color */
+        display: none;
     }
 
-    /* 1. Show and size the scrollbar */
-    .crd-sd-wrapper::-webkit-scrollbar {
-        display: block !important;
-        height: 6px !important; /* Height of the horizontal scrollbar */
+    div#frequentlyaskedquestions {
+        padding: 13px !important;
     }
 
-    /* 2. Style the background track (the line the bar slides on) */
-    .crd-sd-wrapper::-webkit-scrollbar-track {
-        background: transparent !important; 
-        border-radius: 10px !important;
-        margin: 0 20px !important; /* Keeps the track from touching the absolute edges of the screen */
+    .tw-shadow-primary.tw-bg-white.tw-rounded-lg.tw-px-6.tw-py-5.tw-flex.tw-flex-col.tw-justify-between.tw-relative {
+        padding: 12px !important;
+        margin-bottom: 13px;
     }
 
-    /* 3. Style the moving "thumb" (the actual indicator) */
-    .crd-sd-wrapper::-webkit-scrollbar-thumb {
-        background: #cbd5e1 !important; /* Soft gray color for the indicator */
-        border-radius: 10px !important;
+    img,
+    figure.wp-block-image img,
+    .wp-block-image img {
+        max-width: 100% !important;
+        height: auto !important;
+        display: block; /* Removes weird bottom spacing */
+        box-sizing: border-box !important;
     }
 
-    /* Make the indicator slightly darker when the user is actively swiping */
-    .crd-sd-wrapper::-webkit-scrollbar-thumb:active {
-        background: #94a3b8 !important;
+    /* Fix for right/left aligned images that break narrow mobile columns */
+    @media (max-width: 768px) {
+        .alignright,
+        .alignleft {
+            float: none !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+            text-align: center;
+        }
     }
-}
+
+    @media (max-width: 768px) {
+        /* Make sure the wrapper has enough bottom padding so the bar doesn't touch the cards */
+        .crd-sd-wrapper {
+            padding-bottom: 25px !important;
+            scrollbar-width: thin !important; /* Enables thin scrollbar in Firefox */
+            scrollbar-color: #cbd5e1 transparent !important; /* Firefox thumb and track color */
+        }
+
+        /* 1. Show and size the scrollbar */
+        .crd-sd-wrapper::-webkit-scrollbar {
+            display: block !important;
+            height: 6px !important; /* Height of the horizontal scrollbar */
+        }
+
+        /* 2. Style the background track (the line the bar slides on) */
+        .crd-sd-wrapper::-webkit-scrollbar-track {
+            background: transparent !important;
+            border-radius: 10px !important;
+            margin: 0 20px !important; /* Keeps the track from touching the absolute edges of the screen */
+        }
+
+        /* 3. Style the moving "thumb" (the actual indicator) */
+        .crd-sd-wrapper::-webkit-scrollbar-thumb {
+            background: #cbd5e1 !important; /* Soft gray color for the indicator */
+            border-radius: 10px !important;
+        }
+
+        /* Make the indicator slightly darker when the user is actively swiping */
+        .crd-sd-wrapper::-webkit-scrollbar-thumb:active {
+            background: #94a3b8 !important;
+        }
+    }
 
     #free-spin-terms-and-conditions > div.tw-bg-white {
         background-color: rgba(255, 255, 255, 0.02) !important;
@@ -958,7 +1078,7 @@ figure.wp-block-image img,
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
     }
     .header-container {
-        max-width: 1200px;
+        max-width: 1356px;
         margin: 0 auto;
         display: flex;
         justify-content: space-between;
@@ -1219,8 +1339,6 @@ figure.wp-block-image img,
             0 4px 6px rgba(0, 0, 0, 0.1) !important;
     }
 
-    
-
     .casino-table__casinoitem .tw-absolute.tw-w-full.tw-top-2\.5 {
         position: absolute !important;
         top: -1px !important;
@@ -1284,7 +1402,6 @@ figure.wp-block-image img,
         color: #16a34a !important;
     }
     .tw-block.tw-text-sm a {
-
         color: #0f172a !important;
     }
     .tw-block.tw-text-sm a:hover {
@@ -1960,7 +2077,7 @@ figure.wp-block-image img,
         line-height: 1.7;
         font-size: 16px;
     }
-    
+
     #different-types-of-free-spins-bonuses p {
         margin-bottom: 20px;
     }
@@ -2428,8 +2545,8 @@ figure.wp-block-image img,
     }
 
     table.cus-table td {
-    color: #cecaca !important;
-}
+        color: #cecaca !important;
+    }
 
     #different-types-of-free-spins-bonuses .img-clear-content img {
         border-radius: 10px;
@@ -2437,7 +2554,7 @@ figure.wp-block-image img,
         height: auto;
         display: block;
     }
-   
+
     div[id^="accordionfaq"] {
         padding: 0 !important;
         margin: 1.5rem 0 !important;
@@ -3913,158 +4030,193 @@ figure.wp-block-image img,
     }
 
     .featured-image-wrapper {
-    display: none !important;
-}
-
-
-/* Scope: this exact table. Change to .entry-content table if you want it global. */
-table[width="624"] {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    font-size: 0.95rem;
-    color: #111827;
-    margin: 2rem 0;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    overflow: hidden; /* keeps rounded corners clean */
-}
-
-/* Kill the inline width="" attributes so columns flex */
-table[width="624"] td {
-    width: auto !important;
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid #f3f4f6;
-    vertical-align: middle;
-    text-align: left;
-}
-
-/* Header = first row */
-table[width="624"] tr:first-child td {
-    background: #111827;
-    color: #fff;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    letter-spacing: 0.03em;
-    border-bottom: 3px solid #dc2626; /* brand red accent */
-}
-table[width="624"] tr:first-child td strong { color: #fff; }
-
-/* Zebra striping on the body rows */
-table[width="624"] tr:nth-child(even):not(:first-child) td {
-    background: #f9fafb;
-}
-
-/* Row hover */
-table[width="624"] tr:not(:first-child):hover td {
-    background: #fef2f2;
-}
-
-/* Position column: a touch of emphasis */
-table[width="624"] td:first-child {
-    font-weight: 600;
-    color: #374151;
-    white-space: nowrap;
-}
-
-/* Last row: drop the trailing border */
-table[width="624"] tr:last-child td { border-bottom: none; }
-
-/* ---- MOBILE ---- */
-@media (max-width: 600px) {
-    table[width="624"] {
-        font-size: 0.85rem;
-        margin: 1.25rem 0;
+        display: none !important;
     }
+
+    /* Scope: this exact table. Change to .entry-content table if you want it global. */
+    table[width="624"] {
+        width: 100%;
+        border-collapse: collapse;
+        font-family:
+            system-ui,
+            -apple-system,
+            "Segoe UI",
+            Roboto,
+            sans-serif;
+        font-size: 0.95rem;
+        color: #111827;
+        margin: 2rem 0;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        overflow: hidden; /* keeps rounded corners clean */
+    }
+
+    /* Kill the inline width="" attributes so columns flex */
     table[width="624"] td {
-        padding: 0.6rem 0.65rem;
+        width: auto !important;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #f3f4f6;
+        vertical-align: middle;
+        text-align: left;
     }
-    table[width="624"] tr:first-child td {
-        font-size: 0.7rem;
-    }
-}
 
-/* Very narrow phones: allow horizontal scroll as a fallback */
-@media (max-width: 380px) {
-    table[width="624"] {
-        display: block;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+    /* Header = first row */
+    table[width="624"] tr:first-child td {
+        background: #111827;
+        color: #fff;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.03em;
+        border-bottom: 3px solid #dc2626; /* brand red accent */
+    }
+    table[width="624"] tr:first-child td strong {
+        color: #fff;
+    }
+
+    /* Zebra striping on the body rows */
+    table[width="624"] tr:nth-child(even):not(:first-child) td {
+        background: #f9fafb;
+    }
+
+    /* Row hover */
+    table[width="624"] tr:not(:first-child):hover td {
+        background: #fef2f2;
+    }
+
+    /* Position column: a touch of emphasis */
+    table[width="624"] td:first-child {
+        font-weight: 600;
+        color: #374151;
         white-space: nowrap;
     }
-}
 
-
-/* Scope: tables wrapped in a <figure>. Tighten to your content wrapper if needed. */
-figure {
-    margin: 2rem 0;
-    overflow: hidden;
-}
-
-figure table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    font-size: 0.95rem;
-    color: #111827;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-figure table td {
-    padding: 0.85rem 1rem;
-    border-bottom: 1px solid #f3f4f6;
-    border-right: 1px solid #f3f4f6;
-    vertical-align: top;
-    text-align: left;
-}
-figure table td:last-child { border-right: none; }
-
-/* Column header row */
-figure table thead td {
-    background: #111827;
-    color: #fff;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    letter-spacing: 0.03em;
-    border-bottom: 3px solid #dc2626; /* brand red accent */
-    border-right-color: rgba(255,255,255,0.12);
-}
-figure table thead td strong { color: #fff; }
-
-/* First column = row labels */
-figure table tbody td:first-child {
-    background: #f9fafb;
-    font-weight: 600;
-    color: #374151;
-    width: 30%;
-}
-figure table tbody td:first-child strong { font-weight: 600; }
-
-/* Row hover (skips the label cell highlight overlap nicely) */
-figure table tbody tr:hover td { background: #fef2f2; }
-figure table tbody tr:hover td:first-child { background: #fde8e8; }
-
-/* Drop trailing border */
-figure table tbody tr:last-child td { border-bottom: none; }
-
-/* ---- MOBILE ---- */
-@media (max-width: 600px) {
-    figure table { font-size: 0.85rem; }
-    figure table td { padding: 0.65rem 0.7rem; }
-    figure table thead td { font-size: 0.7rem; }
-    figure table tbody td:first-child { width: 34%; } /* labels need room */
-}
-
-@media (max-width: 380px) {
-    figure table {
-        display: block;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+    /* Last row: drop the trailing border */
+    table[width="624"] tr:last-child td {
+        border-bottom: none;
     }
-    figure table tbody td:first-child { width: auto; white-space: nowrap; }
-}
+
+    /* ---- MOBILE ---- */
+    @media (max-width: 600px) {
+        table[width="624"] {
+            font-size: 0.85rem;
+            margin: 1.25rem 0;
+        }
+        table[width="624"] td {
+            padding: 0.6rem 0.65rem;
+        }
+        table[width="624"] tr:first-child td {
+            font-size: 0.7rem;
+        }
+    }
+
+    /* Very narrow phones: allow horizontal scroll as a fallback */
+    @media (max-width: 380px) {
+        table[width="624"] {
+            display: block;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            white-space: nowrap;
+        }
+    }
+
+    /* Scope: tables wrapped in a <figure>. Tighten to your content wrapper if needed. */
+    figure {
+        margin: 2rem 0;
+        overflow: hidden;
+    }
+
+    figure table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family:
+            system-ui,
+            -apple-system,
+            "Segoe UI",
+            Roboto,
+            sans-serif;
+        font-size: 0.95rem;
+        color: #111827;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    figure table td {
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid #f3f4f6;
+        border-right: 1px solid #f3f4f6;
+        vertical-align: top;
+        text-align: left;
+    }
+    figure table td:last-child {
+        border-right: none;
+    }
+
+    /* Column header row */
+    figure table thead td {
+        background: #111827;
+        color: #fff;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.03em;
+        border-bottom: 3px solid #dc2626; /* brand red accent */
+        border-right-color: rgba(255, 255, 255, 0.12);
+    }
+    figure table thead td strong {
+        color: #fff;
+    }
+
+    /* First column = row labels */
+    figure table tbody td:first-child {
+        background: #f9fafb;
+        font-weight: 600;
+        color: #374151;
+        width: 30%;
+    }
+    figure table tbody td:first-child strong {
+        font-weight: 600;
+    }
+
+    /* Row hover (skips the label cell highlight overlap nicely) */
+    figure table tbody tr:hover td {
+        background: #fef2f2;
+    }
+    figure table tbody tr:hover td:first-child {
+        background: #fde8e8;
+    }
+
+    /* Drop trailing border */
+    figure table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* ---- MOBILE ---- */
+    @media (max-width: 600px) {
+        figure table {
+            font-size: 0.85rem;
+        }
+        figure table td {
+            padding: 0.65rem 0.7rem;
+        }
+        figure table thead td {
+            font-size: 0.7rem;
+        }
+        figure table tbody td:first-child {
+            width: 34%;
+        } /* labels need room */
+    }
+
+    @media (max-width: 380px) {
+        figure table {
+            display: block;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        figure table tbody td:first-child {
+            width: auto;
+            white-space: nowrap;
+        }
+    }
 
     .cus-banking-card:hover {
         transform: translateY(-4px);
@@ -9289,8 +9441,8 @@ figure table tbody tr:last-child td { border-bottom: none; }
         margin: 0;
     }
     p.has-small-font-size {
-    display: none;
-}
+        display: none;
+    }
 
     h2#h-why-choose-casinous-sportsbook {
         color: #000 !important;
@@ -10131,12 +10283,9 @@ figure table tbody tr:last-child td { border-bottom: none; }
         color: #fbbf24; /* Golden yellow accent for list headers */
     }
 
-
-    
-section.full-width-discovery-section {
-    border-top: 3px solid #e5e5e5;
-}
-
+    section.full-width-discovery-section {
+        border-top: 3px solid #e5e5e5;
+    }
 
     /* --- Main Disclaimer Box --- */
     .desktop-dis .disclaimer-cl {
@@ -10157,10 +10306,9 @@ section.full-width-discovery-section {
         line-height: 1.6;
     }
 
-
     .blog-post-content h3 {
-    font-weight: 400;
-}
+        font-weight: 400;
+    }
 
     /* --- Paragraph Spacing --- */
     .desktop-dis .disclaimer-cl p {
@@ -10237,13 +10385,12 @@ section.full-width-discovery-section {
     }
 
     .full-width-discovery-section {
-		width: 100%;
-		background-color: #ffffff;
-		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23e2e8f0' fill-opacity='0.2'%3E%3Cpath d='M0 0h20v20H0V0zm20 20h20v20H20V20z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-		padding: 1rem 1rem;
-		border-top: 1px solid #e2e8f0;
-	}
-
+        width: 100%;
+        background-color: #ffffff;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23e2e8f0' fill-opacity='0.2'%3E%3Cpath d='M0 0h20v20H0V0zm20 20h20v20H20V20z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        padding: 1rem 1rem;
+        border-top: 1px solid #e2e8f0;
+    }
 
     /* --- 1. Main Section Container --- */
     .full-width-discovery-section {
@@ -10251,7 +10398,12 @@ section.full-width-discovery-section {
         background: #ffffff;
         border-top: 1px solid #e2e8f0;
         margin-top: 9px;
-        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        font-family:
+            system-ui,
+            -apple-system,
+            "Segoe UI",
+            Roboto,
+            sans-serif;
     }
 
     .discovery-container {
@@ -10284,9 +10436,13 @@ section.full-width-discovery-section {
         border-bottom: 1px solid #f1f5f9;
         transition: transform 0.2s ease;
     }
-    
-    .breaking-story-card:last-child { border-bottom: none; }
-    .breaking-story-card:hover { transform: translateX(4px); }
+
+    .breaking-story-card:last-child {
+        border-bottom: none;
+    }
+    .breaking-story-card:hover {
+        transform: translateX(4px);
+    }
 
     .breaking-story-image {
         width: 220px;
@@ -10298,7 +10454,7 @@ section.full-width-discovery-section {
         height: 130px;
         object-fit: cover;
         border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     .breaking-story-content {
@@ -10322,8 +10478,12 @@ section.full-width-discovery-section {
         transition: transform 0.2s ease;
     }
 
-    .blog-post-card:last-child { margin-bottom: 0; }
-    .blog-post-card:hover { transform: translateX(4px); }
+    .blog-post-card:last-child {
+        margin-bottom: 0;
+    }
+    .blog-post-card:hover {
+        transform: translateX(4px);
+    }
 
     .blog-post-image {
         width: 120px;
@@ -10335,7 +10495,7 @@ section.full-width-discovery-section {
         height: 80px;
         object-fit: cover;
         border-radius: 8px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     }
 
     .blog-post-content {
@@ -10356,9 +10516,12 @@ section.full-width-discovery-section {
         letter-spacing: 0.5px;
     }
 
-    .card-category { color: #2563eb; } /* Blue accent for 'News' */
+    .card-category {
+        color: #2563eb;
+    } /* Blue accent for 'News' */
 
-    .card-title-link, .blog-title-link {
+    .card-title-link,
+    .blog-title-link {
         text-decoration: none;
         color: #0f172a;
     }
@@ -10379,11 +10542,13 @@ section.full-width-discovery-section {
         transition: color 0.2s ease;
     }
 
-    .card-title-link:hover h3, .blog-title-link:hover h3 {
+    .card-title-link:hover h3,
+    .blog-title-link:hover h3 {
         color: #2563eb;
     }
 
-    .card-meta-bottom, .blog-meta-author {
+    .card-meta-bottom,
+    .blog-meta-author {
         display: flex;
         align-items: center;
         gap: 8px;
@@ -10392,7 +10557,8 @@ section.full-width-discovery-section {
         font-weight: 500;
     }
 
-    .card-author-avatar, .blog-author-avatar {
+    .card-author-avatar,
+    .blog-author-avatar {
         width: 24px;
         height: 24px;
         border-radius: 50%;
@@ -10409,7 +10575,9 @@ section.full-width-discovery-section {
         transition: color 0.2s ease;
     }
 
-    .blog-read-more:hover { color: #1d4ed8; }
+    .blog-read-more:hover {
+        color: #1d4ed8;
+    }
 
     /* --- 6. Mobile Responsiveness --- */
     @media (max-width: 900px) {
@@ -10417,26 +10585,30 @@ section.full-width-discovery-section {
             grid-template-columns: 1fr; /* Stacks columns vertically */
             gap: 40px;
         }
-        
-        .breaking-story-card, .blog-post-card {
+
+        .breaking-story-card,
+        .blog-post-card {
             flex-direction: column; /* Stacks image above text */
             gap: 12px;
         }
 
-        .breaking-story-image, .blog-post-image {
+        .breaking-story-image,
+        .blog-post-image {
             width: 100%;
             min-width: 100%;
         }
 
-        .breaking-story-image img { height: 180px; }
-        .blog-post-image img { height: 160px; }
-        
+        .breaking-story-image img {
+            height: 180px;
+        }
+        .blog-post-image img {
+            height: 160px;
+        }
+
         .discovery-right-col {
             padding: 20px;
         }
     }
-
-
 
     /* --- Clickable Header --- */
     .toc-header {
@@ -10736,6 +10908,10 @@ section.full-width-discovery-section {
         visibility: visible;
         transform: translateY(0) translateX(-50%); /* Slides up into final position */
     }
+
+    .nav-dropdown img {
+        display: unset !important;
+    }
 </style>
 
 <script>
@@ -10746,7 +10922,7 @@ section.full-width-discovery-section {
             toggle.addEventListener("click", e => {
                 const btn = e.currentTarget // Removed 'as HTMLElement' for standard JS parsing
                 const item = btn.closest(".cus-faq-item")
-                if (!item) return 
+                if (!item) return
 
                 const answer = item.querySelector(".cus-faq-answer")
                 if (!answer) return
@@ -10760,14 +10936,19 @@ section.full-width-discovery-section {
                         if (activeItem !== item) {
                             activeItem.classList.remove("active")
 
-                            const activeToggle = activeItem.querySelector(".cus-faq-toggle")
+                            const activeToggle =
+                                activeItem.querySelector(".cus-faq-toggle")
                             if (activeToggle) {
-                                activeToggle.setAttribute("aria-expanded", "false")
+                                activeToggle.setAttribute(
+                                    "aria-expanded",
+                                    "false",
+                                )
                             }
 
-                            const activeAnswer = activeItem.querySelector(".cus-faq-answer")
+                            const activeAnswer =
+                                activeItem.querySelector(".cus-faq-answer")
                             if (activeAnswer) {
-                                activeAnswer.style.maxHeight = "" 
+                                activeAnswer.style.maxHeight = ""
                             }
                         }
                     })
@@ -10784,7 +10965,7 @@ section.full-width-discovery-section {
                         // 1. Write: Add the class
                         item.classList.add("active")
                         btn.setAttribute("aria-expanded", "true")
-                        
+
                         // 2. Read & Write: Wait for the next natural browser paint to check the height
                         requestAnimationFrame(() => {
                             answer.style.maxHeight = answer.scrollHeight + "px"
