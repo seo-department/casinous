@@ -1,4 +1,6 @@
 ---
+import MegaMenu from "../components/MegaMenu.astro"
+
 export interface Props {
     title: string
     description?: string
@@ -23,152 +25,6 @@ const {
 
 const finalTitle = seoTitle ? seoTitle : title
 const canonicalURL = canonical || Astro.url.href
-
-// ---- WP menu types ----------------------------------------------------
-interface WPMenuItemRaw {
-    id: string
-    label: string
-    url: string
-    parentId: string | null
-    cssClasses: string[]
-    description: string | null
-}
-
-interface MenuMeta {
-    icon: string | null
-    color: string
-    column: string | null
-}
-
-interface MenuNode extends MenuMeta {
-    id: string
-    label: string
-    url: string
-    isMega: boolean
-    isViewAll: boolean
-    children: MenuNode[]
-}
-
-// ---- Config -----------------------------------------------------------
-const WP_GRAPHQL_URL =
-    import.meta.env.WP_GRAPHQL_URL ||
-    "https://wordpress-1621926-6409582.cloudwaysapps.com/graphql"
-const MENU_LOCATION = "PRIMARY"
-const DEFAULT_ICON_COLOR = "#cbd5e1"
-
-// ---- Fetch --------------------------------------------------------------
-async function fetchMenuItems(): Promise<WPMenuItemRaw[]> {
-    const query = `
-    query GetHeaderMenu {
-      menuItems(where: { location: ${MENU_LOCATION} }, first: 100) {
-        nodes {
-          id
-          label
-          url
-          parentId
-          cssClasses
-          description
-        }
-      }
-    }
-  `
-
-    try {
-        const res = await fetch(WP_GRAPHQL_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ query }),
-        })
-
-        if (!res.ok) {
-            console.error(
-                `WP menu fetch failed: ${res.status} ${res.statusText}`,
-            )
-            return []
-        }
-
-        const json = await res.json()
-
-        if (json.errors) {
-            console.error("WPGraphQL menu errors:", json.errors)
-            return []
-        }
-
-        return json?.data?.menuItems?.nodes ?? []
-    } catch (err) {
-        console.error("Failed to fetch WP nav menu:", err)
-        return []
-    }
-}
-
-// ---- Metadata parsing -----------------------------------------------------
-function parseMeta(description: string | null): MenuMeta {
-    if (!description) {
-        return { icon: null, color: DEFAULT_ICON_COLOR, column: null }
-    }
-    try {
-        const parsed = JSON.parse(description)
-        return {
-            icon: parsed.icon ?? null,
-            color: parsed.color ?? DEFAULT_ICON_COLOR,
-            column: parsed.column ?? null,
-        }
-    } catch {
-        return { icon: null, color: DEFAULT_ICON_COLOR, column: null }
-    }
-}
-
-// ---- Build tree ------------------------------------------------------------
-function buildMenuTree(rawItems: WPMenuItemRaw[]): MenuNode[] {
-    const byParent = new Map<string | null, WPMenuItemRaw[]>()
-    rawItems.forEach(item => {
-        const key = item.parentId ?? null
-        if (!byParent.has(key)) byParent.set(key, [])
-        byParent.get(key)!.push(item)
-    })
-
-    function toNode(item: WPMenuItemRaw): MenuNode {
-        const meta = parseMeta(item.description)
-        const classes = item.cssClasses ?? []
-        const children = (byParent.get(item.id) ?? []).map(toNode)
-
-        return {
-            id: item.id,
-            label: item.label,
-            url: item.url,
-            icon: meta.icon,
-            color: meta.color,
-            column: meta.column,
-            isMega: classes.includes("mega-menu"),
-            isViewAll: classes.includes("view-all"),
-            children,
-        }
-    }
-
-    return (byParent.get(null) ?? []).map(toNode)
-}
-
-// ---- Group mega-menu children into columns (this was missing) -------------
-function groupByColumn(
-    children: MenuNode[],
-): { title: string | null; items: MenuNode[] }[] {
-    const columns: { title: string | null; items: MenuNode[] }[] = []
-    const index = new Map<string | null, number>()
-
-    children.forEach(child => {
-        const key = child.column
-        if (!index.has(key)) {
-            index.set(key, columns.length)
-            columns.push({ title: key, items: [] })
-        }
-        columns[index.get(key)!].items.push(child)
-    })
-
-    return columns
-}
-
-const rawMenu = await fetchMenuItems()
-const menuTree = buildMenuTree(rawMenu)
 ---
 
 <!doctype html>
@@ -281,120 +137,7 @@ const menuTree = buildMenuTree(rawMenu)
 
                 <div class="header-right">
                     <nav class="header-nav">
-                        {
-                            menuTree.map(item => {
-                                // No children → plain link (e.g. "Online Slots")
-                                if (item.children.length === 0) {
-                                    return (
-                                        <a href={item.url} class="nav-link">
-                                            {item.icon && (
-                                                <i
-                                                    class={item.icon}
-                                                    style={`color: ${item.color};`}
-                                                />
-                                            )}{" "}
-                                            <span set:html={item.label} />
-                                        </a>
-                                    )
-                                }
-
-                                // Mega-menu → multi-column dropdown
-                                if (item.isMega) {
-                                    const columns = groupByColumn(item.children)
-                                    return (
-                                        <div class="nav-dropdown">
-                                            <button class="nav-dropdown-toggle">
-                                                <a href={item.url}>
-                                                    {item.icon && (
-                                                        <i
-                                                            class={item.icon}
-                                                            style={`color: ${item.color};`}
-                                                        />
-                                                    )}{" "}
-                                                    <span
-                                                        set:html={item.label}
-                                                    />{" "}
-                                                    <i class="fa-solid fa-chevron-down" />
-                                                </a>
-                                            </button>
-                                            <div class="nav-dropdown-menu mega-menu">
-                                                {columns.map(col => (
-                                                    <div class="mega-column">
-                                                        {col.title && (
-                                                            <span class="mega-title">
-                                                                {col.title}
-                                                            </span>
-                                                        )}
-                                                        {col.items.map(child =>
-                                                            child.isViewAll ? (
-                                                                <a
-                                                                    href={
-                                                                        child.url
-                                                                    }
-                                                                    class="view-all"
-                                                                >
-                                                                    <span
-                                                                        set:html={
-                                                                            child.label
-                                                                        }
-                                                                    />{" "}
-                                                                    &rarr;
-                                                                </a>
-                                                            ) : (
-                                                                <a
-                                                                    href={
-                                                                        child.url
-                                                                    }
-                                                                >
-                                                                    <span
-                                                                        set:html={
-                                                                            child.label
-                                                                        }
-                                                                    />
-                                                                </a>
-                                                            ),
-                                                        )}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )
-                                }
-
-                                // Simple dropdown → flat list of links with icons
-                                return (
-                                    <div class="nav-dropdown">
-                                        <button class="nav-dropdown-toggle">
-                                            <a href={item.url}>
-                                                {item.icon && (
-                                                    <i
-                                                        class={item.icon}
-                                                        style={`color: ${item.color};`}
-                                                    />
-                                                )}{" "}
-                                                <span set:html={item.label} />{" "}
-                                                <i class="fa-solid fa-chevron-down" />
-                                            </a>
-                                        </button>
-                                        <div class="nav-dropdown-menu">
-                                            {item.children.map(child => (
-                                                <a href={child.url}>
-                                                    {child.icon && (
-                                                        <i
-                                                            class={child.icon}
-                                                            style={`color: ${child.color};`}
-                                                        />
-                                                    )}{" "}
-                                                    <span
-                                                        set:html={child.label}
-                                                    />
-                                                </a>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )
-                            })
-                        }
+                        <MegaMenu />
                     </nav>
                 </div>
             </div>
@@ -501,6 +244,9 @@ const menuTree = buildMenuTree(rawMenu)
 </html>
 
 <style is:global>
+    .header-nav {
+        gap: 14px !important;
+    }
     .cus-vote-btn {
         transition: all 0.2s ease !important;
     }
@@ -10912,7 +10658,980 @@ const menuTree = buildMenuTree(rawMenu)
     .nav-dropdown img {
         display: unset !important;
     }
+
+    /* ===================== CASEDGE TOPLIST — RANKED CARDS ===================== */
+    .casedge-toplist {
+        font-family:
+            system-ui,
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            Roboto,
+            sans-serif;
+        max-width: 100%;
+        margin: 2rem 0;
+    }
+
+    .casedge-ranked-list {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    p.casedge-ranked-card__claimed {
+    font-size: 12px !important;
+    margin-bottom: 1px;
+}
+
+    .casedge-ranked-card {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        padding: 1px 7px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        position: relative;
+        transition:
+            box-shadow 0.2s ease,
+            transform 0.2s ease;
+    }
+    .casedge-ranked-card:hover {
+        box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.08);
+    }
+
+    /* #1 card gets the gold "best overall" treatment */
+    .casedge-ranked-list > article:first-child {
+        border-color: #f59e0b;
+        border-width: 2px;
+        box-shadow: 0 4px 16px rgba(245, 158, 11, 0.15);
+    }
+    .casedge-ranked-list
+        > article:first-child
+        .casedge-ranked-card__rank-number {
+        background: #f59e0b;
+    }
+
+    /* ---- Rank column ---- */
+    .casedge-ranked-card__rank {
+        flex: 0 0 92px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        text-align: center;
+    }
+    .casedge-ranked-card__rank-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        background: #0f172a;
+        color: #fff;
+        font-weight: 800;
+        font-size: 14px;
+        border-radius: 8px;
+    }
+    .casedge-ranked-card__rank-tag {
+        display: inline-block;
+        background: #eef2ff;
+        color: #4338ca;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 20px;
+        white-space: nowrap;
+    }
+    .casedge-ranked-card__au-flag {
+        display: block;
+        margin: 2px auto 0;
+        border-radius: 50%;
+    }
+
+    /* ---- Body wrapper (brand + score + offer) ---- */
+    .casedge-ranked-card__body {
+        display: flex;
+        align-items: center;
+        gap: 32px;
+        flex: 1;
+        min-width: 0;
+    }
+
+    /* Brand */
+    .casedge-ranked-card__brand {
+        flex: 0 0 130px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        text-align: center;
+    }
+    .casedge-ranked-card__logo-wrap {
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .casedge-ranked-card__logo {
+        max-height: 48px;
+        max-width: 120px;
+        object-fit: contain;
+    }
+    .casedge-ranked-card__name {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    /* Trust score circle */
+    .casedge-ranked-card__score {
+        flex: 0 0 100px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        text-align: center;
+    }
+    .casedge-ranked-card__score-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #64748b;
+    }
+    .casedge-ranked-card__score-help {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 1px solid #cbd5e1;
+        font-size: 10px;
+        color: #94a3b8;
+        cursor: help;
+    }
+    .casedge-rating-circle {
+        --score: 0;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: conic-gradient(#22c55e calc(var(--score) * 1%), #e5e7eb 0);
+    }
+    .casedge-rating-circle::before {
+        content: "";
+        position: absolute;
+        inset: 6px;
+        background: #fff;
+        border-radius: 50%;
+    }
+    .casedge-rating-circle span {
+        position: relative;
+        z-index: 1;
+        font-weight: 800;
+        font-size: 16px;
+        color: #0f172a;
+    }
+    .casedge-player-reviews {
+        font-size: 11px;
+        color: #94a3b8;
+    }
+
+    /* Offer column */
+    .casedge-ranked-card__offer {
+        flex: 1 1 220px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        text-align: center;
+    }
+    .casedge-ranked-card__claimed {
+        margin: 0;
+        font-size: 12px;
+        color: #64748b;
+    }
+    .casedge-ranked-card__bonus {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.3;
+    }
+
+    /* Terms & Conditions dropdown */
+    .casedge-ranked-card__terms {
+        font-size: 12px;
+        width: 100%;
+        max-width: 220px;
+    }
+    .casedge-ranked-card__terms summary {
+        cursor: pointer;
+        list-style: none;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 7px 14px;
+        color: #475569;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+    .casedge-ranked-card__terms summary::-webkit-details-marker {
+        display: none;
+    }
+    .casedge-ranked-card__terms summary::after {
+        content: "▾";
+        font-size: 10px;
+        color: #94a3b8;
+    }
+    .casedge-ranked-card__terms[open] summary::after {
+        content: "▴";
+    }
+    .casedge-ranked-card__terms-body {
+        margin-top: 8px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 10px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 12px;
+        color: #64748b;
+        text-align: left;
+    }
+
+    /* Compare checkbox pill */
+    .casedge-compare-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid #bbf7d0;
+        background: #f0fdf4;
+        color: #15803d;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 6px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    .casedge-compare-toggle__input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .casedge-compare-toggle__box {
+        width: 16px;
+        height: 16px;
+        border: 2px solid #86efac;
+        border-radius: 4px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+        transition: all 0.15s ease;
+    }
+    .casedge-compare-toggle__input:checked + .casedge-compare-toggle__box {
+        background: #22c55e;
+        border-color: #22c55e;
+    }
+    .casedge-compare-toggle__input:checked
+        + .casedge-compare-toggle__box::after {
+        content: "✓";
+        color: #fff;
+        font-size: 11px;
+        font-weight: 900;
+    }
+
+    /* ---- Badges column ---- */
+    .casedge-ranked-card__badges {
+        flex: 0 0 170px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .casedge-ranked-badge {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 7px 12px;
+        font-size: 11px;
+        color: #64748b;
+    }
+    .casedge-ranked-badge strong {
+        color: #0f172a;
+        font-weight: 700;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+    .casedge-ranked-badge--success {
+        background: #f0fdf4;
+        border-color: #bbf7d0;
+    }
+    .casedge-ranked-badge--success strong {
+        color: #15803d;
+    }
+
+    /* ---- Action column ---- */
+    .casedge-ranked-card__action {
+        flex: 0 0 170px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+    .casedge-ranked-card__action-review {
+        font-size: 12px;
+        font-weight: 700;
+        color: #ea580c;
+        text-decoration: none;
+    }
+    .casedge-ranked-card__action-review:hover {
+        text-decoration: underline;
+    }
+    .casedge-cta-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        background: linear-gradient(135deg, #f97316, #ea580c);
+        color: #fff !important;
+        font-weight: 800;
+        font-size: 14px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        text-decoration: none !important;
+        text-align: center;
+        box-shadow: 0 4px 10px rgba(234, 88, 12, 0.3);
+        transition:
+            transform 0.15s ease,
+            box-shadow 0.15s ease;
+    }
+    .casedge-cta-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 14px rgba(234, 88, 12, 0.4);
+    }
+    .casedge-coupon-badge {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        border-radius: 8px;
+        padding: 6px 14px;
+        font-size: 11px;
+        color: #64748b;
+        cursor: pointer;
+        width: 100%;
+        justify-content: center;
+    }
+    .casedge-coupon-badge strong {
+        color: #0f172a;
+        font-weight: 800;
+    }
+
+    .casedge-toplist__disclaimer {
+        text-align: center;
+        font-size: 11px;
+        color: #94a3b8;
+        margin-top: 16px;
+    }
+
+    /* ===================== COMPARE MODAL ===================== */
+    .casedge-compare-modal[hidden] {
+        display: none;
+    }
+    .casedge-compare-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        justify-content: flex-end;
+    }
+    .casedge-compare-modal__backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.5);
+    }
+    .casedge-compare-modal__panel {
+        position: relative;
+        background: #fff;
+        width: 480px;
+        max-width: 100%;
+        height: 100%;
+        overflow-y: auto;
+        padding: 32px;
+        box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15);
+        animation: casedge-slide-in 0.25s ease;
+    }
+    @keyframes casedge-slide-in {
+        from {
+            transform: translateX(20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    .casedge-compare-modal__close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #f1f5f9;
+        border: none;
+        font-size: 18px;
+        color: #64748b;
+        cursor: pointer;
+    }
+    .casedge-compare-modal__close:hover {
+        background: #e2e8f0;
+    }
+    .casedge-compare-modal__header h3 {
+        margin: 0 0 4px;
+        font-size: 22px;
+        font-weight: 800;
+        color: #0f172a;
+    }
+    .casedge-compare-modal__header p {
+        margin: 0 0 24px;
+        font-size: 13px;
+        color: #64748b;
+    }
+
+/* Replace the existing .casedge-compare-columns / row rules with this set */
+.casedge-compare-modal__content {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.casedge-compare-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    margin-bottom: 0;
+}
+.casedge-compare-col {
+    text-align: center;
+    padding: 20px 16px;
+    border-right: 1px solid #e5e7eb;
+    background: #fafbfc;
+}
+.casedge-compare-col:last-child {
+    border-right: none;
+}
+.casedge-compare-col img {
+    max-height: 40px;
+    max-width: 100px;
+    object-fit: contain;
+    margin: 0 auto 10px;
+    display: block;
+}
+.casedge-compare-col strong {
+    display: block;
+    font-size: 15px;
+    color: #0f172a;
+    margin-bottom: 4px;
+}
+.casedge-compare-col-review {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #ea580c;
+    text-decoration: none;
+}
+.casedge-compare-col-review:hover {
+    text-decoration: underline;
+}
+
+.casedge-compare-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 1px solid #e5e7eb;
+    font-size: 14px;
+    text-align: center;
+}
+.casedge-compare-row > div {
+    padding: 12px 16px;
+    border-right: 1px solid #e5e7eb;
+}
+.casedge-compare-row > div:last-child {
+    border-right: none;
+}
+.casedge-compare-row strong {
+    color: #0f172a;
+    font-weight: 800;
+    font-size: 15px;
+}
+
+.casedge-compare-row-label {
+    border-top: 1px solid #e5e7eb;
+    background: #f8fafc;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #94a3b8;
+    text-align: center;
+    padding: 8px 0 2px;
+}
+
+/* Highlight the numerically "better" stat column — driven by data attribute
+   set in JS below, since CSS alone can't compare two arbitrary values */
+.casedge-compare-row > div.is-better {
+    background: #f0fdf4;
+}
+
+.casedge-compare-row:last-of-type,
+.casedge-compare-row:has(.casedge-cta-button) {
+    border-top: 1px solid #e5e7eb;
+}
+.casedge-compare-row:has(.casedge-cta-button) > div {
+    padding: 16px;
+    border-right: none;
+}
+.casedge-compare-row:has(.casedge-cta-button) .casedge-cta-button {
+    width: 100%;
+}
+
+    /* ===================== RESPONSIVE ===================== */
+    @media (max-width: 991px) {
+        .casedge-ranked-card {
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 16px;
+        }
+        .casedge-ranked-card__body {
+            flex-wrap: wrap;
+            gap: 16px;
+            justify-content: center;
+            width: 100%;
+        }
+        .casedge-ranked-card__badges,
+        .casedge-ranked-card__action {
+            flex: 1 1 45%;
+        }
+        .casedge-compare-modal__panel {
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .casedge-ranked-card {
+            flex-direction: column;
+            text-align: center;
+        }
+        .casedge-ranked-card__badges,
+        .casedge-ranked-card__action {
+            flex: 1 1 100%;
+            width: 100%;
+        }
+        .casedge-compare-columns {
+            grid-template-columns: 1fr;
+        }
+        .casedge-compare-row {
+            grid-template-columns: 1fr;
+            text-align: left;
+        }
+    }
+
+    .casedge-compare-toggle.is-checked .casedge-compare-toggle__box {
+    background: #22c55e;
+    border-color: #22c55e;
+}
+.casedge-compare-toggle.is-checked .casedge-compare-toggle__box::after {
+    content: "✓";
+    color: #fff;
+    font-size: 11px;
+    font-weight: 900;
+}
+
+
+
+/* ===================== BONUS COMPARISON TABLE ===================== */
+.wp-content table[width="1436"] {
+    width: 100% !important;
+    border-collapse: collapse;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.95rem;
+    color: #1e293b;
+    margin: 2.5rem 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Header row */
+.wp-content table[width="1436"] thead tr {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+}
+.wp-content table[width="1436"] thead td {
+    padding: 16px 20px;
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 3px solid #3b82f6;
+}
+.wp-content table[width="1436"] thead td strong {
+    color: #fff;
+    font-weight: inherit;
+}
+
+/* Body rows */
+.wp-content table[width="1436"] tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    background: #fff;
+    transition: background-color 0.15s ease;
+}
+.wp-content table[width="1436"] tbody tr:last-child {
+    border-bottom: none;
+}
+.wp-content table[width="1436"] tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.wp-content table[width="1436"] tbody td {
+    padding: 16px 20px;
+    color: #475569;
+    line-height: 1.6;
+    vertical-align: top;
+}
+
+/* First column ("Bonus Type") reads as a label/title */
+.wp-content table[width="1436"] tbody td:first-child {
+    font-weight: 700;
+    color: #0f172a;
+    white-space: nowrap;
+}
+
+/* Wagering requirement column gets a subtle highlight pill look */
+.wp-content table[width="1436"] tbody td:nth-child(3) {
+    font-weight: 600;
+    color: #1d4ed8;
+}
+
+/* Last column ("What to Check") is the longest text — give it breathing room */
+.wp-content table[width="1436"] tbody td:last-child {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+/* ---- MOBILE ---- */
+@media (max-width: 768px) {
+    .wp-content table[width="1436"] {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+        border-radius: 10px;
+    }
+    .wp-content table[width="1436"] thead td,
+    .wp-content table[width="1436"] tbody td {
+        padding: 12px 14px;
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .wp-content table[width="1436"] {
+        font-size: 0.8rem;
+    }
+}
+
+/* ===================== 3-COLUMN METHOD/TIME/MIN TABLE ===================== */
+.wp-content table:has(thead tr td:nth-child(3):last-child) {
+    width: 100% !important;
+    border-collapse: collapse;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.95rem;
+    color: #1e293b;
+    margin: 2.5rem 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.wp-content table:has(thead tr td:nth-child(3):last-child) thead tr {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+}
+.wp-content table:has(thead tr td:nth-child(3):last-child) thead td {
+    padding: 16px 20px;
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 3px solid #f59e0b;
+}
+.wp-content table:has(thead tr td:nth-child(3):last-child) thead td strong {
+    color: #fff;
+    font-weight: inherit;
+}
+
+.wp-content table:has(thead tr td:nth-child(3):last-child) tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    background: #fff;
+    transition: background-color 0.15s ease;
+}
+.wp-content table:has(thead tr td:nth-child(3):last-child) tbody tr:last-child {
+    border-bottom: none;
+}
+.wp-content table:has(thead tr td:nth-child(3):last-child) tbody tr:hover {
+    background-color: #fffbeb;
+}
+
+.wp-content table:has(thead tr td:nth-child(3):last-child) tbody td {
+    padding: 14px 20px;
+    color: #475569;
+    line-height: 1.6;
+}
+
+.wp-content table:has(thead tr td:nth-child(3):last-child) tbody td:first-child {
+    font-weight: 700;
+    color: #0f172a;
+    white-space: nowrap;
+}
+
+.wp-content table:has(thead tr td:nth-child(3):last-child) tbody td:nth-child(2) {
+    color: #d97706;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .wp-content table:has(thead tr td:nth-child(3):last-child) {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+        border-radius: 10px;
+    }
+    .wp-content table:has(thead tr td:nth-child(3):last-child) thead td,
+    .wp-content table:has(thead tr td:nth-child(3):last-child) tbody td {
+        padding: 12px 14px;
+        font-size: 0.85rem;
+    }
+}
+
 </style>
+
+<script>
+    function initCasedgeCompare() {
+        const checkboxes = document.querySelectorAll("[data-casedge-compare]")
+        if (!checkboxes.length) return
+        if (checkboxes[0].dataset.compareBound === "true") return
+
+        const modal = document.querySelector("[data-casedge-compare-modal]")
+        const content = document.querySelector("[data-casedge-compare-content]")
+        const countText = document.querySelector("[data-casedge-compare-count]")
+        const closeButtons = document.querySelectorAll(
+            "[data-casedge-compare-close]",
+        )
+
+        if (!modal || !content) return
+
+        let selected = []
+
+        function openModal() {
+            modal.hidden = false
+        }
+
+        function closeModal() {
+            modal.hidden = true
+        }
+
+        function updateCountText() {
+            if (!countText) return
+            if (selected.length === 0) {
+                countText.textContent = "Compare selected casinos side by side."
+            } else if (selected.length === 1) {
+                countText.textContent = "Select one more casino to compare."
+            } else {
+                countText.textContent = `${selected.length} casinos selected for comparison.`
+            }
+        }
+
+        // Determines which of the two selected values is "better" for a stat,
+        // and returns a highlight class for each column accordingly
+        function statRow(label, key, higherIsBetter = true) {
+            const values = selected.map(e => e[key])
+            const numeric = values.map(v => {
+                const n = parseFloat(String(v).replace(/[^0-9.]/g, ""))
+                return isNaN(n) ? null : n
+            })
+
+            let betterIndex = -1
+            if (
+                numeric[0] !== null &&
+                numeric[1] !== null &&
+                numeric[0] !== numeric[1]
+            ) {
+                betterIndex = higherIsBetter
+                    ? numeric[0] > numeric[1]
+                        ? 0
+                        : 1
+                    : numeric[0] < numeric[1]
+                        ? 0
+                        : 1
+            }
+
+            return `
+                <div class="casedge-compare-row-label">${label}</div>
+                <div class="casedge-compare-row">
+                    ${selected
+                        .map(
+                            (e, i) =>
+                                `<div class="${i === betterIndex ? "is-better" : ""}"><strong>${e[key] ?? "N/A"}</strong></div>`,
+                        )
+                        .join("")}
+                </div>
+            `
+        }
+
+        function renderComparison() {
+            if (selected.length < 2) {
+                content.innerHTML = ""
+                return
+            }
+
+            const columnsHtml = `
+                <div class="casedge-compare-columns">
+                    ${selected
+                        .map(
+                            entry => `
+                        <div class="casedge-compare-col">
+                            <img src="${entry.logo}" alt="${entry.name} logo" loading="lazy">
+                            <strong>${entry.name}</strong>
+                            <div>${entry.score}/10</div>
+                            <a href="${entry.reviewUrl}" class="casedge-compare-col-review">Read review</a>
+                        </div>
+                    `,
+                        )
+                        .join("")}
+                </div>
+            `
+
+            const bonusRow = `
+                <div class="casedge-compare-row">
+                    ${selected.map(e => `<div>${e.bonus}</div>`).join("")}
+                </div>
+            `
+
+            const statsHtml =
+                statRow("Wagering Req", "wagering", false) +
+                statRow("Min Deposit", "minDeposit", false) +
+                statRow("Free Spins", "freeSpins", true)
+
+            const licenceRow = `
+                <div class="casedge-compare-row">
+                    ${selected.map(e => `<div>${e.licence}</div>`).join("")}
+                </div>
+            `
+
+            const codeRow = statRow("Bonus Code", "bonusCode")
+
+            const ctaRow = `
+                <div class="casedge-compare-row">
+                    ${selected
+                        .map(
+                            e => `
+                        <div>
+                            <a href="/" class="casedge-cta-button" target="_blank" rel="noopener noreferrer nofollow sponsored" data-operator-id="${e.id}" data-operator="${e.slug}" data-toplist-id="${e.toplistId}" data-page-id="${e.pageId}">
+                                Claim Bonus
+                            </a>
+                        </div>
+                    `,
+                        )
+                        .join("")}
+                </div>
+            `
+
+            content.innerHTML =
+                columnsHtml + bonusRow + statsHtml + licenceRow + codeRow + ctaRow
+        }
+
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener("change", () => {
+                const raw = checkbox.getAttribute("data-compare-entry")
+                let entry
+                try {
+                    entry = JSON.parse(raw)
+                } catch (err) {
+                    console.error("Invalid compare entry JSON:", err)
+                    return
+                }
+
+                const label = checkbox.closest(".casedge-compare-toggle")
+                if (label) label.classList.toggle("is-checked", checkbox.checked)
+
+                if (checkbox.checked) {
+                    if (selected.length >= 2) {
+                        const removedId = selected[0].id
+                        selected.shift()
+
+                        const oldCheckbox = document.querySelector(
+                            `[data-casedge-compare][data-compare-entry*="${removedId}"]`,
+                        )
+                        if (oldCheckbox) {
+                            oldCheckbox.checked = false
+                            const oldLabel = oldCheckbox.closest(
+                                ".casedge-compare-toggle",
+                            )
+                            if (oldLabel) oldLabel.classList.remove("is-checked")
+                        }
+                    }
+                    selected.push(entry)
+                } else {
+                    selected = selected.filter(e => e.id !== entry.id)
+                }
+
+                updateCountText()
+                renderComparison()
+
+                if (selected.length === 2) {
+                    openModal()
+                }
+            })
+        })
+
+        closeButtons.forEach(btn => {
+            btn.addEventListener("click", closeModal)
+        })
+
+        checkboxes.forEach(cb => (cb.dataset.compareBound = "true"))
+    }
+
+    document.addEventListener("DOMContentLoaded", initCasedgeCompare)
+    document.addEventListener("astro:page-load", initCasedgeCompare)
+</script>
+
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {

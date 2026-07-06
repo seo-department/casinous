@@ -1,0 +1,66 @@
+---
+import { getPrimaryMenu, buildColumns } from "../lib/menu.js"
+
+const menuTree = await getPrimaryMenu()
+---
+
+<nav class="header-nav">
+    {
+        menuTree.map(item => {
+            // No children → plain link (e.g. "Online Slots")
+            if (item.children.length === 0) {
+                return (
+                    <a href={item.url} class="nav-link">
+                        {item.icon && (
+                            <i class={item.icon} style={`color: ${item.color};`} />
+                        )}{" "}
+                        <span set:html={item.label} />
+                    </a>
+                )
+            }
+
+            // Always compute balanced columns — auto-detects whether this
+            // needs a multi-column mega layout based on actual size/weight,
+            // rather than requiring a manual "mega-menu" tag in WP
+            const columns = buildColumns(item.children)
+            const isMultiColumn = columns.length > 1
+
+            return (
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle">
+                        <a href={item.url}>
+                            {item.icon && (
+                                <i class={item.icon} style={`color: ${item.color};`} />
+                            )}{" "}
+                            <span set:html={item.label} />{" "}
+                            <i class="fa-solid fa-chevron-down" />
+                        </a>
+                    </button>
+                    <div class:list={["nav-dropdown-menu", { "mega-menu": isMultiColumn }]}>
+                        {columns.map(col => (
+                            <div class="mega-column">
+                                {col.title && (
+                                    <span class="mega-title">{col.title}</span>
+                                )}
+                                {col.items.map(child =>
+                                    child.isViewAll ? (
+                                        <a href={child.url} class="view-all">
+                                            <span set:html={child.label} /> &rarr;
+                                        </a>
+                                    ) : (
+                                        <a href={child.url}>
+                                            {child.icon && (
+                                                <i class={child.icon} style={`color: ${child.color};`} />
+                                            )}{" "}
+                                            <span set:html={child.label} />
+                                        </a>
+                                    ),
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )
+        })
+    }
+</nav>
