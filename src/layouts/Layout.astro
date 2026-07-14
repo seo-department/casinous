@@ -239,6 +239,29 @@ const canonicalURL = canonical || Astro.url.href
                     &copy; {new Date().getFullYear()} Casino US. All rights reserved.
                 </p>
             </div>
+
+            <div class="cus-cookie-banner" id="cusCookieBanner" hidden>
+                <div class="cus-cookie-inner">
+                    <p class="cus-cookie-text">
+                        We use cookies to improve your experience, analyze site
+                        traffic, and for advertising. By clicking "Accept", you
+                        consent to our use of cookies. See our
+                        <a href="/privacy-policy/">Privacy Policy</a> for details.
+                    </p>
+                    <div class="cus-cookie-actions">
+                        <button
+                            type="button"
+                            class="cus-cookie-btn cus-cookie-decline"
+                            id="cusCookieDecline">Decline</button
+                        >
+                        <button
+                            type="button"
+                            class="cus-cookie-btn cus-cookie-accept"
+                            id="cusCookieAccept">Accept</button
+                        >
+                    </div>
+                </div>
+            </div>
         </footer>
     </body>
 </html>
@@ -247,6 +270,89 @@ const canonicalURL = canonical || Astro.url.href
     .header-nav {
         gap: 14px !important;
     }
+
+    .cus-cookie-banner {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 9999;
+        background: #0f172a;
+        border-top: 3px solid #3b82f6;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+        padding: 1.25rem 1.5rem;
+        animation: cusCookieSlideUp 0.4s ease;
+    }
+    @keyframes cusCookieSlideUp {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+    }
+    .cus-cookie-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+    .cus-cookie-text {
+        margin: 0;
+        color: #cbd5e1;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        flex: 1;
+        min-width: 280px;
+    }
+    .cus-cookie-text a {
+        color: #60a5fa;
+        text-decoration: underline;
+        font-weight: 600;
+    }
+    .cus-cookie-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-shrink: 0;
+    }
+    .cus-cookie-btn {
+        padding: 0.65rem 1.5rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s ease;
+    }
+    .cus-cookie-accept {
+        background: #3b82f6;
+        color: #fff;
+    }
+    .cus-cookie-accept:hover {
+        background: #2563eb;
+    }
+    .cus-cookie-decline {
+        background: transparent;
+        color: #cbd5e1;
+        border: 1px solid #475569;
+    }
+    .cus-cookie-decline:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    @media (max-width: 600px) {
+        .cus-cookie-inner {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1rem;
+        }
+        .cus-cookie-actions {
+            justify-content: stretch;
+        }
+        .cus-cookie-btn {
+            flex: 1;
+        }
+    }
+
+   
     .cus-vote-btn {
         transition: all 0.2s ease !important;
     }
@@ -10679,9 +10785,9 @@ const canonicalURL = canonical || Astro.url.href
     }
 
     p.casedge-ranked-card__claimed {
-    font-size: 12px !important;
-    margin-bottom: 1px;
-}
+        font-size: 12px !important;
+        margin-bottom: 1px;
+    }
 
     .casedge-ranked-card {
         display: flex;
@@ -11122,101 +11228,101 @@ const canonicalURL = canonical || Astro.url.href
         color: #64748b;
     }
 
-/* Replace the existing .casedge-compare-columns / row rules with this set */
-.casedge-compare-modal__content {
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    overflow: hidden;
-}
+    /* Replace the existing .casedge-compare-columns / row rules with this set */
+    .casedge-compare-modal__content {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        overflow: hidden;
+    }
 
-.casedge-compare-columns {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0;
-    margin-bottom: 0;
-}
-.casedge-compare-col {
-    text-align: center;
-    padding: 20px 16px;
-    border-right: 1px solid #e5e7eb;
-    background: #fafbfc;
-}
-.casedge-compare-col:last-child {
-    border-right: none;
-}
-.casedge-compare-col img {
-    max-height: 40px;
-    max-width: 100px;
-    object-fit: contain;
-    margin: 0 auto 10px;
-    display: block;
-}
-.casedge-compare-col strong {
-    display: block;
-    font-size: 15px;
-    color: #0f172a;
-    margin-bottom: 4px;
-}
-.casedge-compare-col-review {
-    display: inline-block;
-    margin-top: 6px;
-    font-size: 12px;
-    font-weight: 700;
-    color: #ea580c;
-    text-decoration: none;
-}
-.casedge-compare-col-review:hover {
-    text-decoration: underline;
-}
+    .casedge-compare-columns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+        margin-bottom: 0;
+    }
+    .casedge-compare-col {
+        text-align: center;
+        padding: 20px 16px;
+        border-right: 1px solid #e5e7eb;
+        background: #fafbfc;
+    }
+    .casedge-compare-col:last-child {
+        border-right: none;
+    }
+    .casedge-compare-col img {
+        max-height: 40px;
+        max-width: 100px;
+        object-fit: contain;
+        margin: 0 auto 10px;
+        display: block;
+    }
+    .casedge-compare-col strong {
+        display: block;
+        font-size: 15px;
+        color: #0f172a;
+        margin-bottom: 4px;
+    }
+    .casedge-compare-col-review {
+        display: inline-block;
+        margin-top: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #ea580c;
+        text-decoration: none;
+    }
+    .casedge-compare-col-review:hover {
+        text-decoration: underline;
+    }
 
-.casedge-compare-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    border-top: 1px solid #e5e7eb;
-    font-size: 14px;
-    text-align: center;
-}
-.casedge-compare-row > div {
-    padding: 12px 16px;
-    border-right: 1px solid #e5e7eb;
-}
-.casedge-compare-row > div:last-child {
-    border-right: none;
-}
-.casedge-compare-row strong {
-    color: #0f172a;
-    font-weight: 800;
-    font-size: 15px;
-}
+    .casedge-compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        border-top: 1px solid #e5e7eb;
+        font-size: 14px;
+        text-align: center;
+    }
+    .casedge-compare-row > div {
+        padding: 12px 16px;
+        border-right: 1px solid #e5e7eb;
+    }
+    .casedge-compare-row > div:last-child {
+        border-right: none;
+    }
+    .casedge-compare-row strong {
+        color: #0f172a;
+        font-weight: 800;
+        font-size: 15px;
+    }
 
-.casedge-compare-row-label {
-    border-top: 1px solid #e5e7eb;
-    background: #f8fafc;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #94a3b8;
-    text-align: center;
-    padding: 8px 0 2px;
-}
+    .casedge-compare-row-label {
+        border-top: 1px solid #e5e7eb;
+        background: #f8fafc;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #94a3b8;
+        text-align: center;
+        padding: 8px 0 2px;
+    }
 
-/* Highlight the numerically "better" stat column — driven by data attribute
+    /* Highlight the numerically "better" stat column — driven by data attribute
    set in JS below, since CSS alone can't compare two arbitrary values */
-.casedge-compare-row > div.is-better {
-    background: #f0fdf4;
-}
+    .casedge-compare-row > div.is-better {
+        background: #f0fdf4;
+    }
 
-.casedge-compare-row:last-of-type,
-.casedge-compare-row:has(.casedge-cta-button) {
-    border-top: 1px solid #e5e7eb;
-}
-.casedge-compare-row:has(.casedge-cta-button) > div {
-    padding: 16px;
-    border-right: none;
-}
-.casedge-compare-row:has(.casedge-cta-button) .casedge-cta-button {
-    width: 100%;
-}
+    .casedge-compare-row:last-of-type,
+    .casedge-compare-row:has(.casedge-cta-button) {
+        border-top: 1px solid #e5e7eb;
+    }
+    .casedge-compare-row:has(.casedge-cta-button) > div {
+        padding: 16px;
+        border-right: none;
+    }
+    .casedge-compare-row:has(.casedge-cta-button) .casedge-cta-button {
+        width: 100%;
+    }
 
     /* ===================== RESPONSIVE ===================== */
     @media (max-width: 991px) {
@@ -11260,186 +11366,204 @@ const canonicalURL = canonical || Astro.url.href
     }
 
     .casedge-compare-toggle.is-checked .casedge-compare-toggle__box {
-    background: #22c55e;
-    border-color: #22c55e;
-}
-.casedge-compare-toggle.is-checked .casedge-compare-toggle__box::after {
-    content: "✓";
-    color: #fff;
-    font-size: 11px;
-    font-weight: 900;
-}
-
-
-
-/* ===================== BONUS COMPARISON TABLE ===================== */
-.wp-content table[width="1436"] {
-    width: 100% !important;
-    border-collapse: collapse;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    font-size: 0.95rem;
-    color: #1e293b;
-    margin: 2.5rem 0;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-}
-
-/* Header row */
-.wp-content table[width="1436"] thead tr {
-    background: linear-gradient(135deg, #0f172a, #1e293b);
-}
-.wp-content table[width="1436"] thead td {
-    padding: 16px 20px;
-    color: #fff;
-    font-size: 0.8rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border-bottom: 3px solid #3b82f6;
-}
-.wp-content table[width="1436"] thead td strong {
-    color: #fff;
-    font-weight: inherit;
-}
-
-/* Body rows */
-.wp-content table[width="1436"] tbody tr {
-    border-bottom: 1px solid #f1f5f9;
-    background: #fff;
-    transition: background-color 0.15s ease;
-}
-.wp-content table[width="1436"] tbody tr:last-child {
-    border-bottom: none;
-}
-.wp-content table[width="1436"] tbody tr:hover {
-    background-color: #f8fafc;
-}
-
-.wp-content table[width="1436"] tbody td {
-    padding: 16px 20px;
-    color: #475569;
-    line-height: 1.6;
-    vertical-align: top;
-}
-
-/* First column ("Bonus Type") reads as a label/title */
-.wp-content table[width="1436"] tbody td:first-child {
-    font-weight: 700;
-    color: #0f172a;
-    white-space: nowrap;
-}
-
-/* Wagering requirement column gets a subtle highlight pill look */
-.wp-content table[width="1436"] tbody td:nth-child(3) {
-    font-weight: 600;
-    color: #1d4ed8;
-}
-
-/* Last column ("What to Check") is the longest text — give it breathing room */
-.wp-content table[width="1436"] tbody td:last-child {
-    color: #64748b;
-    font-size: 0.9rem;
-}
-
-/* ---- MOBILE ---- */
-@media (max-width: 768px) {
-    .wp-content table[width="1436"] {
-        display: block;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        white-space: nowrap;
-        border-radius: 10px;
+        background: #22c55e;
+        border-color: #22c55e;
     }
-    .wp-content table[width="1436"] thead td,
-    .wp-content table[width="1436"] tbody td {
-        padding: 12px 14px;
-        font-size: 0.85rem;
+    .casedge-compare-toggle.is-checked .casedge-compare-toggle__box::after {
+        content: "✓";
+        color: #fff;
+        font-size: 11px;
+        font-weight: 900;
     }
-}
 
-@media (max-width: 480px) {
+    /* ===================== BONUS COMPARISON TABLE ===================== */
     .wp-content table[width="1436"] {
+        width: 100% !important;
+        border-collapse: collapse;
+        font-family:
+            system-ui,
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            Roboto,
+            sans-serif;
+        font-size: 0.95rem;
+        color: #1e293b;
+        margin: 2.5rem 0;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Header row */
+    .wp-content table[width="1436"] thead tr {
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+    }
+    .wp-content table[width="1436"] thead td {
+        padding: 16px 20px;
+        color: #fff;
         font-size: 0.8rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 3px solid #3b82f6;
     }
-}
+    .wp-content table[width="1436"] thead td strong {
+        color: #fff;
+        font-weight: inherit;
+    }
 
-/* ===================== 3-COLUMN METHOD/TIME/MIN TABLE ===================== */
-.wp-content table:has(thead tr td:nth-child(3):last-child) {
-    width: 100% !important;
-    border-collapse: collapse;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    font-size: 0.95rem;
-    color: #1e293b;
-    margin: 2.5rem 0;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-}
+    /* Body rows */
+    .wp-content table[width="1436"] tbody tr {
+        border-bottom: 1px solid #f1f5f9;
+        background: #fff;
+        transition: background-color 0.15s ease;
+    }
+    .wp-content table[width="1436"] tbody tr:last-child {
+        border-bottom: none;
+    }
+    .wp-content table[width="1436"] tbody tr:hover {
+        background-color: #f8fafc;
+    }
 
-.wp-content table:has(thead tr td:nth-child(3):last-child) thead tr {
-    background: linear-gradient(135deg, #0f172a, #1e293b);
-}
-.wp-content table:has(thead tr td:nth-child(3):last-child) thead td {
-    padding: 16px 20px;
-    color: #fff;
-    font-size: 0.8rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border-bottom: 3px solid #f59e0b;
-}
-.wp-content table:has(thead tr td:nth-child(3):last-child) thead td strong {
-    color: #fff;
-    font-weight: inherit;
-}
+    .wp-content table[width="1436"] tbody td {
+        padding: 16px 20px;
+        color: #475569;
+        line-height: 1.6;
+        vertical-align: top;
+    }
 
-.wp-content table:has(thead tr td:nth-child(3):last-child) tbody tr {
-    border-bottom: 1px solid #f1f5f9;
-    background: #fff;
-    transition: background-color 0.15s ease;
-}
-.wp-content table:has(thead tr td:nth-child(3):last-child) tbody tr:last-child {
-    border-bottom: none;
-}
-.wp-content table:has(thead tr td:nth-child(3):last-child) tbody tr:hover {
-    background-color: #fffbeb;
-}
-
-.wp-content table:has(thead tr td:nth-child(3):last-child) tbody td {
-    padding: 14px 20px;
-    color: #475569;
-    line-height: 1.6;
-}
-
-.wp-content table:has(thead tr td:nth-child(3):last-child) tbody td:first-child {
-    font-weight: 700;
-    color: #0f172a;
-    white-space: nowrap;
-}
-
-.wp-content table:has(thead tr td:nth-child(3):last-child) tbody td:nth-child(2) {
-    color: #d97706;
-    font-weight: 600;
-}
-
-@media (max-width: 768px) {
-    .wp-content table:has(thead tr td:nth-child(3):last-child) {
-        display: block;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+    /* First column ("Bonus Type") reads as a label/title */
+    .wp-content table[width="1436"] tbody td:first-child {
+        font-weight: 700;
+        color: #0f172a;
         white-space: nowrap;
-        border-radius: 10px;
     }
-    .wp-content table:has(thead tr td:nth-child(3):last-child) thead td,
-    .wp-content table:has(thead tr td:nth-child(3):last-child) tbody td {
-        padding: 12px 14px;
-        font-size: 0.85rem;
-    }
-}
 
+    /* Wagering requirement column gets a subtle highlight pill look */
+    .wp-content table[width="1436"] tbody td:nth-child(3) {
+        font-weight: 600;
+        color: #1d4ed8;
+    }
+
+    /* Last column ("What to Check") is the longest text — give it breathing room */
+    .wp-content table[width="1436"] tbody td:last-child {
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+
+    /* ---- MOBILE ---- */
+    @media (max-width: 768px) {
+        .wp-content table[width="1436"] {
+            display: block;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            white-space: nowrap;
+            border-radius: 10px;
+        }
+        .wp-content table[width="1436"] thead td,
+        .wp-content table[width="1436"] tbody td {
+            padding: 12px 14px;
+            font-size: 0.85rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .wp-content table[width="1436"] {
+            font-size: 0.8rem;
+        }
+    }
+
+    /* ===================== 3-COLUMN METHOD/TIME/MIN TABLE ===================== */
+    .wp-content table:has(thead tr td:nth-child(3):last-child) {
+        width: 100% !important;
+        border-collapse: collapse;
+        font-family:
+            system-ui,
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            Roboto,
+            sans-serif;
+        font-size: 0.95rem;
+        color: #1e293b;
+        margin: 2.5rem 0;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .wp-content table:has(thead tr td:nth-child(3):last-child) thead tr {
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+    }
+    .wp-content table:has(thead tr td:nth-child(3):last-child) thead td {
+        padding: 16px 20px;
+        color: #fff;
+        font-size: 0.8rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 3px solid #f59e0b;
+    }
+    .wp-content table:has(thead tr td:nth-child(3):last-child) thead td strong {
+        color: #fff;
+        font-weight: inherit;
+    }
+
+    .wp-content table:has(thead tr td:nth-child(3):last-child) tbody tr {
+        border-bottom: 1px solid #f1f5f9;
+        background: #fff;
+        transition: background-color 0.15s ease;
+    }
+    .wp-content
+        table:has(thead tr td:nth-child(3):last-child)
+        tbody
+        tr:last-child {
+        border-bottom: none;
+    }
+    .wp-content table:has(thead tr td:nth-child(3):last-child) tbody tr:hover {
+        background-color: #fffbeb;
+    }
+
+    .wp-content table:has(thead tr td:nth-child(3):last-child) tbody td {
+        padding: 14px 20px;
+        color: #475569;
+        line-height: 1.6;
+    }
+
+    .wp-content
+        table:has(thead tr td:nth-child(3):last-child)
+        tbody
+        td:first-child {
+        font-weight: 700;
+        color: #0f172a;
+        white-space: nowrap;
+    }
+
+    .wp-content
+        table:has(thead tr td:nth-child(3):last-child)
+        tbody
+        td:nth-child(2) {
+        color: #d97706;
+        font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+        .wp-content table:has(thead tr td:nth-child(3):last-child) {
+            display: block;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            white-space: nowrap;
+            border-radius: 10px;
+        }
+        .wp-content table:has(thead tr td:nth-child(3):last-child) thead td,
+        .wp-content table:has(thead tr td:nth-child(3):last-child) tbody td {
+            padding: 12px 14px;
+            font-size: 0.85rem;
+        }
+    }
 </style>
 
 <script>
@@ -11498,8 +11622,8 @@ const canonicalURL = canonical || Astro.url.href
                         ? 0
                         : 1
                     : numeric[0] < numeric[1]
-                        ? 0
-                        : 1
+                      ? 0
+                      : 1
             }
 
             return `
@@ -11574,7 +11698,12 @@ const canonicalURL = canonical || Astro.url.href
             `
 
             content.innerHTML =
-                columnsHtml + bonusRow + statsHtml + licenceRow + codeRow + ctaRow
+                columnsHtml +
+                bonusRow +
+                statsHtml +
+                licenceRow +
+                codeRow +
+                ctaRow
         }
 
         checkboxes.forEach(checkbox => {
@@ -11589,7 +11718,8 @@ const canonicalURL = canonical || Astro.url.href
                 }
 
                 const label = checkbox.closest(".casedge-compare-toggle")
-                if (label) label.classList.toggle("is-checked", checkbox.checked)
+                if (label)
+                    label.classList.toggle("is-checked", checkbox.checked)
 
                 if (checkbox.checked) {
                     if (selected.length >= 2) {
@@ -11604,7 +11734,8 @@ const canonicalURL = canonical || Astro.url.href
                             const oldLabel = oldCheckbox.closest(
                                 ".casedge-compare-toggle",
                             )
-                            if (oldLabel) oldLabel.classList.remove("is-checked")
+                            if (oldLabel)
+                                oldLabel.classList.remove("is-checked")
                         }
                     }
                     selected.push(entry)
@@ -11631,7 +11762,6 @@ const canonicalURL = canonical || Astro.url.href
     document.addEventListener("DOMContentLoaded", initCasedgeCompare)
     document.addEventListener("astro:page-load", initCasedgeCompare)
 </script>
-
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -12038,4 +12168,25 @@ const canonicalURL = canonical || Astro.url.href
         // Toggle the 'is-open' class on and off
         wrapper.classList.toggle("is-open")
     }
+</script>
+
+
+<script is:inline>
+    (function () {
+        const banner = document.getElementById("cusCookieBanner")
+        if (!banner) return
+        // document.cookie is the real cookie store — check for our consent cookie
+        const hasConsent = document.cookie
+            .split("; ")
+            .some(c => c.startsWith("cus_cookie_consent="))
+        if (!hasConsent) banner.hidden = false
+
+        function setConsent(value) {
+            const oneYear = 60 * 60 * 24 * 365
+            document.cookie = `cus_cookie_consent=${value}; path=/; max-age=${oneYear}; SameSite=Lax`
+            banner.hidden = true
+        }
+        document.getElementById("cusCookieAccept")?.addEventListener("click", () => setConsent("accepted"))
+        document.getElementById("cusCookieDecline")?.addEventListener("click", () => setConsent("declined"))
+    })()
 </script>
