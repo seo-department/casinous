@@ -48,12 +48,23 @@ const menuTree = await getPrimaryMenu()
                                             <span set:html={child.label} /> &rarr;
                                         </a>
                                     ) : (
-                                        <a href={child.url}>
-                                            {child.icon && (
-                                                <i class={child.icon} style={`color: ${child.color};`} />
-                                            )}{" "}
-                                            <span set:html={child.label} />
-                                        </a>
+                                        <>
+                                            <a href={child.url}>
+                                                {child.icon && (
+                                                    <i class={child.icon} style={`color: ${child.color};`} />
+                                                )}{" "}
+                                                <span set:html={child.label} />
+                                            </a>
+                                            {child.children && child.children.length > 0 &&
+                                                child.children.map(grandchild => (
+                                                    
+                                                      <a  href={grandchild.url}
+                                                        style="padding-left: 2rem; font-size: 0.85rem;"
+                                                    >
+                                                        <span set:html={grandchild.label} />
+                                                    </a>
+                                                ))}
+                                        </>
                                     ),
                                 )}
                             </div>

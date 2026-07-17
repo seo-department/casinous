@@ -108,13 +108,15 @@ function buildColumns(children) {
     const hasExplicitColumns = children.some(c => c.column != null)
     const totalWeight = children.reduce((sum, c) => sum + itemWeight(c), 0)
 
-    // Only respect explicit column tags for lists short enough that they fit
-    if (hasExplicitColumns && totalWeight <= MAX_PER_COLUMN) {
+    // Always respect explicit WP column assignments, regardless of list length —
+    // an editor manually splitting items into columns in WP admin should never
+    // be silently overridden by the auto-balancer just because the list is long
+    if (hasExplicitColumns) {
         const columns = []
         const index = new Map()
 
         children.forEach(child => {
-            const key = child.column
+            const key = child.column ?? 1 // items missing a column fall into column 1
             if (!index.has(key)) {
                 index.set(key, columns.length)
                 columns.push({ title: key, items: [] })
@@ -122,10 +124,13 @@ function buildColumns(children) {
             columns[index.get(key)].items.push(child)
         })
 
+        // Keep columns in numeric order (1, 2, 3...) rather than first-seen order
+        columns.sort((a, b) => (a.title ?? 0) - (b.title ?? 0))
+
         return columns
     }
 
-    // Auto-balance by weight for larger lists
+    // Auto-balance by weight only when WP hasn't specified columns manually
     if (totalWeight > MAX_PER_COLUMN) {
         const numColumns = Math.min(MAX_COLUMNS, Math.ceil(totalWeight / MAX_PER_COLUMN))
         const buckets = Array.from({ length: numColumns }, () => [])

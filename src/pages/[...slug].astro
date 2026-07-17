@@ -390,7 +390,11 @@ if (tocItems.length > 0) {
 const displayTitle = (post.title || "").replaceAll("[year]", currentYear)
 
 // --- 7. FINAL CONTENT REPLACEMENTS ---
-const fixedContent = contentWithIds
+let contentWithToc = contentWithIds
+if (tocHTML && !contentWithIds.includes("[casino_toc]")) {
+    contentWithToc = contentWithIds.replace(/<h2/i, `${tocHTML}<h2`)
+}
+const fixedContent = contentWithToc
     .replaceAll("[casino_toc]", tocHTML)
     .replace(/src="[^"]*placeholder[^"]*"/gi, "")
     .replaceAll('data-src="/wp-content/', 'src="/wp-content/')
