@@ -112,12 +112,15 @@ const cleanImageUrl = (url: string | undefined) => {
     }
 }
 
+const stripWp = (html: string | undefined) => {
+    if (!html) return "";
+    return html.replaceAll(wpDomain, "https://www.casinous.com");
+};
+
 const cleanSrcSet = (srcSet: string | undefined) => {
     if (!srcSet) return undefined;
-    // Strip the Cloudways domain from all srcset URLs so Vercel proxies them locally
     return srcSet.replaceAll(wpDomain, "");
 }
-
 const getRelativeUrl = (uri: string | undefined) => {
     if (!uri) return "/";
     return `/${uri.replace(/https?:\/\/[^\/]+/g, "").replace(/^\/|\/$/g, "")}/`;
@@ -230,7 +233,7 @@ teamMembers = teamMembers
                             {mainPost.author?.node?.name || 'Editorial Team'}
                         </a>
                     </div>
-                    <div class="excerpt" set:html={mainPost.excerpt} />
+                    <div class="excerpt" set:html={stripWp(mainPost.excerpt)} />
                 </article>
                 )}
 
@@ -350,7 +353,7 @@ teamMembers = teamMembers
                                 {post.author?.node?.name || 'Editorial Team'}
                             </a>
                         </div>
-                        <div class="excerpt-small" set:html={post.excerpt} />
+                        <div class="excerpt-small" set:html={stripWp(post.excerpt)} />
                     </div>
                 </article>
                 ))}
@@ -461,7 +464,7 @@ teamMembers = teamMembers
                 
                 // 1. Generate the slug from the displayed name
                 const authorSlug = createAuthorSlug(displayName);
-                const avatar = member.avatar?.url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=e5e7eb&color=111`;
+                const avatar = stripWp(member.avatar?.url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=e5e7eb&color=111`;
                 
                 return (
                     <a href={`/about-us/${authorSlug}/`} class="team-card group-hover-wrap">
@@ -470,7 +473,7 @@ teamMembers = teamMembers
                         </div>
                         <div class="team-info">
                             <h3 class="team-name">{displayName}</h3>
-                            <div class="team-role" set:html={member.description || "Expert Contributor"} />
+                            <div class="team-role" set:html={stripWp(member.description) || "Expert Contributor"} />
                         </div>
                     </a>
                 )
