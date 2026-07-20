@@ -117,10 +117,27 @@ if (yoastSchema) {
                 dateModified: page?.modified || page?.date || undefined,
                 isPartOf: { "@id": pageUrl },
             },
+            // --- NEW: WebPage Schema ---
+            {
+                "@type": "WebPage",
+                "@id": `${pageUrl}#webpage`,
+                url: pageUrl,
+                name: yoastTitle,
+                description: yoastDesc,
+                datePublished: page?.date || undefined,
+                dateModified: page?.modified || page?.date || undefined,
+                isPartOf: { "@id": `${liveDomain}/#website` },
+                inLanguage: "en-US"
+            }
         ]
 
         for (const node of extraNodes) {
-            if (!existingTypes.includes(node["@type"])) {
+            const existingIndex = graph.findIndex((n: any) => n["@type"] === node["@type"])
+            if (existingIndex > -1) {
+                // Override Yoast's default node with your custom one
+                graph[existingIndex] = { ...graph[existingIndex], ...node }
+            } else {
+                // Inject as new if it doesn't exist
                 graph.push(node)
             }
         }
