@@ -84,44 +84,52 @@ let yoastSchema = page?.seo?.schema?.raw || undefined
 if (yoastSchema) {
     yoastSchema = yoastSchema.replaceAll(wpDomain, liveDomain)
 
-    // Inject WPHeader, WPFooter, and CreativeWork nodes that WordPress renders
-    // natively but Yoast's schema.raw omits in a headless build.
     try {
         const schemaObj = JSON.parse(yoastSchema)
-        if (Array.isArray(schemaObj["@graph"])) {
-            const extraNodes = [
-                {
-                    "@type": "WPHeader",
-                    "@id": `${pageUrl}#header`,
-                    isPartOf: { "@id": pageUrl },
-                },
-                {
-                    "@type": "WPFooter",
-                    "@id": `${pageUrl}#footer`,
-                    isPartOf: { "@id": pageUrl },
-                },
-                {
-                    "@type": "CreativeWork",
-                    "@id": `${pageUrl}#creativework`,
-                    name: yoastTitle,
-                    headline: yoastTitle,
-                    description: yoastDesc,
-                    url: pageUrl,
-                    datePublished: page?.date || undefined,
-                    dateModified: page?.modified || page?.date || undefined,
-                    isPartOf: { "@id": pageUrl },
-                },
-            ]
 
-            // Avoid duplicates if any already exist
-            const existingTypes = schemaObj["@graph"].map((n: any) => n["@type"])
-            for (const node of extraNodes) {
-                if (!existingTypes.includes(node["@type"])) {
-                    schemaObj["@graph"].push(node)
-                }
-            }
-            yoastSchema = JSON.stringify(schemaObj)
+        // Make sure @graph exists and is an array; if not, wrap what we have
+        if (!Array.isArray(schemaObj["@graph"])) {
+            schemaObj["@graph"] = schemaObj["@type"] ? [schemaObj] : []
         }
+
+        const graph = schemaObj["@graph"]
+        const existingTypes = graph.map((n: any) => n["@type"])
+
+        const extraNodes = [
+            {
+                "@type": "WPHeader",
+                "@id": `${pageUrl}#header`,
+                isPartOf: { "@id": pageUrl },
+            },
+            {
+                "@type": "WPFooter",
+                "@id": `${pageUrl}#footer`,
+                isPartOf: { "@id": pageUrl },
+            },
+            {
+                "@type": "CreativeWork",
+                "@id": `${pageUrl}#creativework`,
+                name: yoastTitle,
+                headline: yoastTitle,
+                description: yoastDesc,
+                url: pageUrl,
+                datePublished: page?.date || undefined,
+                dateModified: page?.modified || page?.date || undefined,
+                isPartOf: { "@id": pageUrl },
+            },
+        ]
+
+        for (const node of extraNodes) {
+            if (!existingTypes.includes(node["@type"])) {
+                graph.push(node)
+            }
+        }
+
+        // Rebuild wrapper preserving @context
+        yoastSchema = JSON.stringify({
+            "@context": schemaObj["@context"] || "https://schema.org",
+            "@graph": graph,
+        })
     } catch (e) {
         console.error("Schema injection failed:", e)
     }
