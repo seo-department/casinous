@@ -79,7 +79,10 @@ if (result.errors) {
 // --- 2. PROCESS SEO DATA ---
 const page = result.data?.nodeByUri
 const currentYear = new Date().getFullYear().toString()
-const yoastTitle = (page?.seo?.title || page?.title || "Casino US").replaceAll("[year]", currentYear)
+const yoastTitle = (page?.seo?.title || page?.title || "Casino US").replaceAll(
+    "[year]",
+    currentYear,
+)
 const yoastDesc = (page?.seo?.metaDesc || "").replaceAll("[year]", currentYear)
 
 const wpDomain = "https://wordpress-1621926-6409582.cloudwaysapps.com"
@@ -91,87 +94,200 @@ if (yoastSchema) {
 // --- 3. HELPER FUNCTIONS ---
 
 const getCategoryUrl = (slug: string | undefined) => {
-    if (!slug) return "#";
+    if (!slug) return "#"
     // If the category is 'blog', route to /blog/ instead of /category/blog/
-    if (slug === "blog") return "/blog/";
-    return `/category/${slug}/`;
-};
+    if (slug === "blog") return "/blog/"
+    return `/category/${slug}/`
+}
 
 const createAuthorSlug = (name: string | undefined) => {
-    if (!name) return "editorial-team";
-    return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
-};
+    if (!name) return "editorial-team"
+    return name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)+/g, "")
+}
 
 const cleanImageUrl = (url: string | undefined) => {
-    if (!url) return "https://via.placeholder.com/300x150";
+    if (!url) return "https://via.placeholder.com/300x150"
     try {
-        const parsedUrl = new URL(url);
-        return parsedUrl.pathname;
-    } catch(e) {
-        return url;
+        const parsedUrl = new URL(url)
+        return parsedUrl.pathname
+    } catch (e) {
+        return url
     }
 }
 
 const stripWp = (html: string | undefined) => {
-    if (!html) return "";
-    return html.replaceAll(wpDomain, "https://www.casinous.com");
-};
+    if (!html) return ""
+    return html.replaceAll(wpDomain, "https://www.casinous.com")
+}
 
 const cleanSrcSet = (srcSet: string | undefined) => {
-    if (!srcSet) return undefined;
-    return srcSet.replaceAll(wpDomain, "");
+    if (!srcSet) return undefined
+    return srcSet.replaceAll(wpDomain, "")
 }
 const getRelativeUrl = (uri: string | undefined) => {
-    if (!uri) return "/";
-    return `/${uri.replace(/https?:\/\/[^\/]+/g, "").replace(/^\/|\/$/g, "")}/`;
-};
+    if (!uri) return "/"
+    return `/${uri.replace(/https?:\/\/[^\/]+/g, "").replace(/^\/|\/$/g, "")}/`
+}
 
 const formatShortDate = (dateString: string) => {
-  const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' };
-  return new Date(dateString).toLocaleDateString('en-GB', options);
-};
+    const options: Intl.DateTimeFormatOptions = {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+    }
+    return new Date(dateString).toLocaleDateString("en-GB", options)
+}
 
 const stripHtml = (html: string) => {
-    return html.replace(/<[^>]*>?/gm, '').replace(/\[&hellip;\]/g, '...');
-};
+    return html.replace(/<[^>]*>?/gm, "").replace(/\[&hellip;\]/g, "...")
+}
 
 // --- 4. DATA SLICING FOR DYNAMIC SECTIONS ---
 const recentPosts = result.data?.posts?.nodes || []
 const allCategories = result.data?.categories?.nodes || []
 
 // Distribute the 30 posts across the different homepage blocks
-const mainPost = recentPosts[0] || null;
-const subPosts = recentPosts.slice(1, 5);
-const popularPosts = recentPosts.slice(1, 10);
-const inDepthPosts = recentPosts.slice(10, 14); 
-const moreNewsPosts = recentPosts.slice(14, 21);
-const guidePosts = recentPosts.slice(21, 25);
-const qaPosts = recentPosts.slice(25, 30);
+const mainPost = recentPosts[0] || null
+const subPosts = recentPosts.slice(1, 5)
+const popularPosts = recentPosts.slice(1, 10)
+const inDepthPosts = recentPosts.slice(10, 14)
+const moreNewsPosts = recentPosts.slice(14, 21)
+const guidePosts = recentPosts.slice(21, 25)
+const qaPosts = recentPosts.slice(25, 30)
+
+const manualFaqs = [
+    {
+        title: "Can I win real money at an online casino?",
+        excerpt:
+            "Yes. Players win real money at licensed online casinos every day. RNG casino games use certified random number generators, independently tested by labs including eCOGRA and iTech Labs, to produce fair outcomes. The house edge means the casino has a mathematical advantage over time, but individual sessions, and individual players, absolutely do produce real winnings. Short-term variance is high, particularly on high-volatility slots.",
+        uri: "/online-casinos/",
+    },
+    {
+        title: "Are online casinos legal in the US?",
+        excerpt:
+            "Real-money online casino gambling is legal in seven states: New Jersey, Pennsylvania, Michigan, West Virginia, Delaware, Connecticut, and Rhode Island. Players outside those states can access offshore platforms, which operate under international licences and accept US players without federal restriction on individual play. The UIGEA of 2006 governs payment processing rather than the act of playing. Always check your state's specific position before depositing.",
+        uri: "/online-casinos/",
+    },
+    {
+        title: "What are the best payout casino games?",
+        excerpt:
+            "The best payout casino games are Roulette, Blackjack, and Video Poker. These games offer the lowest house edge and give the player the best chance to win. Some of them even allow a player's skill to improve their chances of winning. Online slots have some of the biggest payouts, but generally, the house edge is larger, and winning is completely dependent on luck.",
+        uri: "/best-payout-casinos/",
+    },
+    {
+        title: "Which payout method should I use at online casinos for fast payouts?",
+        excerpt:
+            "Opt for cryptocurrencies and e-wallets, if available, for fast payouts at online casinos. Cryptocurrencies such as Bitcoin, Ethereum, or Litecoin offer decentralized and efficient withdrawal options for instant access to your funds.",
+        uri: "/fastest-payout-casinos/",
+    },
+    {
+        title: "How do I know if a new online casino is safe?",
+        excerpt:
+            "This can be a bit tricky, but it is important to make sure it is before depositing any money. The best way is to make sure the new casino is to ensure it is properly licensed and regulated. Never deposit cash at a new site before it gets its license sorted.",
+        uri: "/new-online-casinos/",
+    },
+    {
+        title: "Are Online Gambling Sites Safe?",
+        excerpt:
+            "State-licensed gambling sites are regulated to specific standards that require player fund protection, game fairness testing by independent labs, and clear complaint procedures. Sites licensed by the NJDGE, PGCB, or Michigan Gaming Control Board are subject to regular audits. Unlicensed offshore sites carry higher risk: no guaranteed player protections, no regulatory oversight from US authorities, and limited options if a withdrawal dispute arises.",
+        uri: "/online-gambling/",
+    },
+    {
+        title: "Are online slots rigged?",
+        excerpt:
+            "Online slots from licensed software providers like RTG, NetEnt, and Betsoft use the same RNG as the real money version. The algorithm is identical only the currency changes. Games certified by eCOGRA or GLI are independently audited. Avoid demo slots from unverified studios with no third-party certification.",
+        uri: "/online-slots/",
+    },
+    {
+        title: "Do I need a bonus code to claim a welcome bonus?",
+        excerpt:
+            "Some casinos require a bonus code to be entered at the cashier before you deposit. Others activate the welcome offer automatically. Check the specific offer page before depositing; a missed code usually cannot be applied retroactively. If no code is shown, the offer likely activates on deposit.",
+        uri: "/casino-bonuses/",
+    },
+]
+
+const manualGuides = [
+    {
+        title: "Best Online Casinos USA 2026",
+        uri: "/online-casinos/",
+        icon: "🎰",
+        color: "#ff4d4d",
+    },
+    {
+        title: "Fastest Payout Casinos Online USA 2026",
+        uri: "/fastest-payout-casinos/",
+        icon: "⚡",
+        color: "#facc15",
+    },
+    {
+        title: "Best Payout Online Casinos USA",
+        uri: "/best-payout-casinos/",
+        icon: "💰",
+        color: "#22c55e",
+    },
+    {
+        title: "Best Casino Bonuses in the USA",
+        uri: "/casino-bonuses/",
+        icon: "🎁",
+        color: "#ec4899",
+    },
+    {
+        title: "Best Real Money Online Slots USA 2026",
+        uri: "/online-slots/",
+        icon: "🎲",
+        color: "#8b5cf6",
+    },
+    {
+        title: "Top Online Gambling Sites in the USA",
+        uri: "/online-gambling/",
+        icon: "🏆",
+        color: "#f97316",
+    },
+    {
+        title: "Best No Deposit Bonus USA",
+        uri: "/no-deposit-bonus/",
+        icon: "🆓",
+        color: "#06b6d4",
+    },
+    {
+        title: "Honest & Trusted Online Casino Reviews",
+        uri: "/casino-reviews/",
+        icon: "⭐",
+        color: "#eab308",
+    },
+]
 
 // Process Users for Team Section
-let teamMembers = result.data?.users?.nodes || [];
+let teamMembers = result.data?.users?.nodes || []
 
 // Fallback to authors if WP 'users' query is empty
 if (teamMembers.length === 0) {
-    const uniqueAuthors = new Map();
+    const uniqueAuthors = new Map()
     recentPosts.forEach((p: any) => {
         if (p.author?.node && !uniqueAuthors.has(p.author.node.name)) {
-            uniqueAuthors.set(p.author.node.name, p.author.node);
+            uniqueAuthors.set(p.author.node.name, p.author.node)
         }
-    });
-    teamMembers = Array.from(uniqueAuthors.values());
+    })
+    teamMembers = Array.from(uniqueAuthors.values())
 }
 
 // FILTER: Exclude authors named Tom and Sarah, limit to 8
 teamMembers = teamMembers
     .filter((member: any) => {
-        const fullName = (member.name || "").toLowerCase();
-        const firstName = (member.firstName || "").toLowerCase();
-        
-        return !fullName.includes("tom") && !fullName.includes("sarah") && 
-               !firstName.includes("tom") && !firstName.includes("sarah");
+        const fullName = (member.name || "").toLowerCase()
+        const firstName = (member.firstName || "").toLowerCase()
+
+        return (
+            !fullName.includes("tom") &&
+            !fullName.includes("sarah") &&
+            !firstName.includes("tom") &&
+            !firstName.includes("sarah")
+        )
     })
-    .slice(0, 8);
+    .slice(0, 8)
 ---
 
 <Layout
@@ -184,506 +300,1313 @@ teamMembers = teamMembers
         <nav class="nav-filters">
             <a href="#" class="nav-btn active">All News</a>
             <a href="/blog/" class="nav-btn">Blogs</a>
-            {allCategories.map((cat: any) => {
-                // Skip rendering redundant categories
-                if (cat.slug === "blog" || cat.slug === "uncategorized") return null;
-                return (
-                    <a href={getCategoryUrl(cat.slug)} class="nav-btn">{cat.name}</a>
-                );
-            })}
+            {
+                allCategories.map((cat: any) => {
+                    // Skip rendering redundant categories
+                    if (cat.slug === "blog" || cat.slug === "uncategorized")
+                        return null
+                    return (
+                        <a href={getCategoryUrl(cat.slug)} class="nav-btn">
+                            {cat.name}
+                        </a>
+                    )
+                })
+            }
         </nav>
 
         <header class="section-header">
-            <h2 class="section-title"><span class="title-accent"></span> Today's News</h2>
+            <h2 class="section-title">
+                <span class="title-accent"></span> Today's News
+            </h2>
             <a href="/blog/" class="more-link">More &rarr;</a>
         </header>
 
         <section class="layout-main">
             <div class="left-col">
-                {mainPost && (
-                <article class="main-article">
-                    <a href={getRelativeUrl(mainPost.uri)} class="image-wrapper-link">
-                        <div class="image-wrapper">
-                        {mainPost.featuredImage?.node?.sourceUrl ? (
-                            <img 
-                                src={cleanImageUrl(mainPost.featuredImage.node.sourceUrl)} 
-                                srcset={cleanSrcSet(mainPost.featuredImage.node.srcSet)}
-                                sizes="(max-width: 1024px) 100vw, 800px"
-                                alt={mainPost.featuredImage.node.altText || mainPost.title} 
-                                loading="lazy" 
-                                referrerpolicy="no-referrer" 
+                {
+                    mainPost && (
+                        <article class="main-article">
+                            <a
+                                href={getRelativeUrl(mainPost.uri)}
+                                class="image-wrapper-link"
+                            >
+                                <div class="image-wrapper">
+                                    {mainPost.featuredImage?.node?.sourceUrl ? (
+                                        <img
+                                            src={cleanImageUrl(
+                                                mainPost.featuredImage.node
+                                                    .sourceUrl,
+                                            )}
+                                            srcset={cleanSrcSet(
+                                                mainPost.featuredImage.node
+                                                    .srcSet,
+                                            )}
+                                            sizes="(max-width: 1024px) 100vw, 800px"
+                                            alt={
+                                                mainPost.featuredImage.node
+                                                    .altText || mainPost.title
+                                            }
+                                            loading="lazy"
+                                            referrerpolicy="no-referrer"
+                                        />
+                                    ) : (
+                                        <div class="placeholder-img">
+                                            No Image
+                                        </div>
+                                    )}
+                                    <span class="badge-breaking">Breaking</span>
+                                </div>
+                            </a>
+                            <h1 class="article-title">
+                                <a
+                                    href={getRelativeUrl(mainPost.uri)}
+                                    set:html={mainPost.title}
+                                />
+                            </h1>
+                            <div class="meta">
+                                <a
+                                    href={getCategoryUrl(
+                                        mainPost.categories?.nodes[0]?.slug,
+                                    )}
+                                    class="category hover-red"
+                                >
+                                    {mainPost.categories?.nodes[0]?.name ||
+                                        "News"}
+                                </a>
+                                <span>•</span>
+                                <span>{formatShortDate(mainPost.date)}</span>
+                                <span>•</span>
+                                <a
+                                    href={`/about-us/${createAuthorSlug(mainPost.author?.node?.name)}/`}
+                                    class="hover-red"
+                                    style="text-transform: uppercase;"
+                                >
+                                    {mainPost.author?.node?.name ||
+                                        "Editorial Team"}
+                                </a>
+                            </div>
+                            <div
+                                class="excerpt"
+                                set:html={stripWp(mainPost.excerpt)}
                             />
-                        ) : (
-                            <div class="placeholder-img">No Image</div>
-                        )}
-                        <span class="badge-breaking">Breaking</span>
-                        </div>
-                    </a>
-                    <h1 class="article-title">
-                        <a href={getRelativeUrl(mainPost.uri)} set:html={mainPost.title} />
-                    </h1>
-                    <div class="meta">
-                        <a href={getCategoryUrl(mainPost.categories?.nodes[0]?.slug)} class="category hover-red">
-							{mainPost.categories?.nodes[0]?.name || 'News'}
-						</a>
-                        <span>•</span>
-                        <span>{formatShortDate(mainPost.date)}</span>
-                        <span>•</span>
-                        <a href={`/about-us/${createAuthorSlug(mainPost.author?.node?.name)}/`} class="hover-red" style="text-transform: uppercase;">
-                            {mainPost.author?.node?.name || 'Editorial Team'}
-                        </a>
-                    </div>
-                    <div class="excerpt" set:html={stripWp(mainPost.excerpt)} />
-                </article>
-                )}
+                        </article>
+                    )
+                }
 
                 <div class="sub-posts-grid">
-                {subPosts.map((post: any) => (
-                    <article class="sub-article">
-                    <a href={getRelativeUrl(post.uri)}>
-                        {post.featuredImage?.node?.sourceUrl && (
-                            <img 
-                                src={cleanImageUrl(post.featuredImage.node.sourceUrl)} 
-                                srcset={cleanSrcSet(post.featuredImage.node.srcSet)}
-                                sizes="100px"
-                                alt="Thumbnail" 
-                                class="sub-img" 
-                                loading="lazy" 
-                                referrerpolicy="no-referrer" 
-                            />
-                        )}
-                    </a>
-                    <div class="sub-content">
-                        <h3 class="sub-title"><a href={getRelativeUrl(post.uri)} set:html={post.title} /></h3>
-                        <div class="meta small-meta">
-                            <a href={getCategoryUrl(post.categories?.nodes[0]?.slug)} class="category hover-red">
-                                {post.categories?.nodes[0]?.name || 'Update'}
-                            </a>
-                            <span>{formatShortDate(post.date)}</span>
-                        </div>
-                    </div>
-                    </article>
-                ))}
+                    {
+                        subPosts.map((post: any) => (
+                            <article class="sub-article">
+                                <a href={getRelativeUrl(post.uri)}>
+                                    {post.featuredImage?.node?.sourceUrl && (
+                                        <img
+                                            src={cleanImageUrl(
+                                                post.featuredImage.node
+                                                    .sourceUrl,
+                                            )}
+                                            srcset={cleanSrcSet(
+                                                post.featuredImage.node.srcSet,
+                                            )}
+                                            sizes="100px"
+                                            alt="Thumbnail"
+                                            class="sub-img"
+                                            loading="lazy"
+                                            referrerpolicy="no-referrer"
+                                        />
+                                    )}
+                                </a>
+                                <div class="sub-content">
+                                    <h3 class="sub-title">
+                                        <a
+                                            href={getRelativeUrl(post.uri)}
+                                            set:html={post.title}
+                                        />
+                                    </h3>
+                                    <div class="meta small-meta">
+                                        <a
+                                            href={getCategoryUrl(
+                                                post.categories?.nodes[0]?.slug,
+                                            )}
+                                            class="category hover-red"
+                                        >
+                                            {post.categories?.nodes[0]?.name ||
+                                                "Update"}
+                                        </a>
+                                        <span>
+                                            {formatShortDate(post.date)}
+                                        </span>
+                                    </div>
+                                </div>
+                            </article>
+                        ))
+                    }
                 </div>
             </div>
 
             <aside class="right-col">
                 <header class="sidebar-header">
-                <span class="title-accent"></span>
-                <h2>Most Popular</h2>
+                    <span class="title-accent"></span>
+                    <h2>Most Popular</h2>
                 </header>
                 <div class="popular-list">
-                {popularPosts.map((post: any) => (
-                    <article class="popular-item">
-                        <h3 class="sub-title"><a href={getRelativeUrl(post.uri)} set:html={post.title} /></h3>
-                        <a href={getCategoryUrl(post.categories?.nodes[0]?.slug)} class="category small-meta hover-red inline-block mt-1">
-                            {post.categories?.nodes[0]?.name || 'Trending'}
-                        </a>
-                    </article>
-                ))}
+                    {
+                        popularPosts.map((post: any) => (
+                            <article class="popular-item">
+                                <h3 class="sub-title">
+                                    <a
+                                        href={getRelativeUrl(post.uri)}
+                                        set:html={post.title}
+                                    />
+                                </h3>
+                                <a
+                                    href={getCategoryUrl(
+                                        post.categories?.nodes[0]?.slug,
+                                    )}
+                                    class="category small-meta hover-red inline-block mt-1"
+                                >
+                                    {post.categories?.nodes[0]?.name ||
+                                        "Trending"}
+                                </a>
+                            </article>
+                        ))
+                    }
                 </div>
             </aside>
         </section>
 
         <header class="section-header mt-lg">
-            <h2 class="section-title"><span class="title-accent"></span> In-Depth</h2>
-            </header>
+            <h2 class="section-title">
+                <span class="title-accent"></span> In-Depth
+            </h2>
+        </header>
 
         <section class="grid-4-cols">
-            {inDepthPosts.map((post: any) => (
-                <article class="grid-card">
-                    <a href={getRelativeUrl(post.uri)} class="grid-img-wrap">
-                        {post.featuredImage?.node?.sourceUrl ? (
-                            <img 
-                                src={cleanImageUrl(post.featuredImage.node.sourceUrl)} 
-                                srcset={cleanSrcSet(post.featuredImage.node.srcSet)}
-                                sizes="(max-width: 768px) 100vw, 380px"
-                                alt={post.title} 
-                                loading="lazy" 
-                                referrerpolicy="no-referrer" 
+            {
+                inDepthPosts.map((post: any) => (
+                    <article class="grid-card">
+                        <a
+                            href={getRelativeUrl(post.uri)}
+                            class="grid-img-wrap"
+                        >
+                            {post.featuredImage?.node?.sourceUrl ? (
+                                <img
+                                    src={cleanImageUrl(
+                                        post.featuredImage.node.sourceUrl,
+                                    )}
+                                    srcset={cleanSrcSet(
+                                        post.featuredImage.node.srcSet,
+                                    )}
+                                    sizes="(max-width: 768px) 100vw, 380px"
+                                    alt={post.title}
+                                    loading="lazy"
+                                    referrerpolicy="no-referrer"
+                                />
+                            ) : (
+                                <div
+                                    class="placeholder-img"
+                                    style="width: 100%; height: 100%; background: #e5e7eb;"
+                                />
+                            )}
+                        </a>
+                        <h3 class="sub-title">
+                            <a
+                                href={getRelativeUrl(post.uri)}
+                                set:html={post.title}
                             />
-                        ) : (
-                            <div class="placeholder-img" style="width: 100%; height: 100%; background: #e5e7eb;"></div>
-                        )}
-                    </a>
-                    <h3 class="sub-title"><a href={getRelativeUrl(post.uri)} set:html={post.title} /></h3>
-                    <a href={getCategoryUrl(post.categories?.nodes[0]?.slug)} class="category small-meta hover-red mt-1">
-                        {post.categories?.nodes[0]?.name || 'Feature'}
-                    </a>
-                </article>
-            ))}
+                        </h3>
+                        <a
+                            href={getCategoryUrl(
+                                post.categories?.nodes[0]?.slug,
+                            )}
+                            class="category small-meta hover-red mt-1"
+                        >
+                            {post.categories?.nodes[0]?.name || "Feature"}
+                        </a>
+                    </article>
+                ))
+            }
         </section>
 
         <section class="promo-banner">
-            <h2><span>$5m+</span> in bonuses claimed by <span>200K+</span><br/> monthly readers - and counting.</h2>
+            <h2>
+                <span>$5m+</span> in bonuses claimed by <span>200K+</span><br />
+                monthly readers - and counting.
+            </h2>
             <a href="/casino-bonuses/" class="btn-dark">Claim Bonus &rarr;</a>
         </section>
 
         <header class="section-header mt-lg">
-            <h2 class="section-title"><span class="title-accent"></span> More News</h2>
+            <h2 class="section-title">
+                <span class="title-accent"></span> More News
+            </h2>
         </header>
 
         <section class="layout-main">
             <div class="left-col flex-col-gap">
-                {moreNewsPosts.slice(0, 3).map((post: any) => (
-                <article class="sub-article-large">
-                    <a href={getRelativeUrl(post.uri)} class="img-wrap-large">
-                        {post.featuredImage?.node?.sourceUrl ? (
-                            <img 
-                                src={cleanImageUrl(post.featuredImage.node.sourceUrl)} 
-                                srcset={cleanSrcSet(post.featuredImage.node.srcSet)}
-                                sizes="(max-width: 640px) 100vw, 200px"
-                                alt="Thumbnail" 
-                                loading="lazy" 
-                                referrerpolicy="no-referrer" 
-                            />
-                        ) : (
-                            <div class="placeholder-img" style="width: 100%; height: 100%; background: #e5e7eb;"></div>
-                        )}
-                    </a>
-                    <div class="sub-content">
-                        <h3 class="sub-title-large"><a href={getRelativeUrl(post.uri)} set:html={post.title} /></h3>
-                        <div class="meta small-meta">
-                            <a href={getCategoryUrl(post.categories?.nodes[0]?.slug)} class="category hover-red">
-                                {post.categories?.nodes[0]?.name || 'News'}
+                {
+                    moreNewsPosts.slice(0, 3).map((post: any) => (
+                        <article class="sub-article-large">
+                            <a
+                                href={getRelativeUrl(post.uri)}
+                                class="img-wrap-large"
+                            >
+                                {post.featuredImage?.node?.sourceUrl ? (
+                                    <img
+                                        src={cleanImageUrl(
+                                            post.featuredImage.node.sourceUrl,
+                                        )}
+                                        srcset={cleanSrcSet(
+                                            post.featuredImage.node.srcSet,
+                                        )}
+                                        sizes="(max-width: 640px) 100vw, 200px"
+                                        alt="Thumbnail"
+                                        loading="lazy"
+                                        referrerpolicy="no-referrer"
+                                    />
+                                ) : (
+                                    <div
+                                        class="placeholder-img"
+                                        style="width: 100%; height: 100%; background: #e5e7eb;"
+                                    />
+                                )}
                             </a>
-                            <span>{formatShortDate(post.date)}</span>
-                            <span>•</span>
-                            <a href={`/about-us/${createAuthorSlug(post.author?.node?.name)}/`} class="hover-red" style="text-transform: uppercase;">
-                                {post.author?.node?.name || 'Editorial Team'}
-                            </a>
-                        </div>
-                        <div class="excerpt-small" set:html={stripWp(post.excerpt)} />
-                    </div>
-                </article>
-                ))}
+                            <div class="sub-content">
+                                <h3 class="sub-title-large">
+                                    <a
+                                        href={getRelativeUrl(post.uri)}
+                                        set:html={post.title}
+                                    />
+                                </h3>
+                                <div class="meta small-meta">
+                                    <a
+                                        href={getCategoryUrl(
+                                            post.categories?.nodes[0]?.slug,
+                                        )}
+                                        class="category hover-red"
+                                    >
+                                        {post.categories?.nodes[0]?.name ||
+                                            "News"}
+                                    </a>
+                                    <span>{formatShortDate(post.date)}</span>
+                                    <span>•</span>
+                                    <a
+                                        href={`/about-us/${createAuthorSlug(post.author?.node?.name)}/`}
+                                        class="hover-red"
+                                        style="text-transform: uppercase;"
+                                    >
+                                        {post.author?.node?.name ||
+                                            "Editorial Team"}
+                                    </a>
+                                </div>
+                                <div
+                                    class="excerpt-small"
+                                    set:html={stripWp(post.excerpt)}
+                                />
+                            </div>
+                        </article>
+                    ))
+                }
             </div>
             <div class="right-col grid-2-cols">
-                {moreNewsPosts.slice(3, 7).map((post: any) => (
-                    <article class="grid-card">
-                        <a href={getRelativeUrl(post.uri)} class="grid-img-wrap">
-                            {post.featuredImage?.node?.sourceUrl ? (
-                                <img 
-                                    src={cleanImageUrl(post.featuredImage.node.sourceUrl)} 
-                                    srcset={cleanSrcSet(post.featuredImage.node.srcSet)}
-                                    sizes="(max-width: 768px) 100vw, 380px"
-                                    alt="" 
-                                    loading="lazy" 
-                                    referrerpolicy="no-referrer" 
+                {
+                    moreNewsPosts.slice(3, 7).map((post: any) => (
+                        <article class="grid-card">
+                            <a
+                                href={getRelativeUrl(post.uri)}
+                                class="grid-img-wrap"
+                            >
+                                {post.featuredImage?.node?.sourceUrl ? (
+                                    <img
+                                        src={cleanImageUrl(
+                                            post.featuredImage.node.sourceUrl,
+                                        )}
+                                        srcset={cleanSrcSet(
+                                            post.featuredImage.node.srcSet,
+                                        )}
+                                        sizes="(max-width: 768px) 100vw, 380px"
+                                        alt=""
+                                        loading="lazy"
+                                        referrerpolicy="no-referrer"
+                                    />
+                                ) : (
+                                    <div
+                                        class="placeholder-img"
+                                        style="width: 100%; height: 100%; background: #e5e7eb;"
+                                    />
+                                )}
+                            </a>
+                            <h3 class="sub-title">
+                                <a
+                                    href={getRelativeUrl(post.uri)}
+                                    set:html={post.title}
                                 />
-                            ) : (
-                                <div class="placeholder-img" style="width: 100%; height: 100%; background: #e5e7eb;"></div>
-                            )}
-                        </a>
-                        <h3 class="sub-title"><a href={getRelativeUrl(post.uri)} set:html={post.title} /></h3>
-                        <a href={getCategoryUrl(post.categories?.nodes[0]?.slug)} class="category small-meta hover-red mt-1">
-                            {post.categories?.nodes[0]?.name || 'Report'}
-                        </a>
-                    </article>
-                ))}
+                            </h3>
+                            <a
+                                href={getCategoryUrl(
+                                    post.categories?.nodes[0]?.slug,
+                                )}
+                                class="category small-meta hover-red mt-1"
+                            >
+                                {post.categories?.nodes[0]?.name || "Report"}
+                            </a>
+                        </article>
+                    ))
+                }
             </div>
         </section>
 
         <div class="divider mt-xl"></div>
         <header class="section-header">
-            <h2 class="section-title"><span class="title-accent"></span> GUIDES</h2>
+            <h2 class="section-title">
+                <span class="title-accent"></span> GUIDES
+            </h2>
             <div class="nav-arrows">
                 <a href="/betting-systems/" class="more-link">More &rarr;</a>
-                </div>
+            </div>
         </header>
 
         <div class="tab-filters-small">
             <button class="active">Top Picks</button>
-            </div>
+        </div>
 
         <section class="guides-grid">
-            {guidePosts.map((guide: any) => (
-                <a href={getRelativeUrl(guide.uri)} class="guide-card group-hover-wrap">
-                    {guide.featuredImage?.node?.sourceUrl ? (
-                        <img 
-                            src={cleanImageUrl(guide.featuredImage.node.sourceUrl)} 
-                            srcset={cleanSrcSet(guide.featuredImage.node.srcSet)}
-                            sizes="(max-width: 768px) 100vw, 400px"
-                            alt={guide.title} 
-                            loading="lazy" 
-                        />
-                    ) : (
-                        <div style="position: absolute; inset: 0; background: #222;"></div>
-                    )}
-                    <div class="guide-content">
-                        <h3 class="guide-title" set:html={guide.title} />
-                        <div class="guide-meta">
-                            <span>{guide.categories?.nodes[0]?.name || 'GUIDE'}</span> • {guide.author?.node?.name || 'Editorial'}
+            {
+                manualGuides.map((guide: any) => (
+                    <a
+                        href={guide.uri}
+                        class="guide-card group-hover-wrap"
+                        style={`--accent: ${guide.color};`}
+                    >
+                        <div class="guide-placeholder">
+                            <span class="guide-icon">{guide.icon}</span>
                         </div>
-                    </div>
-                </a>
-            ))}
+                        <div class="guide-content">
+                            <h3 class="guide-title" set:html={guide.title} />
+                            <div class="guide-meta">
+                                <span>GUIDE</span> • Editorial
+                            </div>
+                        </div>
+                    </a>
+                ))
+            }
         </section>
 
         <div class="divider mt-xl"></div>
         <header class="section-header no-border">
             <div class="header-text-block">
-                <h2 class="section-title"><span class="title-accent"></span> Q&As</h2>
-                <p class="section-subtitle">Our experts' answers to the most common gambling questions, helping you stay informed.</p>
+                <h2 class="section-title">
+                    <span class="title-accent"></span> Q&As
+                </h2>
+                <p class="section-subtitle">
+                    Our experts' answers to the most common gambling questions,
+                    helping you stay informed.
+                </p>
             </div>
             <div class="nav-arrows">
                 <a href="/faq/" class="more-link">More &rarr;</a>
-                </div>
+            </div>
         </header>
 
         <div class="tab-filters-pill mb-md">
             <button class="active">All Q&As</button>
-            </div>
+        </div>
 
         <section class="qa-grid">
-            {qaPosts.map((qa: any) => (
-                <a href={getRelativeUrl(qa.uri)} class="qa-card group-hover-wrap block-link">
-                    <div class="qa-text">
-                        <h3 class="qa-q"><span class="qa-label">Q:</span> <span set:html={qa.title} /></h3>
-                        <p class="qa-a"><span class="qa-label a-label">A:</span> {stripHtml(qa.excerpt)}</p>
-                    </div>
-                    <button class="qa-btn">Full Answer</button>
-                </a>
-            ))}
+            {
+                manualFaqs.map((qa: any) => (
+                    <a
+                        href={getRelativeUrl(qa.uri)}
+                        class="qa-card group-hover-wrap block-link"
+                    >
+                        <div class="qa-text">
+                            <h3 class="qa-q">
+                                <span class="qa-label">Q:</span>{" "}
+                                <span set:html={qa.title} />
+                            </h3>
+                            <p class="qa-a">
+                                <span class="qa-label a-label">A:</span>{" "}
+                                {stripHtml(qa.excerpt)}
+                            </p>
+                        </div>
+                        <button class="qa-btn">Full Answer</button>
+                    </a>
+                ))
+            }
         </section>
 
         <div class="divider mt-xl"></div>
         <header class="section-header no-border">
             <div class="header-text-block">
-                <h2 class="section-title"><span class="title-accent"></span> ABOUT</h2>
-                <p class="section-subtitle">Industry-leading expertise from trusted, independent voices.</p>
+                <h2 class="section-title">
+                    <span class="title-accent"></span> ABOUT
+                </h2>
+                <p class="section-subtitle">
+                    Industry-leading expertise from trusted, independent voices.
+                </p>
             </div>
             <a href="/about-us/" class="more-link mt-auto">More &rarr;</a>
         </header>
 
         <section class="team-grid">
-            {teamMembers.map((member: any) => {
-                const displayName = member.firstName && member.lastName 
-                    ? `${member.firstName} ${member.lastName}` 
-                    : member.name || "Editorial Team";
-                
-                // 1. Generate the slug from the displayed name
-                const authorSlug = createAuthorSlug(displayName);
-                const avatar = stripWp(member.avatar?.url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=e5e7eb&color=111`;
-                
-                return (
-                    <a href={`/about-us/${authorSlug}/`} class="team-card group-hover-wrap">
-                        <div class="team-img-wrap">
-                            <img src={avatar} alt={displayName} loading="lazy" />
-                        </div>
-                        <div class="team-info">
-                            <h3 class="team-name">{displayName}</h3>
-                            <div class="team-role" set:html={stripWp(member.description) || "Expert Contributor"} />
-                        </div>
-                    </a>
-                )
-            })}
-        </section>
+            {
+                teamMembers.map((member: any) => {
+                    const displayName =
+                        member.firstName && member.lastName
+                            ? `${member.firstName} ${member.lastName}`
+                            : member.name || "Editorial Team"
 
+                    // 1. Generate the slug from the displayed name
+                    const authorSlug = createAuthorSlug(displayName)
+                    const avatar =
+                        stripWp(member.avatar?.url) ||
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=e5e7eb&color=111`
+
+                    return (
+                        <a
+                            href={`/about-us/${authorSlug}/`}
+                            class="team-card group-hover-wrap"
+                        >
+                            <div class="team-img-wrap">
+                                <img
+                                    src={avatar}
+                                    alt={displayName}
+                                    loading="lazy"
+                                />
+                            </div>
+                            <div class="team-info">
+                                <h3 class="team-name">{displayName}</h3>
+                                <div
+                                    class="team-role"
+                                    set:html={
+                                        stripWp(member.description) ||
+                                        "Expert Contributor"
+                                    }
+                                />
+                            </div>
+                        </a>
+                    )
+                })
+            }
+        </section>
     </main>
 </Layout>
 
 <style>
-  /* ========================================================
+    /* ========================================================
      NEWS PORTAL CSS (No Tailwind, completely isolated)
      ======================================================== */
-  .news-portal-container {
-    max-width: 1280px;
-    margin: 2rem auto 4rem auto;
-    padding: 0 1rem;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    color: #111827;
-  }
+    .news-portal-container {
+        max-width: 1280px;
+        margin: 2rem auto 4rem auto;
+        padding: 0 1rem;
+        font-family:
+            system-ui,
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            Roboto,
+            sans-serif;
+        color: #111827;
+    }
 
-  .news-portal-container a { text-decoration: none; color: inherit; transition: color 0.2s; }
-  .news-portal-container a.hover-red:hover { color: #dc2626; }
-  .news-portal-container button { font-family: inherit; cursor: pointer; border: none; background: none; }
-
-  /* Utility helpers */
-  .inline-block { display: inline-block; }
-  .block-link { display: flex; text-decoration: none; color: inherit; }
-  .mt-1 { margin-top: 0.25rem; }
-
-  /* NAVIGATION */
-  .nav-filters {
-    display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 1rem; border-bottom: 1px solid #e5e7eb; margin-bottom: 2.5rem;
-    -ms-overflow-style: none; scrollbar-width: none;  
-  }
-  .nav-filters::-webkit-scrollbar { display: none; }
-  .nav-btn { padding: 0.375rem 1rem; border-radius: 999px; border: 1px solid #d1d5db; font-size: 0.875rem; white-space: nowrap; font-weight: 500; }
-  .nav-btn.active { background: #dc2626; color: white; border-color: #dc2626; }
-  .nav-btn:not(.active):hover { background: #f3f4f6; }
-
-  /* SECTION HEADERS */
-  .section-header, .sidebar-header { display: flex; align-items: flex-end; border-bottom: 2px solid #f3f4f6; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
-  .section-header.no-border { border-bottom: none; padding-bottom: 0; }
-  .section-header { justify-content: space-between; }
-  .sidebar-header { gap: 0.5rem; }
-  .mt-lg { margin-top: 4rem; }
-  .mt-xl { margin-top: 5rem; }
-  .mb-md { margin-bottom: 2rem; }
-  .mt-auto { margin-top: auto; }
-  
-  .section-title, .sidebar-header h2 { font-size: 1.25rem; font-weight: 800; text-transform: uppercase; margin: 0; display: flex; align-items: center; gap: 0.5rem; }
-  .title-accent { width: 16px; height: 4px; background-color: #dc2626; display: inline-block; }
-  .section-subtitle { margin: 0.5rem 0 0 0; font-size: 0.95rem; color: #4b5563; }
-  .more-link { color: #dc2626; font-size: 0.875rem; font-weight: bold; white-space: nowrap; }
-  .more-link:hover { text-decoration: underline; }
-  .divider { width: 100%; height: 1px; background: #e5e7eb; margin-bottom: 2rem; }
-  
-  .nav-arrows { display: flex; align-items: center; gap: 0.75rem; }
-  .nav-arrows button { border: 1px solid #d1d5db; background: white; font-size: 1.2rem; line-height: 1; padding: 0 0.4rem 0.2rem 0.4rem; border-radius: 4px; color: #4b5563; }
-  .nav-arrows button:hover { background: #f3f4f6; color: #dc2626; }
-
-  /* TABS */
-  .tab-filters-small, .tab-filters-pill { display: flex; gap: 0.5rem; overflow-x: auto; margin-bottom: 1.5rem; -ms-overflow-style: none; scrollbar-width: none; }
-  .tab-filters-small::-webkit-scrollbar, .tab-filters-pill::-webkit-scrollbar { display: none; }
-  .tab-filters-small button { padding: 0.25rem 1rem; border-radius: 999px; border: 1px solid #e5e7eb; font-size: 0.8rem; font-weight: 600; background: white; color: #4b5563; }
-  .tab-filters-small button.active { background: #dc2626; color: white; border-color: #dc2626; }
-  .tab-filters-pill { padding-bottom: 1rem; border-bottom: 1px solid #e5e7eb; }
-  .tab-filters-pill button { padding: 0.4rem 1.2rem; border-radius: 999px; border: 1px solid #d1d5db; font-size: 0.875rem; font-weight: 600; background: white; color: #4b5563; }
-  .tab-filters-pill button.active { background: #dc2626; color: white; border-color: #dc2626; }
-
-  /* LAYOUT GRIDS */
-  .layout-main { display: grid; grid-template-columns: 1fr; gap: 2rem; margin-bottom: 3rem; }
-  @media (min-width: 1024px) { .layout-main { grid-template-columns: 2fr 1fr; gap: 3rem; } .right-col { border-left: 1px solid #e5e7eb; padding-left: 2rem; } }
-  .grid-4-cols { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 3rem; }
-  @media (min-width: 640px) { .grid-4-cols { grid-template-columns: repeat(2, 1fr); } }
-  @media (min-width: 1024px) { .grid-4-cols { grid-template-columns: repeat(4, 1fr); } }
-  .grid-2-cols { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
-  @media (min-width: 640px) { .grid-2-cols { grid-template-columns: repeat(2, 1fr); } }
-  .flex-col-gap { display: flex; flex-direction: column; gap: 2rem; }
-
-  /* MAIN ARTICLE */
-  .image-wrapper { width: 100%; height: auto; position: relative; border-radius: 6px; overflow: hidden; margin-bottom: 1rem; background: #f3f4f6; }
-  .image-wrapper img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
-  .image-wrapper-link:hover .image-wrapper img { transform: scale(1.05); }
-  .badge-breaking { position: absolute; bottom: 1rem; left: 0; background: black; color: white; padding: 0.25rem 0.75rem; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
-
-  .article-title { font-size: clamp(1.75rem, 3vw, 2.5rem); font-weight: 800; line-height: 1.2; margin: 0 0 0.5rem 0; }
-  .article-title a:hover, .sub-title a:hover, .sub-title-large a:hover { color: #dc2626; }
-  
-  .meta { font-size: 0.75rem; font-weight: bold; color: #6b7280; text-transform: uppercase; display: flex; gap: 0.5rem; margin-bottom: 1rem; }
-  .category { color: #dc2626; }
-  .excerpt { color: #4b5563; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-  .excerpt-small { color: #4b5563; font-size: 0.875rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 0.5rem; }
-
-  /* SUB POSTS */
-  .sub-posts-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e5e7eb; }
-  @media (min-width: 768px) { .sub-posts-grid { grid-template-columns: 1fr 1fr; } }
-  .sub-article { display: flex; gap: 1rem; align-items: center; }
-  .sub-article-large { display: flex; gap: 1rem; flex-direction: column;}
-  @media (min-width: 640px) { .sub-article-large { flex-direction: row; align-items: flex-start; } }
-  
-  .sub-img { width: 96px; height: 96px; border-radius: 6px; object-fit: cover; flex-shrink: 0; transition: transform 0.3s; }
-  .sub-article a:hover .sub-img { transform: scale(1.05); }
-  
-  .img-wrap-large { width: 100%; height: 140px; border-radius: 6px; overflow: hidden; flex-shrink: 0; }
-  @media (min-width: 640px) { .img-wrap-large { width: 200px; height: 120px; } }
-  .img-wrap-large img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
-  .img-wrap-large:hover img { transform: scale(1.05); }
-
-  .sub-content { display: flex; flex-direction: column; justify-content: center; }
-  .sub-title { font-size: 0.875rem; font-weight: 700; margin: 0 0 0.25rem 0; line-height: 1.3; }
-  .sub-title-large { font-size: 1rem; font-weight: 800; margin: 0 0 0.25rem 0; line-height: 1.3; }
-  .small-meta { font-size: 0.65rem; margin-bottom: 0.25rem; }
-
-  /* GRID CARDS */
-  .grid-card { display: flex; flex-direction: column; }
-  .grid-img-wrap { width: 100%; height: 150px; border-radius: 6px; overflow: hidden; margin-bottom: 0.75rem; background: #f3f4f6; display: block; }
-  .grid-img-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
-  .grid-img-wrap:hover img { transform: scale(1.05); }
-
-  /* SIDEBAR POPULAR */
-  .popular-list { display: flex; flex-direction: column; }
-  .popular-item { padding: 1rem 0; border-bottom: 1px solid #e5e7eb; }
-  .popular-item:last-child { border-bottom: none; }
-
-  /* PROMO BANNER */
-  .promo-banner { background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 3rem 1rem; text-align: center; margin: 4rem 0; background-image: url('https://www.transparenttextures.com/patterns/cubes.png'); }
-  .promo-banner h2 { font-size: clamp(1.5rem, 2vw, 2rem); font-style: italic; margin: 0 0 1.5rem 0; }
-  .promo-banner h2 span { color: #dc2626; }
-  .btn-dark { display: inline-block; background: #111; color: white !important; padding: 0.75rem 2rem; font-weight: bold; border-radius: 4px; }
-  .btn-dark:hover { background: #333; }
-
-  /* ================= GUIDES GRID ================= */
-  .guides-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
-  .guide-card {
-    position: relative; height: 340px; background: #111; display: flex; align-items: flex-end; padding: 1.5rem;
-    color: white; overflow: hidden; cursor: pointer; text-decoration: none;
-  }
-  .guide-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; transition: transform 0.4s ease; }
-  .guide-card:hover img { transform: scale(1.05); }
-  .guide-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0) 100%); z-index: 1; }
-  .guide-content { position: relative; z-index: 2; width: 100%; }
-  .guide-title {
-    font-size: 1.25rem; font-weight: 800; line-height: 1.2; margin: 0 0 0.75rem 0;
-    border-left: 4px solid #dc2626; padding-left: 0.75rem; color: white;
-  }
-  .guide-card:hover .guide-title { color: #fca5a5; transition: color 0.2s; }
-  .guide-meta { font-size: 0.75rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; }
-  .guide-meta span { color: white; font-weight: 800; }
-
-  /* ================= Q&A GRID ================= */
-  .qa-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; }
-  .qa-card {
-    border: 1px solid #e5e7eb; border-radius: 6px; padding: 1.25rem; background: #fcfcfc;
-    justify-content: space-between; align-items: center; gap: 1.5rem;
-    transition: box-shadow 0.2s ease, border-color 0.2s; cursor: pointer;
-  }
-  .qa-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-color: #d1d5db; }
-  .qa-text { flex: 1; }
-  .qa-label { color: #111; font-weight: 800; margin-right: 0.25rem; }
-  .a-label { color: #9ca3af; font-weight: 600; }
-  .qa-q { font-size: 0.95rem; font-weight: 700; margin: 0 0 0.5rem 0; line-height: 1.4; color: #111827; transition: color 0.2s; }
-  .qa-card:hover .qa-q { color: #dc2626; }
-  .qa-a { font-size: 0.85rem; color: #6b7280; margin: 0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .qa-btn {
-    flex-shrink: 0; border: 1px solid #dc2626; color: #dc2626; background: transparent; font-weight: 700;
-    font-size: 0.8rem; padding: 0.4rem 0.8rem; border-radius: 4px; transition: all 0.2s;
-  }
-  .qa-card:hover .qa-btn { background: #dc2626; color: white; }
-
-  /* ================= ABOUT TEAM GRID (WITH SCROLLBAR) ================= */
-  .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
-  .team-card {
-    border: 1px solid #e5e7eb; background-color: #ffffff; text-decoration: none;
-    background-image: linear-gradient(#f3f4f6 1px, transparent 1px), linear-gradient(90deg, #f3f4f6 1px, transparent 1px); background-size: 20px 20px;
-    display: flex; height: 160px; overflow: hidden; transition: box-shadow 0.2s;
-  }
-  .team-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-  .team-img-wrap { width: 100px; position: relative; overflow: hidden; flex-shrink: 0; }
-  .team-img-wrap::before {
-    content: ''; position: absolute; inset: 0; background: #dc2626; z-index: 1;
-    clip-path: polygon(0 60%, 100% 100%, 0 100%); transition: all 0.3s ease;
-  }
-  .team-card:hover .team-img-wrap::before { clip-path: polygon(0 40%, 100% 100%, 0 100%); }
-  .team-img-wrap img {
-    width: 100%; height: 100%; object-fit: cover; position: relative; z-index: 0;
-    filter: grayscale(100%) contrast(120%); transition: transform 0.3s;
-  }
-  .team-card:hover .team-img-wrap img { transform: scale(1.05); }
-
-  .team-info { 
-    padding: 1rem 0.5rem 1rem 1rem; 
-    display: flex; flex-direction: column; justify-content: flex-start; 
-    flex: 1; background: rgba(255,255,255,0.85); backdrop-filter: blur(2px);
-    overflow-y: auto; 
-  }
-  .team-info::-webkit-scrollbar { width: 5px; }
-  .team-info::-webkit-scrollbar-track { background: transparent; }
-  .team-info::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
-  .team-info::-webkit-scrollbar-thumb:hover { background: #dc2626; }
-
-  .team-name {
-    font-size: 1rem; font-weight: 800; color: #111; margin: 0 0 0.4rem 0; transition: color 0.2s;
-    border-bottom: 2px solid #111; padding-bottom: 0.4rem; display: inline-block; width: max-content;
-  }
-  .team-card:hover .team-name { color: #dc2626; border-color: #dc2626; }
-  .team-role { font-size: 0.85rem; font-style: italic; color: #4b5563; line-height: 1.4; }
-  .team-role p { margin: 0 0 0.5rem 0; }
-
-  a.nav-btn.active {
-    color: #fff !important;
+/* Container styling for the 4-column layout */
+.guides-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
+
+/* Force Light Theme Card Styling */
+.guide-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1.5rem;
+  background-color: #ffffff !important; /* Forces light mode background */
+  border: 1px solid #e5e7eb; /* Light gray outline */
+  border-radius: 12px;
+  text-decoration: none;
+  border-top: 4px solid var(--accent); /* Uses inline style variable */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Soft shadow */
+  min-height: 160px;
+}
+
+.guide-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); /* Slightly stronger shadow on hover */
+}
+
+/* Position the emoji icon at the top right like in the image */
+.guide-placeholder {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  font-size: 1.5rem;
+}
+
+/* Content styling with the left accent line */
+.guide-content {
+  border-left: 3px solid var(--accent); /* Colored line next to text */
+  padding-left: 1rem;
+  margin-top: 1rem; 
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+/* Force dark text for readability */
+.guide-title {
+  font-size: 1.125rem;
+  font-weight: 800;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.4;
+  color: #111827 !important; /* Dark gray/black title */
+}
+
+.guide-meta {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280 !important; /* Medium gray meta text */
+  font-weight: 700;
+}
+
+/* Responsive Rules: Collapses columns on smaller screens */
+@media (max-width: 1024px) {
+  .guides-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .guides-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+    .news-portal-container a {
+        text-decoration: none;
+        color: inherit;
+        transition: color 0.2s;
+    }
+    .news-portal-container a.hover-red:hover {
+        color: #dc2626;
+    }
+    .news-portal-container button {
+        font-family: inherit;
+        cursor: pointer;
+        border: none;
+        background: none;
+    }
+
+    /* Utility helpers */
+    .inline-block {
+        display: inline-block;
+    }
+    .block-link {
+        display: flex;
+        text-decoration: none;
+        color: inherit;
+    }
+    .mt-1 {
+        margin-top: 0.25rem;
+    }
+
+    /* NAVIGATION */
+    .nav-filters {
+        display: flex;
+        gap: 0.5rem;
+        overflow-x: auto;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 2.5rem;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .nav-filters::-webkit-scrollbar {
+        display: none;
+    }
+    .nav-btn {
+        padding: 0.375rem 1rem;
+        border-radius: 999px;
+        border: 1px solid #d1d5db;
+        font-size: 0.875rem;
+        white-space: nowrap;
+        font-weight: 500;
+    }
+    .nav-btn.active {
+        background: #dc2626;
+        color: white;
+        border-color: #dc2626;
+    }
+    .nav-btn:not(.active):hover {
+        background: #f3f4f6;
+    }
+
+    /* SECTION HEADERS */
+    .section-header,
+    .sidebar-header {
+        display: flex;
+        align-items: flex-end;
+        border-bottom: 2px solid #f3f4f6;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .section-header.no-border {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    .section-header {
+        justify-content: space-between;
+    }
+    .sidebar-header {
+        gap: 0.5rem;
+    }
+    .mt-lg {
+        margin-top: 4rem;
+    }
+    .mt-xl {
+        margin-top: 5rem;
+    }
+    .mb-md {
+        margin-bottom: 2rem;
+    }
+    .mt-auto {
+        margin-top: auto;
+    }
+
+    .section-title,
+    .sidebar-header h2 {
+        font-size: 1.25rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .title-accent {
+        width: 16px;
+        height: 4px;
+        background-color: #dc2626;
+        display: inline-block;
+    }
+    .section-subtitle {
+        margin: 0.5rem 0 0 0;
+        font-size: 0.95rem;
+        color: #4b5563;
+    }
+    .more-link {
+        color: #dc2626;
+        font-size: 0.875rem;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+    .more-link:hover {
+        text-decoration: underline;
+    }
+    .divider {
+        width: 100%;
+        height: 1px;
+        background: #e5e7eb;
+        margin-bottom: 2rem;
+    }
+
+    .nav-arrows {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .nav-arrows button {
+        border: 1px solid #d1d5db;
+        background: white;
+        font-size: 1.2rem;
+        line-height: 1;
+        padding: 0 0.4rem 0.2rem 0.4rem;
+        border-radius: 4px;
+        color: #4b5563;
+    }
+    .nav-arrows button:hover {
+        background: #f3f4f6;
+        color: #dc2626;
+    }
+
+    /* TABS */
+    .tab-filters-small,
+    .tab-filters-pill {
+        display: flex;
+        gap: 0.5rem;
+        overflow-x: auto;
+        margin-bottom: 1.5rem;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .tab-filters-small::-webkit-scrollbar,
+    .tab-filters-pill::-webkit-scrollbar {
+        display: none;
+    }
+    .tab-filters-small button {
+        padding: 0.25rem 1rem;
+        border-radius: 999px;
+        border: 1px solid #e5e7eb;
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: white;
+        color: #4b5563;
+    }
+    .tab-filters-small button.active {
+        background: #dc2626;
+        color: white;
+        border-color: #dc2626;
+    }
+    .tab-filters-pill {
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .tab-filters-pill button {
+        padding: 0.4rem 1.2rem;
+        border-radius: 999px;
+        border: 1px solid #d1d5db;
+        font-size: 0.875rem;
+        font-weight: 600;
+        background: white;
+        color: #4b5563;
+    }
+    .tab-filters-pill button.active {
+        background: #dc2626;
+        color: white;
+        border-color: #dc2626;
+    }
+
+    /* LAYOUT GRIDS */
+    .layout-main {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+    @media (min-width: 1024px) {
+        .layout-main {
+            grid-template-columns: 2fr 1fr;
+            gap: 3rem;
+        }
+        .right-col {
+            border-left: 1px solid #e5e7eb;
+            padding-left: 2rem;
+        }
+    }
+    .grid-4-cols {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+    @media (min-width: 640px) {
+        .grid-4-cols {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    @media (min-width: 1024px) {
+        .grid-4-cols {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+    .grid-2-cols {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    @media (min-width: 640px) {
+        .grid-2-cols {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    .flex-col-gap {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    /* MAIN ARTICLE */
+    .image-wrapper {
+        width: 100%;
+        height: auto;
+        position: relative;
+        border-radius: 6px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+        background: #f3f4f6;
+    }
+    .image-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    .image-wrapper-link:hover .image-wrapper img {
+        transform: scale(1.05);
+    }
+    .badge-breaking {
+        position: absolute;
+        bottom: 1rem;
+        left: 0;
+        background: black;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .article-title {
+        font-size: clamp(1.75rem, 3vw, 2.5rem);
+        font-weight: 800;
+        line-height: 1.2;
+        margin: 0 0 0.5rem 0;
+    }
+    .article-title a:hover,
+    .sub-title a:hover,
+    .sub-title-large a:hover {
+        color: #dc2626;
+    }
+
+    .meta {
+        font-size: 0.75rem;
+        font-weight: bold;
+        color: #6b7280;
+        text-transform: uppercase;
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    .category {
+        color: #dc2626;
+    }
+    .excerpt {
+        color: #4b5563;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .excerpt-small {
+        color: #4b5563;
+        font-size: 0.875rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin-top: 0.5rem;
+    }
+
+    /* SUB POSTS */
+    .sub-posts-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e5e7eb;
+    }
+    @media (min-width: 768px) {
+        .sub-posts-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+    .sub-article {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    .sub-article-large {
+        display: flex;
+        gap: 1rem;
+        flex-direction: column;
+    }
+    @media (min-width: 640px) {
+        .sub-article-large {
+            flex-direction: row;
+            align-items: flex-start;
+        }
+    }
+
+    .sub-img {
+        width: 96px;
+        height: 96px;
+        border-radius: 6px;
+        object-fit: cover;
+        flex-shrink: 0;
+        transition: transform 0.3s;
+    }
+    .sub-article a:hover .sub-img {
+        transform: scale(1.05);
+    }
+
+    .img-wrap-large {
+        width: 100%;
+        height: 140px;
+        border-radius: 6px;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+    @media (min-width: 640px) {
+        .img-wrap-large {
+            width: 200px;
+            height: 120px;
+        }
+    }
+    .img-wrap-large img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s;
+    }
+    .img-wrap-large:hover img {
+        transform: scale(1.05);
+    }
+
+    .sub-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .sub-title {
+        font-size: 0.875rem;
+        font-weight: 700;
+        margin: 0 0 0.25rem 0;
+        line-height: 1.3;
+    }
+    .sub-title-large {
+        font-size: 1rem;
+        font-weight: 800;
+        margin: 0 0 0.25rem 0;
+        line-height: 1.3;
+    }
+    .small-meta {
+        font-size: 0.65rem;
+        margin-bottom: 0.25rem;
+    }
+
+    /* GRID CARDS */
+    .grid-card {
+        display: flex;
+        flex-direction: column;
+    }
+    .grid-img-wrap {
+        width: 100%;
+        height: 150px;
+        border-radius: 6px;
+        overflow: hidden;
+        margin-bottom: 0.75rem;
+        background: #f3f4f6;
+        display: block;
+    }
+    .grid-img-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s;
+    }
+    .grid-img-wrap:hover img {
+        transform: scale(1.05);
+    }
+
+    /* SIDEBAR POPULAR */
+    .popular-list {
+        display: flex;
+        flex-direction: column;
+    }
+    .popular-item {
+        padding: 1rem 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .popular-item:last-child {
+        border-bottom: none;
+    }
+
+    /* PROMO BANNER */
+    .promo-banner {
+        background-color: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 3rem 1rem;
+        text-align: center;
+        margin: 4rem 0;
+        background-image: url("https://www.transparenttextures.com/patterns/cubes.png");
+    }
+    .promo-banner h2 {
+        font-size: clamp(1.5rem, 2vw, 2rem);
+        font-style: italic;
+        margin: 0 0 1.5rem 0;
+    }
+    .promo-banner h2 span {
+        color: #dc2626;
+    }
+    .btn-dark {
+        display: inline-block;
+        background: #111;
+        color: white !important;
+        padding: 0.75rem 2rem;
+        font-weight: bold;
+        border-radius: 4px;
+    }
+    .btn-dark:hover {
+        background: #333;
+    }
+
+    /* ================= GUIDES GRID ================= */
+    .guides-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+    .guide-card {
+        position: relative;
+        height: 200px;
+        background: #111;
+        display: flex;
+        align-items: flex-end;
+        padding: 1.5rem;
+        color: white;
+        overflow: hidden;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    .guide-card img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 0;
+        transition: transform 0.4s ease;
+    }
+    .guide-card:hover img {
+        transform: scale(1.05);
+    }
+    .guide-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            to top,
+            rgba(0, 0, 0, 0.95) 0%,
+            rgba(0, 0, 0, 0.5) 40%,
+            rgba(0, 0, 0, 0) 100%
+        );
+        z-index: 1;
+    }
+    .guide-content {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+    }
+    .guide-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        line-height: 1.2;
+        margin: 0 0 0.75rem 0;
+        border-left: 4px solid #dc2626;
+        padding-left: 0.75rem;
+        color: white;
+    }
+    .guide-card:hover .guide-title {
+        color: #fca5a5;
+        transition: color 0.2s;
+    }
+    .guide-meta {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #9ca3af;
+        text-transform: uppercase;
+    }
+    .guide-meta span {
+        color: white;
+        font-weight: 800;
+    }
+
+    /* ================= Q&A GRID ================= */
+    .qa-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 1rem;
+    }
+    .qa-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 1.25rem;
+        background: #fcfcfc;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1.5rem;
+        transition:
+            box-shadow 0.2s ease,
+            border-color 0.2s;
+        cursor: pointer;
+    }
+    .qa-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        border-color: #d1d5db;
+    }
+    .qa-text {
+        flex: 1;
+    }
+    .qa-label {
+        color: #111;
+        font-weight: 800;
+        margin-right: 0.25rem;
+    }
+    .a-label {
+        color: #9ca3af;
+        font-weight: 600;
+    }
+    .qa-q {
+        font-size: 0.95rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
+        line-height: 1.4;
+        color: #111827;
+        transition: color 0.2s;
+    }
+    .qa-card:hover .qa-q {
+        color: #dc2626;
+    }
+    .qa-a {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin: 0;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .qa-btn {
+        flex-shrink: 0;
+        border: 1px solid #dc2626;
+        color: #dc2626;
+        background: transparent;
+        font-weight: 700;
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+    .qa-card:hover .qa-btn {
+        background: #dc2626;
+        color: white;
+    }
+
+    /* ================= ABOUT TEAM GRID (WITH SCROLLBAR) ================= */
+    .team-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+    }
+    .team-card {
+        border: 1px solid #e5e7eb;
+        background-color: #ffffff;
+        text-decoration: none;
+        background-image:
+            linear-gradient(#f3f4f6 1px, transparent 1px),
+            linear-gradient(90deg, #f3f4f6 1px, transparent 1px);
+        background-size: 20px 20px;
+        display: flex;
+        height: 160px;
+        overflow: hidden;
+        transition: box-shadow 0.2s;
+    }
+    .team-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    .team-img-wrap {
+        width: 100px;
+        position: relative;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+    .team-img-wrap::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: #dc2626;
+        z-index: 1;
+        clip-path: polygon(0 60%, 100% 100%, 0 100%);
+        transition: all 0.3s ease;
+    }
+    .team-card:hover .team-img-wrap::before {
+        clip-path: polygon(0 40%, 100% 100%, 0 100%);
+    }
+    .team-img-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        position: relative;
+        z-index: 0;
+        filter: grayscale(100%) contrast(120%);
+        transition: transform 0.3s;
+    }
+    .team-card:hover .team-img-wrap img {
+        transform: scale(1.05);
+    }
+
+    .team-info {
+        padding: 1rem 0.5rem 1rem 1rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        flex: 1;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(2px);
+        overflow-y: auto;
+    }
+    .team-info::-webkit-scrollbar {
+        width: 5px;
+    }
+    .team-info::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .team-info::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+        border-radius: 10px;
+    }
+    .team-info::-webkit-scrollbar-thumb:hover {
+        background: #dc2626;
+    }
+
+    .team-name {
+        font-size: 1rem;
+        font-weight: 800;
+        color: #111;
+        margin: 0 0 0.4rem 0;
+        transition: color 0.2s;
+        border-bottom: 2px solid #111;
+        padding-bottom: 0.4rem;
+        display: inline-block;
+        width: max-content;
+    }
+    .team-card:hover .team-name {
+        color: #dc2626;
+        border-color: #dc2626;
+    }
+    .team-role {
+        font-size: 0.85rem;
+        font-style: italic;
+        color: #4b5563;
+        line-height: 1.4;
+    }
+    .team-role p {
+        margin: 0 0 0.5rem 0;
+    }
+
+    a.nav-btn.active {
+        color: #fff !important;
+    }
 </style>
