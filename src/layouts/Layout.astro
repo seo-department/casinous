@@ -11917,6 +11917,74 @@ table td {
     })
 </script>
 
+
+<script is:inline>
+	function scrollToFaqOnCurrentPage(query) {
+		const candidates = document.querySelectorAll(
+			"main h2, main h3, main h4, main strong, main p"
+		);
+
+		let match = null;
+		for (const el of candidates) {
+			const text = (el.textContent || "").trim().toLowerCase();
+			if (text === query || text.includes(query)) {
+				match = el;
+				break;
+			}
+		}
+
+		if (match) {
+			const target = match.closest("h2, h3, h4, p") || match;
+			target.scrollIntoView({ behavior: "smooth", block: "center" });
+			return true;
+		}
+		return false;
+	}
+
+	function initFaqJumpLinks() {
+		document.querySelectorAll(".faq-jump-link").forEach(link => {
+			if (link.dataset.faqBound === "true") return;
+			link.dataset.faqBound = "true";
+
+			link.addEventListener("click", e => {
+				const targetUri = link.getAttribute("data-faq-uri");
+				const question = (link.getAttribute("data-faq-question") || "")
+					.trim()
+					.toLowerCase();
+				const samePage =
+					window.location.pathname.replace(/\/$/, "") ===
+					targetUri.replace(/\/$/, "");
+
+				if (samePage) {
+					// Already on the target page: intercept the click, just scroll, no navigation, no hash
+					e.preventDefault();
+					scrollToFaqOnCurrentPage(question);
+				} else {
+					// Different page: let the normal navigation happen (real href),
+					// then scroll once the new page has loaded, via sessionStorage handoff
+					sessionStorage.setItem("pendingFaqScroll", question);
+					// allow default navigation to proceed (no preventDefault)
+				}
+			});
+		});
+	}
+
+	function checkPendingFaqScroll() {
+		const pending = sessionStorage.getItem("pendingFaqScroll");
+		if (!pending) return;
+		sessionStorage.removeItem("pendingFaqScroll");
+		scrollToFaqOnCurrentPage(pending);
+	}
+
+	function initFaqJump() {
+		initFaqJumpLinks();
+		checkPendingFaqScroll();
+	}
+
+	document.addEventListener("DOMContentLoaded", initFaqJump);
+	document.addEventListener("astro:page-load", initFaqJump);
+</script>
+
 <script is:inline>
     document.addEventListener("click", function (e) {
         // Did we click an FAQ button?

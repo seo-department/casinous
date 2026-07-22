@@ -777,9 +777,11 @@ teamMembers = teamMembers
         <section class="qa-grid">
             {
                 manualFaqs.map((qa: any) => (
-                    <a
-                        href={getRelativeUrl(qa.uri)}
-                        class="qa-card group-hover-wrap block-link"
+                    
+                       <a href={getRelativeUrl(qa.uri)}
+                        data-faq-uri={getRelativeUrl(qa.uri)}
+                        data-faq-question={qa.title}
+                        class="qa-card group-hover-wrap block-link faq-jump-link"
                     >
                         <div class="qa-text">
                             <h3 class="qa-q">
