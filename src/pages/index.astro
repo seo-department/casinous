@@ -213,50 +213,50 @@ const manualGuides = [
     {
         title: "Best Online Casinos USA 2026",
         uri: "/online-casinos/",
-        icon: "🎰",
-        color: "#ff4d4d",
+        image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2025/05/Best-online-casinos-for-US-players.webp",
+        author: "Paige Williams",
     },
     {
         title: "Fastest Payout Casinos Online USA 2026",
         uri: "/fastest-payout-casinos/",
-        icon: "⚡",
-        color: "#facc15",
+        image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2025/03/BetUS-Casino-Reviews.jpg",
+        author: "Alex Harper",
     },
     {
         title: "Best Payout Online Casinos USA",
         uri: "/best-payout-casinos/",
-        icon: "💰",
-        color: "#22c55e",
+        image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2025/04/CUS-paying-online-casinos-1.png",
+        author: "Alex Harper",
     },
     {
         title: "Best Casino Bonuses in the USA",
         uri: "/casino-bonuses/",
-        icon: "🎁",
-        color: "#ec4899",
+        image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2026/06/sun-palace-casino-bonuses.png",
+        author: "Paige Williams",
     },
     {
         title: "Best Real Money Online Slots USA 2026",
         uri: "/online-slots/",
-        icon: "🎲",
-        color: "#8b5cf6",
+        image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2025/04/CasinoUS-Online-Slots.png",
+        author: "Lara Johns",
     },
     {
         title: "Top Online Gambling Sites in the USA",
         uri: "/online-gambling/",
-        icon: "🏆",
-        color: "#f97316",
+        image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2025/03/stage-1.png",
+        author: "Alex Harper",
     },
     {
         title: "Best No Deposit Bonus USA",
         uri: "/no-deposit-bonus/",
-        icon: "🆓",
-        color: "#06b6d4",
+        image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2025/03/no-deposit-promo.png",
+        author: "Paige Williams",
     },
     {
         title: "Honest & Trusted Online Casino Reviews",
         uri: "/casino-reviews/",
-        icon: "⭐",
-        color: "#eab308",
+        image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2025/03/Club-World-Casino-Reviews.jpg",
+        author: "Lara Johns",
     },
 ]
 
@@ -363,6 +363,69 @@ teamMembers = teamMembers
                                     set:html={mainPost.title}
                                 />
                             </h1>
+
+                            <div class="author-meta-box">
+                                <div class="amb-left">
+                                    <img
+                                        src="https://secure.gravatar.com/avatar/6a14bc8cd1f9dccc295508e407cc155adc20c6da88d2ca69ae89d86b917750a9?s=96&d=mm&r=g"
+                                        alt="Kylie Johnston"
+                                        class="amb-avatar"
+                                    />
+                                    <div class="amb-info">
+                                        <span class="amb-name">
+                                            By{" "}
+                                            <strong>
+                                                <a href="/about-us/kylie-johnston/">
+                                                    Kylie Johnston
+                                                </a>
+                                            </strong>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="amb-divider" />
+
+                                <div class="amb-middle">
+                                    <img
+                                        src="https://secure.gravatar.com/avatar/907015fdee956f1b4291ed4c4290571d3b2652adbe40b1938629a7d9b65a8f08?s=96&d=mm&r=g"
+                                        alt="Mason Heaton"
+                                        class="amb-avatar"
+                                    />
+                                    <div class="amb-info">
+                                        <span class="amb-name">
+                                            Reviewed by{" "}
+                                            <strong>
+                                                <a href="/about-us/dave-cooper/">
+                                                    Dave Cooper
+                                                </a>
+                                            </strong>
+                                        </span>
+                                        <span class="amb-role">
+                                            Casino Expert
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="amb-right">
+                                    <a
+                                        href="https://www.facebook.com/people/Casino-US/100092756866754/"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="amb-social facebook"
+                                    >
+                                        <i class="fa-brands fa-facebook-f" />
+                                    </a>
+                                    <a
+                                        href="https://www.instagram.com/realcasino_us/"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="amb-social instagram"
+                                    >
+                                        <i class="fa-brands fa-instagram" />
+                                    </a>
+                                </div>
+                            </div>
+
                             <div class="meta">
                                 <a
                                     href={getCategoryUrl(
@@ -672,18 +735,18 @@ teamMembers = teamMembers
         <section class="guides-grid">
             {
                 manualGuides.map((guide: any) => (
-                    <a
-                        href={guide.uri}
-                        class="guide-card group-hover-wrap"
-                        style={`--accent: ${guide.color};`}
-                    >
-                        <div class="guide-placeholder">
-                            <span class="guide-icon">{guide.icon}</span>
-                        </div>
+                    <a href={guide.uri} class="guide-card group-hover-wrap">
+                        <img
+                            src={guide.image}
+                            alt={guide.title}
+                            class="guide-bg-img"
+                            loading="lazy"
+                            referrerpolicy="no-referrer"
+                        />
                         <div class="guide-content">
                             <h3 class="guide-title" set:html={guide.title} />
                             <div class="guide-meta">
-                                <span>GUIDE</span> • Editorial
+                                <span>CASINO</span> • {guide.author}
                             </div>
                         </div>
                     </a>
@@ -809,159 +872,135 @@ teamMembers = teamMembers
         color: #111827;
     }
 
-.guides-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-    margin: 2rem 0;
-}
-
-.guide-card {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1.2rem;
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-top: 4px solid var(--accent);
-    border-radius: 18px;
-    text-decoration: none;
-    color: #1f2937;
-    transition: .3s ease;
-    box-shadow: 0 8px 24px rgba(15,23,42,.06);
-}
-
-.guide-card:hover {
-    transform: translateY(-6px);
-    border-color: var(--accent);
-    box-shadow: 0 16px 40px rgba(15,23,42,.12);
-}
-
-.guide-placeholder {
-    width: 72px;
-    height: 72px;
-    min-width: 72px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 16px;
-    background: color-mix(in srgb, var(--accent) 12%, white);
-    transition: .3s;
-}
-
-.guide-card:hover .guide-placeholder {
-    background: color-mix(in srgb, var(--accent) 20%, white);
-    transform: scale(1.06);
-}
-
-.guide-icon {
-    font-size: 2rem;
-}
-
-.guide-content {
-    flex: 1;
-}
-
-.guide-title {
-    margin: 0 0 .6rem;
-    font-size: 1.15rem;
-    line-height: 1.4;
-    font-weight: 700;
-    color: #111827;
-    transition: color .3s;
-}
-
-.guide-card:hover .guide-title {
-    color: var(--accent);
-}
-
-.guide-meta {
-    display: flex;
-    align-items: center;
-    gap: .4rem;
-    font-size: .85rem;
-    color: #6b7280;
-    font-weight: 500;
-}
-
-.guide-meta span {
-    display: inline-block;
-    padding: .3rem .7rem;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--accent) 12%, white);
-    color: var(--accent);
-    font-size: .72rem;
-    font-weight: 700;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-}
-
-@media (max-width:768px) {
-    .guides-grid {
-        grid-template-columns: 1fr;
+    
+    /* =========================================
+   AUTHOR META BOX
+========================================= */
+    .author-meta-box {
+        background-color: #1e293b; /* Dark navy slate from image */
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 1.25rem 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
-    .guide-card {
-        padding: 1rem;
+    .amb-left,
+    .amb-middle {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
     }
 
-    .guide-placeholder {
-        width: 60px;
-        height: 60px;
-        min-width: 60px;
+    .amb-avatar {
+        width: 65px;
+        height: 65px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #334155;
     }
 
-    .guide-icon {
-        font-size: 1.6rem;
+    .amb-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        text-align: left;
     }
 
-    .guide-title {
+    .amb-name {
+        color: #94a3b8;
         font-size: 1rem;
     }
-}
 
+    .amb-name a,
+    .amb-name strong {
+        color: #ffffff;
+        font-weight: 700;
+        text-decoration: none;
+    }
 
-.guides-grid .guide-card {
-    background: #ffffff !important;
-    background-image: none !important;
-    color: #222 !important;
-    border: 1px solid #e5e7eb !important;
-    border-top: 4px solid var(--accent) !important;
-    box-shadow: 0 8px 24px rgba(0,0,0,.08) !important;
-}
+    .amb-name a:hover {
+        color: #60a5fa;
+    }
 
-.guides-grid .guide-card:hover {
-    background: #ffffff !important;
-    color: #222 !important;
-    transform: translateY(-6px);
-    box-shadow: 0 18px 40px rgba(0,0,0,.12) !important;
-}
+    .amb-date,
+    .amb-role {
+        color: #94a3b8;
+        font-size: 0.85rem;
+    }
 
-.guides-grid .guide-card::before,
-.guides-grid .guide-card::after {
-    display: none !important;
-}
+    .amb-divider {
+        width: 1px;
+        height: 50px;
+        background-color: #334155;
+    }
 
-.guides-grid .guide-placeholder {
-    background: rgba(0,0,0,.05) !important;
-}
+    .amb-right {
+        display: flex;
+        gap: 0.75rem;
+        margin-left: auto;
+    }
 
-.guides-grid .guide-title {
-    color: #1f2937 !important;
-}
+    .amb-social {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff !important;
+        text-decoration: none;
+        font-size: 1.1rem;
+        transition:
+            transform 0.2s ease,
+            filter 0.2s ease;
+    }
 
-.guides-grid .guide-meta {
-    color: #6b7280 !important;
-}
+    .amb-social:hover {
+        transform: scale(1.1);
+        filter: brightness(1.1);
+    }
 
-.guides-grid .guide-meta span {
-    background: color-mix(in srgb, var(--accent) 15%, white) !important;
-    color: var(--accent) !important;
-}
+    .amb-social.twitter {
+        background-color: #1da1f2;
+    }
+    .amb-social.facebook {
+        background-color: #1877f2;
+    }
+    .amb-social.instagram {
+        background: linear-gradient(
+            45deg,
+            #f09433 0%,
+            #e6683c 25%,
+            #dc2743 50%,
+            #cc2366 75%,
+            #bc1888 100%
+        );
+    }
 
-.guides-grid .guide-icon {
-    filter: none !important;
-}
+    /* Mobile Responsive Author Box */
+    @media (max-width: 900px) {
+        .author-meta-box {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .amb-divider {
+            width: 100%;
+            height: 1px;
+        }
+        .amb-right {
+            margin-left: 0;
+            width: 100%;
+            justify-content: flex-start;
+        }
+    }
+
+    
 
     .news-portal-container a {
         text-decoration: none;
@@ -1156,6 +1195,115 @@ teamMembers = teamMembers
         color: white;
         border-color: #dc2626;
     }
+
+
+    .guides-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+.guide-card {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    text-decoration: none;
+    display: flex;
+    align-items: flex-end;
+    background: #0a0a0a;
+    border-radius: 6px;
+}
+
+
+
+.guide-title {
+    color: #fff;
+    font-size: 1.05rem;
+    font-weight: 800;
+    line-height: 1.3;
+    margin: 0 0 0.5rem 0;
+    padding-left: 0.9rem;
+    border-left: 3px solid #dc2626;
+}
+
+.guide-bg-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100% !important;
+    object-fit: cover;
+    filter: grayscale(100%) contrast(1.1);
+    transition: transform 0.4s ease;
+    z-index: 0;
+}
+
+.guide-card:hover .guide-bg-img {
+    transform: scale(1.06);
+}
+
+/* Diagonal red stripe accent, top-right corner */
+.guide-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 140px;
+    height: 140px;
+    background: repeating-linear-gradient(
+        135deg,
+        #dc2626 0px,
+        #dc2626 18px,
+        transparent 18px,
+        transparent 36px
+    );
+    clip-path: polygon(100% 0, 0 0, 100% 100%);
+    z-index: 1;
+    opacity: 0.9;
+}
+
+/* Dark gradient so text stays readable at the bottom */
+/* Dark gradient so text stays readable at the bottom, image shows through the rest */
+.guide-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgb(30 41 59) 0%, rgb(30 41 59) 22%, transparent 45%);
+    z-index: 1;
+}
+
+.guide-content {
+    position: relative;
+    z-index: 2;
+    padding: 1.25rem 1.25rem 1.5rem;
+    width: 100%;
+}
+
+
+
+.guide-meta {
+    padding-left: 0.9rem;
+    color: #cbd5e1;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.guide-meta span {
+    color: #fff;
+}
+
+@media (max-width: 1024px) {
+    .guides-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .guides-grid {
+        grid-template-columns: 1fr;
+    }
+}
 
     /* LAYOUT GRIDS */
     .layout-main {
@@ -1434,77 +1582,7 @@ teamMembers = teamMembers
         background: #333;
     }
 
-    /* ================= GUIDES GRID ================= */
-    .guides-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1rem;
-    }
-    .guide-card {
-        position: relative;
-        height: 200px;
-        background: #111;
-        display: flex;
-        align-items: flex-end;
-        padding: 1.5rem;
-        color: white;
-        overflow: hidden;
-        cursor: pointer;
-        text-decoration: none;
-    }
-    .guide-card img {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        z-index: 0;
-        transition: transform 0.4s ease;
-    }
-    .guide-card:hover img {
-        transform: scale(1.05);
-    }
-    .guide-card::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(
-            to top,
-            rgba(0, 0, 0, 0.95) 0%,
-            rgba(0, 0, 0, 0.5) 40%,
-            rgba(0, 0, 0, 0) 100%
-        );
-        z-index: 1;
-    }
-    .guide-content {
-        position: relative;
-        z-index: 2;
-        width: 100%;
-    }
-    .guide-title {
-        font-size: 1.25rem;
-        font-weight: 800;
-        line-height: 1.2;
-        margin: 0 0 0.75rem 0;
-        border-left: 4px solid #dc2626;
-        padding-left: 0.75rem;
-        color: white;
-    }
-    .guide-card:hover .guide-title {
-        color: #fca5a5;
-        transition: color 0.2s;
-    }
-    .guide-meta {
-        font-size: 0.75rem;
-        font-weight: 700;
-        color: #9ca3af;
-        text-transform: uppercase;
-    }
-    .guide-meta span {
-        color: white;
-        font-weight: 800;
-    }
-
+    
     /* ================= Q&A GRID ================= */
     .qa-grid {
         display: grid;
