@@ -82,74 +82,76 @@ const pageUrl = `${liveDomain}/online-casinos/`
 
 let yoastSchema = page?.seo?.schema?.raw || undefined
 if (yoastSchema) {
-    yoastSchema = yoastSchema.replaceAll(wpDomain, liveDomain)
+	yoastSchema = yoastSchema.replaceAll(wpDomain, liveDomain)
 
-    try {
-        const schemaObj = JSON.parse(yoastSchema)
+	try {
+		const schemaObj = JSON.parse(yoastSchema)
 
-        // Make sure @graph exists and is an array; if not, wrap what we have
-        if (!Array.isArray(schemaObj["@graph"])) {
-            schemaObj["@graph"] = schemaObj["@type"] ? [schemaObj] : []
-        }
+		// Make sure @graph exists and is an array; if not, wrap what we have
+		if (!Array.isArray(schemaObj["@graph"])) {
+			schemaObj["@graph"] = schemaObj["@type"] ? [schemaObj] : []
+		}
 
-        const graph = schemaObj["@graph"]
-        const existingTypes = graph.map((n: any) => n["@type"])
+		const graph = schemaObj["@graph"]
+		const existingTypes = graph.map((n: any) => n["@type"])
 
-        const extraNodes = [
-            {
-                "@type": "WPHeader",
-                "@id": `${pageUrl}#header`,
-                isPartOf: { "@id": pageUrl },
-            },
-            {
-                "@type": "WPFooter",
-                "@id": `${pageUrl}#footer`,
-                isPartOf: { "@id": pageUrl },
-            },
-            {
-                "@type": "CreativeWork",
-                "@id": `${pageUrl}#creativework`,
-                name: yoastTitle,
-                headline: yoastTitle,
-                description: yoastDesc,
-                url: pageUrl,
-                datePublished: page?.date || undefined,
-                dateModified: page?.modified || page?.date || undefined,
-                isPartOf: { "@id": pageUrl },
-            },
-            // --- NEW: WebPage Schema ---
-            {
-                "@type": "WebPage",
-                "@id": `${pageUrl}#webpage`,
-                url: pageUrl,
-                name: yoastTitle,
-                description: yoastDesc,
-                datePublished: page?.date || undefined,
-                dateModified: page?.modified || page?.date || undefined,
-                isPartOf: { "@id": `${liveDomain}/#website` },
-                inLanguage: "en-US"
-            }
-        ]
+		const extraNodes = [
+			{
+				"@type": "WPHeader",
+				"@id": `${pageUrl}#header`,
+				isPartOf: { "@id": pageUrl },
+			},
+			{
+				"@type": "WPFooter",
+				"@id": `${pageUrl}#footer`,
+				isPartOf: { "@id": pageUrl },
+			},
+			{
+				"@type": "CreativeWork",
+				"@id": `${pageUrl}#creativework`,
+				name: yoastTitle,
+				headline: yoastTitle,
+				description: yoastDesc,
+				url: pageUrl,
+				datePublished: page?.date || undefined,
+				dateModified: page?.modified || page?.date || undefined,
+				isPartOf: { "@id": pageUrl },
+			},
+			// --- NEW: WebPage Schema ---
+			{
+				"@type": "WebPage",
+				"@id": `${pageUrl}#webpage`,
+				url: pageUrl,
+				name: yoastTitle,
+				description: yoastDesc,
+				datePublished: page?.date || undefined,
+				dateModified: page?.modified || page?.date || undefined,
+				isPartOf: { "@id": `${liveDomain}/#website` },
+				inLanguage: "en-US",
+			},
+		]
 
-        for (const node of extraNodes) {
-            const existingIndex = graph.findIndex((n: any) => n["@type"] === node["@type"])
-            if (existingIndex > -1) {
-                // Override Yoast's default node with your custom one
-                graph[existingIndex] = { ...graph[existingIndex], ...node }
-            } else {
-                // Inject as new if it doesn't exist
-                graph.push(node)
-            }
-        }
+		for (const node of extraNodes) {
+			const existingIndex = graph.findIndex(
+				(n: any) => n["@type"] === node["@type"],
+			)
+			if (existingIndex > -1) {
+				// Override Yoast's default node with your custom one
+				graph[existingIndex] = { ...graph[existingIndex], ...node }
+			} else {
+				// Inject as new if it doesn't exist
+				graph.push(node)
+			}
+		}
 
-        // Rebuild wrapper preserving @context
-        yoastSchema = JSON.stringify({
-            "@context": schemaObj["@context"] || "https://schema.org",
-            "@graph": graph,
-        })
-    } catch (e) {
-        console.error("Schema injection failed:", e)
-    }
+		// Rebuild wrapper preserving @context
+		yoastSchema = JSON.stringify({
+			"@context": schemaObj["@context"] || "https://schema.org",
+			"@graph": graph,
+		})
+	} catch (e) {
+		console.error("Schema injection failed:", e)
+	}
 }
 
 // Hero Meta Data (Author)
@@ -213,43 +215,51 @@ const formattedDate = new Date(rawDate).toLocaleDateString("en-US", {
 // Clean the WordPress Content
 const rawContent = page?.content || ""
 let fixedContent = rawContent
-    .replace(/<h1[^>]*>[\s\S]*?<\/h1>/gi, "")
-    .replace(/src="[^"]*placeholder[^"]*"/gi, "")
-    .replaceAll('data-src="/wp-content/', 'src="/wp-content/')
-    .replaceAll('data-srcset="/wp-content/', 'srcset="/wp-content/')
-    
-    // 🚨 BULLETPROOF FIX: Globally strip the Cloudways domain from the entire HTML string.
-    .replaceAll(wpDomain, "") 
+	.replace(/<h1[^>]*>[\s\S]*?<\/h1>/gi, "")
+	.replace(/src="[^"]*placeholder[^"]*"/gi, "")
+	.replaceAll('data-src="/wp-content/', 'src="/wp-content/')
+	.replaceAll('data-srcset="/wp-content/', 'srcset="/wp-content/')
 
-    .replaceAll("<img ", '<img referrerpolicy="no-referrer" ')
-    .replace(/<p>\s*(&nbsp;)?\s*<\/p>/gi, "")
-    .replace(
-        /<strong>\s*Ranking of the Best Payment Methods\s*<\/strong>/gi,
-        "",
-    )
-    .replaceAll("[year]", currentYear)
+	// 🚨 BULLETPROOF FIX: Globally strip the Cloudways domain from the entire HTML string.
+	.replaceAll(wpDomain, "")
+
+	.replaceAll("<img ", '<img referrerpolicy="no-referrer" ')
+	.replace(/<p>\s*(&nbsp;)?\s*<\/p>/gi, "")
+	.replace(
+		/<strong>\s*Ranking of the Best Payment Methods\s*<\/strong>/gi,
+		"",
+	)
+	.replaceAll("[year]", currentYear)
 
 // --- Auto Table of Contents Generation ---
-let tocListItems = "";
-let h2Counter = 0;
+let tocListItems = ""
+let h2Counter = 0
 
 // Parse H2s to inject IDs and build TOC items
-let contentWithIds = fixedContent.replace(/<h2([^>]*)>(.*?)<\/h2>/gi, (match, attrs, content) => {
-    h2Counter++;
-    // Clean tags from content to create a readable slug
-    const cleanText = content.replace(/<[^>]*>?/gm, '').trim();
-    const slug = cleanText.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-    
-    // Inject ID if it doesn't already exist
-    const newAttrs = attrs.includes('id=') ? attrs : ` id="${slug}" ${attrs}`;
-    tocListItems += `<li><a href="#${slug}">${cleanText}</a></li>`;
-    
-    return `<h2${newAttrs}>${content}</h2>`;
-});
+let contentWithIds = fixedContent.replace(
+	/<h2([^>]*)>(.*?)<\/h2>/gi,
+	(match, attrs, content) => {
+		h2Counter++
+		// Clean tags from content to create a readable slug
+		const cleanText = content.replace(/<[^>]*>?/gm, "").trim()
+		const slug = cleanText
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, "-")
+			.replace(/(^-|-$)+/g, "")
 
-let tocHtml = "";
+		// Inject ID if it doesn't already exist
+		const newAttrs = attrs.includes("id=")
+			? attrs
+			: ` id="${slug}" ${attrs}`
+		tocListItems += `<li><a href="#${slug}">${cleanText}</a></li>`
+
+		return `<h2${newAttrs}>${content}</h2>`
+	},
+)
+
+let tocHtml = ""
 if (h2Counter > 0) {
-    tocHtml = `
+	tocHtml = `
     <div class="toc-wrapper cus-toc">
         <div class="toc-header" onclick="toggleToc()">
             Table of Contents <i class="fa-solid fa-chevron-down toc-arrow"></i>
@@ -259,16 +269,17 @@ if (h2Counter > 0) {
                 ${tocListItems}
             </ul>
         </div>
-    </div>`;
+    </div>`
 }
 
 // Inject TOC where the shortcode is, OR at the very top if no shortcode exists
-if (contentWithIds.includes('[casino_toc]')) {
-    fixedContent = contentWithIds.replace(/<p>\s*\[casino_toc\]\s*<\/p>/gi, tocHtml).replaceAll("[casino_toc]", tocHtml);
+if (contentWithIds.includes("[casino_toc]")) {
+	fixedContent = contentWithIds
+		.replace(/<p>\s*\[casino_toc\]\s*<\/p>/gi, tocHtml)
+		.replaceAll("[casino_toc]", tocHtml)
 } else {
-    fixedContent = tocHtml + contentWithIds;
+	fixedContent = tocHtml + contentWithIds
 }
-
 
 // --- 3. PROCESS RECENT POSTS (For Breaking News Section) ---
 const recentPosts = result.data?.posts?.nodes || []
@@ -289,33 +300,87 @@ const blogPosts = recentPosts.slice(3, 7)
 					<h1
 						class="home-hero-title"
 						set:html={page?.title ||
-							"Best Online Casinos in the USA for Real Money"}
+							"Best Real Money Online Casinos in the US in July 2026"}
 					/>
 
 					<!-- 🔥 NEW AUTHOR META BOX 🔥 -->
 					<div class="author-meta-box">
 						<div class="amb-left">
-							<img src={authorAvatar} alt={authorName} class="amb-avatar" />
+							<img
+								src={authorAvatar}
+								alt={authorName}
+								class="amb-avatar"
+							/>
 							<div class="amb-info">
-								<span class="amb-name">By <strong><a href={authorLink}>{authorName}</a></strong></span>
-								<span class="amb-date">Updated: {formattedDate}</span>
+								<span class="amb-name"
+									>By <strong
+										><a href={authorLink}>{authorName}</a
+										></strong
+									></span
+								>
+								<span class="amb-date"
+									>Updated: {formattedDate}</span
+								>
 							</div>
 						</div>
-						
+
 						<div class="amb-divider"></div>
-						
+
 						<div class="amb-middle">
-							<img src={reviewerAvatar} alt={reviewerName} class="amb-avatar" />
+							<img
+								src={reviewerAvatar}
+								alt={reviewerName}
+								class="amb-avatar"
+							/>
 							<div class="amb-info">
-								<span class="amb-name">Reviewed by <strong><a href={reviewerLink}>{reviewerName}</a></strong></span>
+								<span class="amb-name"
+									>Reviewed by <strong
+										><a href={reviewerLink}
+											>{reviewerName}</a
+										></strong
+									></span
+								>
 								<span class="amb-role">Casino Expert</span>
 							</div>
 						</div>
 
 						<div class="amb-right">
-							{authorTwitter && <a href={authorTwitter} target="_blank" rel="noopener noreferrer" class="amb-social twitter"><i class="fa-brands fa-twitter"></i></a>}
-							{authorFacebook && <a href={authorFacebook} target="_blank" rel="noopener noreferrer" class="amb-social facebook"><i class="fa-brands fa-facebook-f"></i></a>}
-							{authorInstagram && <a href={authorInstagram} target="_blank" rel="noopener noreferrer" class="amb-social instagram"><i class="fa-brands fa-instagram"></i></a>}
+							{
+								authorTwitter && (
+									<a
+										href={authorTwitter}
+										target="_blank"
+										rel="noopener noreferrer"
+										class="amb-social twitter"
+									>
+										<i class="fa-brands fa-twitter" />
+									</a>
+								)
+							}
+							{
+								authorFacebook && (
+									<a
+										href={authorFacebook}
+										target="_blank"
+										rel="noopener noreferrer"
+										class="amb-social facebook"
+									>
+										<i class="fa-brands fa-facebook-f" />
+									</a>
+								)
+							}
+							{
+								authorInstagram && (
+									<a
+										href={authorInstagram}
+										target="_blank"
+										rel="noopener noreferrer"
+										class="amb-social instagram"
+									>
+										<i class="fa-brands fa-instagram" />
+									</a>
+								)
+							}
 						</div>
 					</div>
 
@@ -327,11 +392,13 @@ const blogPosts = recentPosts.slice(3, 7)
 						>
 							<p class="hero-lead-text">
 								<span class="cus-teaser">
-									CasinoUS.com is your trusted guide to the
-									best online casinos in the USA, featuring
-									expert-tested reviews that help American
-									players find licensed, legal and secure U.S.
-									casino sites for real-money gambling.
+									Real money online casinos in the US provide
+									a convenient way to enjoy casino gaming
+									without traveling to a physical venue. They
+									offer instant access to hundreds of games
+									from virtually anywhere. Throughout 2026, we
+									spent several weeks reviewing leading casino
+									sites using <b>50+ evaluation criteria</b>.
 								</span>
 								<button
 									id="cus-toggle-1"
@@ -351,234 +418,46 @@ const blogPosts = recentPosts.slice(3, 7)
 								style="display: none;"
 							>
 								<p>
-									Our team of U.S. casino experts focuses on
-									what truly matters to American players from
-									“best online casinos USA” and “real money
-									casino sites” to “fast payout online
-									casinos” and “mobile casinos for U.S.
-									players.” Every review is built on data,
-									testing and verified player feedback to help
-									you choose the safest, fastest-paying and
-									most rewarding casino sites online.
+									These included licensing, payment methods,
+									bonuses, game selection, payout speed,
+									mobile compatibility, and player safety.
+									Based on our research, the best online
+									casinos offer welcome bonuses of up to
+									$4,000. They also feature reasonable
+									wagering requirements and fast USD
+									withdrawals through Visa, Mastercard, and
+									cryptocurrency payment methods.
 								</p>
 
-								<p>
-									Here’s what our US online casino reviews
-									cover:
-								</p>
-								<ul class="hero-bullet-list">
-									<li>
-										<strong
-											>Online Slots and Casino Games:</strong
-										><br />Discover top-rated U.S. casino
-										sites offering premium game libraries
-										from real money slots and progressive
-										jackpots to blackjack, roulette and live
-										dealer games. Every online casino listed
-										is independently verified for fairness,
-										quality and player satisfaction.
-									</li>
-									<li>
-										<strong
-											>Fast &amp; Secure Casino Payouts:</strong
-										><br />Speed and trust define the best.
-										We highlight US trusted online casinos
-										known for the fastest payouts in
-										America, supporting Visa, Mastercard,
-										American Express, bank transfers and
-										crypto. Each casino review details
-										payout times, withdrawal limits and
-										transaction security.
-									</li>
-									<li>
-										<strong
-											>Casino Bonuses and Promotions:</strong
-										><br />Our analysts track exclusive US
-										casino bonuses, including welcome
-										packages, free spins, no-deposit bonuses
-										and reload rewards. Every offer is
-										verified for authenticity and value.
-									</li>
-									<li>
-										<strong
-											>Mobile and User Experience:</strong
-										><br />We test each legal US casino site
-										across iPhone, Android and tablet
-										devices to ensure flawless mobile
-										performance. Our reviews measure speed,
-										usability and secure mobile payments.
-									</li>
-									<li>
-										<strong>Safety and Legality:</strong><br
-										/>Every gambling site we feature is
-										licensed, regulated and compliant with
-										U.S. gambling laws, meeting strict
-										security and responsible gaming
-										standards.
-									</li>
-								</ul>
 
-								<p>
-									Explore our curated list of licensed and
-									legal online casinos in the USA and start
-									playing real-money casino games with
-									confidence, safety and peace of mind on
-									verified U.S. approved platforms.
-								</p>
-
-								<h2 style="color: #ffffff; margin-top: 2rem;">
-									Top 10 Online Casinos in America - Play Real
-									Money Games
-								</h2>
-
-								<table class="cus-table">
-									<thead>
-										<tr>
-											<th>Rank</th>
-											<th>Online Casino</th>
-											<th>Best For</th>
-										</tr>
-									</thead>
-									<tbody>
-										<tr>
-											<td data-label="Rank">1</td>
-											<td data-label="Online Casino"
-												>Vegas Aces</td
-											>
-											<td data-label="Best For"
-												>Trusted USA casino for
-												real-money slots + 250% welcome
-												bonus</td
-											>
-										</tr>
-										<tr>
-											<td data-label="Rank">2</td>
-											<td data-label="Online Casino"
-												>Sun Palace</td
-											>
-											<td data-label="Best For"
-												>Fast withdrawals + 300 free
-												spins welcome offer</td
-											>
-										</tr>
-										<tr>
-											<td data-label="Rank">3</td>
-											<td data-label="Online Casino"
-												><a
-													href="https://www.casinous.com/las-vegas-casinos/"
-													>Las Vegas</a
-												> USA</td
-											>
-											<td data-label="Best For"
-												>Licensed casino for secure
-												gameplay and $3,000 cash bonus</td
-											>
-										</tr>
-										<tr>
-											<td data-label="Rank">4</td>
-											<td data-label="Online Casino"
-												>High Country Casino</td
-											>
-											<td data-label="Best For"
-												>High-paying jackpots + low
-												wagering bonuses</td
-											>
-										</tr>
-										<tr>
-											<td data-label="Rank">5</td>
-											<td data-label="Online Casino"
-												>Vegas Casino Online</td
-											>
-											<td data-label="Best For"
-												>Instant payouts + 15x low
-												wagering requirements</td
-											>
-										</tr>
-										<tr>
-											<td data-label="Rank">6</td>
-											<td data-label="Online Casino"
-												>Red Dog Casino</td
-											>
-											<td data-label="Best For"
-												>U.S.-friendly platform with
-												verified fast payouts + $8,000
-												bonus</td
-											>
-										</tr>
-										<tr>
-											<td data-label="Rank">7</td>
-											<td data-label="Online Casino"
-												>Reels of Joy</td
-											>
-											<td data-label="Best For"
-												>Low deposits, 75 free spins,
-												and real-money rewards</td
-											>
-										</tr>
-										<tr>
-											<td data-label="Rank">8</td>
-											<td data-label="Online Casino"
-												>Cafe Casino</td
-											>
-											<td data-label="Best For"
-												><a
-													href="https://www.casinous.com/blog/bitcoin-gambling-uncertainty/"
-													>Bitcoin</a
-												> casino for U.S. players with $5,500
-												bonus + instant crypto payouts
-											</td>
-										</tr>
-										<tr>
-											<td data-label="Rank">9</td>
-											<td data-label="Online Casino"
-												>Golden Lion Casino</td
-											>
-											<td data-label="Best For"
-												>Licensed U.S. casino with 300%
-												deposit bonus + 98% payout rate</td
-											>
-										</tr>
-										<tr>
-											<td data-label="Rank">10</td>
-											<td data-label="Online Casino"
-												>Stake Casino</td
-											>
-											<td data-label="Best For"
-												>U.S. crypto casino with low
-												deposits and instant real-money
-												payouts</td
-											>
-										</tr>
-									</tbody>
-								</table>
-
-								<div class="table-responsive">
-									</div>
+								<div class="table-responsive"></div>
 							</div>
 						</div>
 					</div>
 
-					
-
 					<div class="hero-search-wrapper">
-                        <input
-                            type="text"
-                            placeholder="Search over 2000 bonuses, casinos and slots..."
-                            class="hero-search-input"
-                        />
-                        <button
-                            type="submit"
-                            class="hero-search-btn"
-                            aria-label="Search"
-                        >
-                            <i class="fa-solid fa-search"></i>
-                        </button>
-                    </div>
+						<input
+							type="text"
+							placeholder="Search over 2000 bonuses, casinos and slots..."
+							class="hero-search-input"
+						/>
+						<button
+							type="submit"
+							class="hero-search-btn"
+							aria-label="Search"
+						>
+							<i class="fa-solid fa-search"></i>
+						</button>
+					</div>
 				</div>
 
 				<div class="hero-right">
 					<div class="hero-cta-card">
-						<img src="/wp-content/uploads/2026/07/Best-Online-Casinos-USA.png" alt="Best Online Casinos" title="Best Online Casinos" >
+						<img
+							src="/wp-content/uploads/2026/07/Best-Online-Casinos-USA.png"
+							alt="Best Online Casinos"
+							title="Best Online Casinos"
+						/>
 					</div>
 				</div>
 			</div>
@@ -681,12 +560,14 @@ const blogPosts = recentPosts.slice(3, 7)
 										day: "numeric",
 									})
 
-									let storyImage = story.featuredImage?.node?.sourceUrl || "https://via.placeholder.com/300x150"
+									let storyImage =
+										story.featuredImage?.node?.sourceUrl ||
+										"https://via.placeholder.com/300x150"
 
 									// 🚨 BULLETPROOF FIX: Extract only the path so Vercel proxies the image
 									try {
-										const parsedUrl = new URL(storyImage);
-										storyImage = parsedUrl.pathname; 
+										const parsedUrl = new URL(storyImage)
+										storyImage = parsedUrl.pathname
 									} catch (e) {}
 
 									const authorObj = story.author?.node
@@ -782,13 +663,16 @@ const blogPosts = recentPosts.slice(3, 7)
 										day: "numeric",
 									})
 
-									let blogImage = blogPost.featuredImage?.node?.sourceUrl || "https://via.placeholder.com/150"
+									let blogImage =
+										blogPost.featuredImage?.node
+											?.sourceUrl ||
+										"https://via.placeholder.com/150"
 
 									// 🚨 BULLETPROOF FIX: Use JS URL object to force the Cloudways domain
 									// 🚨 BULLETPROOF FIX: Extract only the path so Vercel proxies the image
 									try {
-										const parsedUrl = new URL(blogImage);
-										blogImage = parsedUrl.pathname; 
+										const parsedUrl = new URL(blogImage)
+										blogImage = parsedUrl.pathname
 									} catch (e) {}
 
 									const authorObj = blogPost.author?.node
@@ -869,16 +753,16 @@ const blogPosts = recentPosts.slice(3, 7)
 <script is:inline>
 	// JS Logic to Toggle the Auto TOC
 	window.toggleToc = function () {
-        const body = document.getElementById("tocBody");
-        const arrow = document.querySelector(".toc-arrow");
-        if (body.style.display === "block") {
-            body.style.display = "none";
-            if(arrow) arrow.style.transform = "rotate(0deg)";
-        } else {
-            body.style.display = "block";
-            if(arrow) arrow.style.transform = "rotate(180deg)";
-        }
-    };
+		const body = document.getElementById("tocBody")
+		const arrow = document.querySelector(".toc-arrow")
+		if (body.style.display === "block") {
+			body.style.display = "none"
+			if (arrow) arrow.style.transform = "rotate(0deg)"
+		} else {
+			body.style.display = "block"
+			if (arrow) arrow.style.transform = "rotate(180deg)"
+		}
+	}
 
 	// FIX: Explictly check visibility state so it never gets confused
 	window.toggleCustomBlock = function (btn, targetId) {
@@ -926,112 +810,127 @@ const blogPosts = recentPosts.slice(3, 7)
        NEW AUTHOR META BOX
     ========================================= */
 	.author-meta-box {
-        background-color: #1e293b; /* Dark navy slate from image */
-        border: 1px solid #334155;
-        border-radius: 12px;
-        padding: 1.25rem 2rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 2rem;
-        flex-wrap: wrap;
-        gap: 1.5rem;
+		background-color: #1e293b; /* Dark navy slate from image */
+		border: 1px solid #334155;
+		border-radius: 12px;
+		padding: 1.25rem 2rem;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 2rem;
+		flex-wrap: wrap;
+		gap: 1.5rem;
 		box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
+	}
 
-    .amb-left, .amb-middle {
-        display: flex;
-        align-items: center;
-        gap: 1.25rem;
-    }
+	.amb-left,
+	.amb-middle {
+		display: flex;
+		align-items: center;
+		gap: 1.25rem;
+	}
 
-    .amb-avatar {
-        width: 65px;
-        height: 65px;
-        border-radius: 50%;
-        object-fit: cover;
+	.amb-avatar {
+		width: 65px;
+		height: 65px;
+		border-radius: 50%;
+		object-fit: cover;
 		border: 2px solid #334155;
-    }
+	}
 
-    .amb-info {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-    }
+	.amb-info {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
 
-    .amb-name {
-        color: #94a3b8;
-        font-size: 1rem;
-    }
+	.amb-name {
+		color: #94a3b8;
+		font-size: 1rem;
+	}
 
-    .amb-name a, .amb-name strong {
-        color: #ffffff;
-        font-weight: 700;
-        text-decoration: none;
-    }
+	.amb-name a,
+	.amb-name strong {
+		color: #ffffff;
+		font-weight: 700;
+		text-decoration: none;
+	}
 
 	.amb-name a:hover {
 		color: #60a5fa;
 	}
 
-    .amb-date, .amb-role {
-        color: #94a3b8;
-        font-size: 0.85rem;
-    }
-
-    .amb-divider {
-        width: 1px;
-        height: 50px;
-        background-color: #334155;
-    }
-
-    .amb-right {
-        display: flex;
-        gap: 0.75rem;
-        margin-left: auto;
-    }
-
-    .amb-social {
-        width: 38px;
-        height: 38px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #ffffff !important;
-        text-decoration: none;
-        font-size: 1.1rem;
-        transition: transform 0.2s ease, filter 0.2s ease;
-    }
-
-    .amb-social:hover {
-        transform: scale(1.1);
-		filter: brightness(1.1);
-    }
-
-    .amb-social.twitter { background-color: #1da1f2; }
-    .amb-social.facebook { background-color: #1877f2; }
-    .amb-social.instagram { 
-		background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); 
+	.amb-date,
+	.amb-role {
+		color: #94a3b8;
+		font-size: 0.85rem;
 	}
 
-    /* Mobile Responsive Author Box */
-    @media (max-width: 900px) {
-        .author-meta-box {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        .amb-divider {
-            width: 100%;
-            height: 1px;
-        }
-        .amb-right {
-            margin-left: 0;
+	.amb-divider {
+		width: 1px;
+		height: 50px;
+		background-color: #334155;
+	}
+
+	.amb-right {
+		display: flex;
+		gap: 0.75rem;
+		margin-left: auto;
+	}
+
+	.amb-social {
+		width: 38px;
+		height: 38px;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: #ffffff !important;
+		text-decoration: none;
+		font-size: 1.1rem;
+		transition:
+			transform 0.2s ease,
+			filter 0.2s ease;
+	}
+
+	.amb-social:hover {
+		transform: scale(1.1);
+		filter: brightness(1.1);
+	}
+
+	.amb-social.twitter {
+		background-color: #1da1f2;
+	}
+	.amb-social.facebook {
+		background-color: #1877f2;
+	}
+	.amb-social.instagram {
+		background: linear-gradient(
+			45deg,
+			#f09433 0%,
+			#e6683c 25%,
+			#dc2743 50%,
+			#cc2366 75%,
+			#bc1888 100%
+		);
+	}
+
+	/* Mobile Responsive Author Box */
+	@media (max-width: 900px) {
+		.author-meta-box {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+		.amb-divider {
+			width: 100%;
+			height: 1px;
+		}
+		.amb-right {
+			margin-left: 0;
 			width: 100%;
 			justify-content: flex-start;
-        }
-    }
-
+		}
+	}
 
 	/* =========================================
        HERO DISCLAIMER BOX
@@ -1755,35 +1654,35 @@ const blogPosts = recentPosts.slice(3, 7)
 	}
 
 	.hero-intro-box span.cus-teaser {
-        color: #fff !important;
-    }
+		color: #fff !important;
+	}
 
-    .hero-intro-box button#cus-toggle-1 {
-        color: #1ebb58 !important;
-    }
-
+	.hero-intro-box button#cus-toggle-1 {
+		color: #1ebb58 !important;
+	}
 
 	.cus-toggle:hover {
-    background-color: unset !important;
-}
+		background-color: unset !important;
+	}
 
-button.show-more-link.show-more-btn {
-    font-size: 10px !important;
-}
+	button.show-more-link.show-more-btn {
+		font-size: 10px !important;
+	}
 
-.disclaimer-cl p {
-    font-size: 14px !important;
-    font-style: italic;
-}
+	.disclaimer-cl p {
+		font-size: 14px !important;
+		font-style: italic;
+	}
 
-.disclaimer-cl b {
-    color: #fff !important;
-}
+	.disclaimer-cl b {
+		color: #fff !important;
+	}
 
-.desktop-dis .disclaimer-cl {
-    background-color: #141e2f;
-    border: 1px solid #2b4033;
-    border-left: 4px solid #1fbd59 !important;}
+	.desktop-dis .disclaimer-cl {
+		background-color: #141e2f;
+		border: 1px solid #2b4033;
+		border-left: 4px solid #1fbd59 !important;
+	}
 
 	.cus-hp-list li {
 		font-size: 0.85rem;
@@ -1795,11 +1694,9 @@ button.show-more-link.show-more-btn {
 		line-height: 1.4;
 	}
 
-	   .desktop-dis .disclaimer-cl {
-
-        margin: 3px 0;
-
-    }
+	.desktop-dis .disclaimer-cl {
+		margin: 3px 0;
+	}
 
 	/* Hide the default WordPress emoji checkmark */
 	.cus-hp-list li img.emoji {
@@ -2320,8 +2217,6 @@ button.show-more-link.show-more-btn {
 			transform: translateY(0px);
 		}
 	}
-
-	
 
 	/* Left Column Typography */
 	.hero-left .home-hero-title {
@@ -3785,60 +3680,60 @@ button.show-more-link.show-more-btn {
 
 	/* --- Adjust Left Column (Breaking Stories) Sizing --- */
 
-/* Reduce padding inside the breaking story cards */
-.breaking-story-card {
-    padding: 16px !important;
-    gap: 16px !important; 
-    margin-bottom: 12px !important; /* Tighter gap between rows */
-}
+	/* Reduce padding inside the breaking story cards */
+	.breaking-story-card {
+		padding: 16px !important;
+		gap: 16px !important;
+		margin-bottom: 12px !important; /* Tighter gap between rows */
+	}
 
-/* Shrink the thumbnail image slightly */
-.breaking-story-image {
-    width: 220px !important; /* Reduced from default */
-    min-width: 220px !important;
-}
+	/* Shrink the thumbnail image slightly */
+	.breaking-story-image {
+		width: 220px !important; /* Reduced from default */
+		min-width: 220px !important;
+	}
 
-.breaking-story-image img {
-    height: 120px !important; /* Forces a shorter height */
-    object-fit: cover !important;
-}
+	.breaking-story-image img {
+		height: 120px !important; /* Forces a shorter height */
+		object-fit: cover !important;
+	}
 
-/* Reduce the spacing inside the content area */
-.breaking-story-content {
-    gap: 6px !important;
-}
+	/* Reduce the spacing inside the content area */
+	.breaking-story-content {
+		gap: 6px !important;
+	}
 
-/* Shrink the top meta text (News / Date) */
-.card-meta-top {
-    margin-bottom: 2px !important;
-}
+	/* Shrink the top meta text (News / Date) */
+	.card-meta-top {
+		margin-bottom: 2px !important;
+	}
 
-.card-category, 
-.card-date {
-    font-size: 11px !important;
-}
+	.card-category,
+	.card-date {
+		font-size: 11px !important;
+	}
 
-/* Shrink the main title */
-.card-title-link h3 {
-    font-size: 16px !important;
-    line-height: 1.3 !important;
-    font-weight: 700 !important; /* Removed strong, just using CSS bold */
-    margin: 0 !important;
-}
+	/* Shrink the main title */
+	.card-title-link h3 {
+		font-size: 16px !important;
+		line-height: 1.3 !important;
+		font-weight: 700 !important; /* Removed strong, just using CSS bold */
+		margin: 0 !important;
+	}
 
-/* Shrink the bottom author meta */
-.card-meta-bottom {
-    margin-top: 4px !important;
-}
+	/* Shrink the bottom author meta */
+	.card-meta-bottom {
+		margin-top: 4px !important;
+	}
 
-.card-meta-bottom span {
-    font-size: 12px !important;
-}
+	.card-meta-bottom span {
+		font-size: 12px !important;
+	}
 
-.card-author-avatar {
-    width: 24px !important;
-    height: 24px !important;
-}
+	.card-author-avatar {
+		width: 24px !important;
+		height: 24px !important;
+	}
 
 	.license-card h4 {
 		font-size: 1.15rem;
@@ -4304,119 +4199,123 @@ button.show-more-link.show-more-btn {
 		margin-bottom: 0.5rem;
 	}
 
-    /* 1. Target the outer container to create a card layout */
-div.tw-flex:has(> div.tw-bg-imgbackground) {
-  align-items: center;
-  gap: 16px;
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb; /* Light gray border */
-  border-radius: 12px;
-  padding: 16px;
-  max-width: 350px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.2s ease-in-out;
-  cursor: pointer;
-}
+	/* 1. Target the outer container to create a card layout */
+	div.tw-flex:has(> div.tw-bg-imgbackground) {
+		align-items: center;
+		gap: 16px;
+		background-color: #ffffff;
+		border: 1px solid #e5e7eb; /* Light gray border */
+		border-radius: 12px;
+		padding: 16px;
+		max-width: 350px;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+		transition: box-shadow 0.2s ease-in-out;
+		cursor: pointer;
+	}
 
-div.tw-flex:has(> div.tw-bg-imgbackground):hover {
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
+	div.tw-flex:has(> div.tw-bg-imgbackground):hover {
+		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+	}
 
-/* 2. Fix the image wrapper (override the tw-mb-2 to align it in a row) */
-div.tw-bg-imgbackground.tw-mb-2 {
-  margin-bottom: 0 !important;
-  width: 75px;
-  height: 75px;
-  flex-shrink: 0;
-  padding: 10px !important;
-}
+	/* 2. Fix the image wrapper (override the tw-mb-2 to align it in a row) */
+	div.tw-bg-imgbackground.tw-mb-2 {
+		margin-bottom: 0 !important;
+		width: 75px;
+		height: 75px;
+		flex-shrink: 0;
+		padding: 10px !important;
+	}
 
-/* 3. Force the image to scale proportionally instead of cropping */
-div.tw-bg-imgbackground img.tw-object-cover {
-  object-fit: contain !important;
-  height: 100% !important;
-  width: 100% !important;
-}
+	/* 3. Force the image to scale proportionally instead of cropping */
+	div.tw-bg-imgbackground img.tw-object-cover {
+		object-fit: contain !important;
+		height: 100% !important;
+		width: 100% !important;
+	}
 
-/* 4. Remove the top padding from the text wrapper to center it */
-div.tw-flex > div.tw-pt-3 {
-  padding-top: 0 !important;
-  flex: 1;
-}
+	/* 4. Remove the top padding from the text wrapper to center it */
+	div.tw-flex > div.tw-pt-3 {
+		padding-top: 0 !important;
+		flex: 1;
+	}
 
-/* 5. Style the typography (escape the . in tw-mb-2.5) */
-div.tw-pt-3 > p.tw-mb-2\.5 {
-  margin-bottom: 0 !important;
-  font-size: 18px;
-  font-weight: 600;
-  color: #1f2937; /* Dark slate text */
-}
+	/* 5. Style the typography (escape the . in tw-mb-2.5) */
+	div.tw-pt-3 > p.tw-mb-2\.5 {
+		margin-bottom: 0 !important;
+		font-size: 18px;
+		font-weight: 600;
+		color: #1f2937; /* Dark slate text */
+	}
 
-/* 1. Base Card Styling & Layout Fixes */
-div.tw-shadow-primary.tw-bg-white.tw-rounded-lg {
-  /* Add extra padding at the bottom so the absolute button doesn't cover the text */
-  padding-bottom: 75px !important; 
-  text-align: center;
-  border: 1px solid #f3f4f6; /* Subtle border */
-  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
+	/* 1. Base Card Styling & Layout Fixes */
+	div.tw-shadow-primary.tw-bg-white.tw-rounded-lg {
+		/* Add extra padding at the bottom so the absolute button doesn't cover the text */
+		padding-bottom: 75px !important;
+		text-align: center;
+		border: 1px solid #f3f4f6; /* Subtle border */
+		transition:
+			transform 0.2s ease-in-out,
+			box-shadow 0.2s ease-in-out;
+	}
 
-/* Add a smooth lift effect on hover */
-div.tw-shadow-primary.tw-bg-white.tw-rounded-lg:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
-}
+	/* Add a smooth lift effect on hover */
+	div.tw-shadow-primary.tw-bg-white.tw-rounded-lg:hover {
+		transform: translateY(-5px);
+		box-shadow:
+			0 10px 25px -5px rgba(0, 0, 0, 0.1),
+			0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+	}
 
-/* 2. Casino Name (.g-name) */
-p.g-name {
-  font-size: 1.25rem !important; /* 20px */
-  font-weight: 800 !important;
-  color: #111827 !important; /* Dark Slate */
-  margin-top: 0.5rem !important;
-  margin-bottom: 0.25rem !important;
-}
+	/* 2. Casino Name (.g-name) */
+	p.g-name {
+		font-size: 1.25rem !important; /* 20px */
+		font-weight: 800 !important;
+		color: #111827 !important; /* Dark Slate */
+		margin-top: 0.5rem !important;
+		margin-bottom: 0.25rem !important;
+	}
 
-/* 3. Bonus Offer Text (Targets the <p> immediately after the name) */
-div.tw-shadow-primary > p:nth-of-type(2) {
-  font-size: 0.875rem !important; /* 14px */
-  font-weight: 600 !important;
-  color: #059669 !important; /* High-converting Green */
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
-}
+	/* 3. Bonus Offer Text (Targets the <p> immediately after the name) */
+	div.tw-shadow-primary > p:nth-of-type(2) {
+		font-size: 0.875rem !important; /* 14px */
+		font-weight: 600 !important;
+		color: #059669 !important; /* High-converting Green */
+		margin-top: 0 !important;
+		margin-bottom: 0 !important;
+	}
 
-/* 4. Play Now CTA Button */
-div.tw-shadow-primary a.tw-absolute.tw-bottom-5 {
-  /* Transform from an outlined button to a solid CTA */
-  background-color: #ea580c !important; /* Eye-catching Orange */
-  color: #ffffff !important;
-  border: none !important;
-  font-weight: 700 !important;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  
-  /* Force perfect centering for absolute positioning */
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  width: 85% !important; /* Button spans most of the card width */
-  
-  box-shadow: 0 4px 6px rgba(234, 88, 12, 0.25) !important;
-  transition: background-color 0.2s, transform 0.2s !important;
-}
+	/* 4. Play Now CTA Button */
+	div.tw-shadow-primary a.tw-absolute.tw-bottom-5 {
+		/* Transform from an outlined button to a solid CTA */
+		background-color: #ea580c !important; /* Eye-catching Orange */
+		color: #ffffff !important;
+		border: none !important;
+		font-weight: 700 !important;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
 
-/* CTA Hover State */
-div.tw-shadow-primary a.tw-absolute.tw-bottom-5:hover {
-  background-color: #c2410c !important; /* Darker orange */
-  transform: translateX(-50%) scale(1.03) !important;
-}
+		/* Force perfect centering for absolute positioning */
+		left: 50% !important;
+		transform: translateX(-50%) !important;
+		width: 85% !important; /* Button spans most of the card width */
 
-/* 5. Image Polish */
-div.tw-shadow-primary img {
-  border: 1px solid #f3f4f6;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
+		box-shadow: 0 4px 6px rgba(234, 88, 12, 0.25) !important;
+		transition:
+			background-color 0.2s,
+			transform 0.2s !important;
+	}
 
+	/* CTA Hover State */
+	div.tw-shadow-primary a.tw-absolute.tw-bottom-5:hover {
+		background-color: #c2410c !important; /* Darker orange */
+		transform: translateX(-50%) scale(1.03) !important;
+	}
 
+	/* 5. Image Polish */
+	div.tw-shadow-primary img {
+		border: 1px solid #f3f4f6;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+	}
 </style>
 
 <script>
@@ -4510,18 +4409,18 @@ div.tw-shadow-primary img {
 </script>
 
 <script>
-	document.addEventListener('DOMContentLoaded', () => {
-    
-    // 1. STRIP THE LINKS FROM SIDEBAR TABS
-    // Find every 'a' tag that lives inside a '.sidebar-text' span
-    const sidebarLinks = document.querySelectorAll('.sidebar-nav-item .sidebar-text a');
-    
-    sidebarLinks.forEach(link => {
-        // Replace the entire <a> tag with just the text inside of it
-        link.replaceWith(link.textContent);
-    });
+	document.addEventListener("DOMContentLoaded", () => {
+		// 1. STRIP THE LINKS FROM SIDEBAR TABS
+		// Find every 'a' tag that lives inside a '.sidebar-text' span
+		const sidebarLinks = document.querySelectorAll(
+			".sidebar-nav-item .sidebar-text a",
+		)
 
-    // ... [Your existing tab-switching and mobile-scroll code goes here] ...
+		sidebarLinks.forEach(link => {
+			// Replace the entire <a> tag with just the text inside of it
+			link.replaceWith(link.textContent)
+		})
 
-});
+		// ... [Your existing tab-switching and mobile-scroll code goes here] ...
+	})
 </script>
