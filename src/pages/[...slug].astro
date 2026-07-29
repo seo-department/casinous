@@ -834,6 +834,59 @@ const fixedContent = contentWithToc
             </section>
         )
     }
+
+    <section class="site-trust-section">
+        <div class="site-trust-container">
+            <div class="site-author-card">
+                <img
+                    src={authorAvatar}
+                    alt={authorName}
+                    class="site-author-avatar"
+                    referrerpolicy="no-referrer"
+                />
+                <div class="site-author-info">
+                    <h3 class="site-author-name">
+                        <a href={authorLink}>{authorName}</a>
+                    </h3>
+                    <div class="site-author-socials">
+                        {twitterLink && (
+                            <a href={twitterLink} target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+                                <i class="fa-brands fa-twitter" />
+                            </a>
+                        )}
+                        {facebookLink && (
+                            <a href={facebookLink} target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                                <i class="fa-brands fa-facebook-f" />
+                            </a>
+                        )}
+                        {instagramLink && (
+                            <a href={instagramLink} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                                <i class="fa-brands fa-instagram" />
+                            </a>
+                        )}
+                        {linkedinLink && (
+                            <a href={linkedinLink} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+                                <i class="fa-brands fa-linkedin-in" />
+                            </a>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <div class="site-trust-statement">
+                <p>
+                    Casino US is your trusted source for timely industry
+                    updates, in-depth analysis, and honest operator reviews.
+                    Our editorial team brings years of specialized gaming
+                    industry knowledge to every story, holding ourselves to
+                    strict standards of accuracy and objectivity. We're
+                    dedicated to providing straightforward, unbiased, and
+                    reliable reporting on the US gambling landscape and
+                    beyond.
+                </p>
+            </div>
+        </div>
+    </section>
 </Layout>
 
 <script is:inline>
@@ -881,6 +934,103 @@ const fixedContent = contentWithToc
 <style is:global>
     html {
         scroll-behavior: smooth;
+    }
+
+    /* ===== Site trust / author card (above footer) ===== */
+    .site-trust-section {
+        background: #f8fafc;
+        padding: 48px 20px;
+        border-top: 1px solid #e2e8f0;
+    }
+    .site-trust-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+    .site-author-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-top: 4px solid #0f172a;
+        border-radius: 16px;
+        padding: 28px;
+        display: flex;
+        gap: 24px;
+        align-items: center;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    .site-author-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+        border: 3px solid #f1f5f9;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    .site-author-info {
+        flex: 1;
+        min-width: 0;
+    }
+    .site-author-name {
+        margin: 0 0 12px 0;
+        font-size: 1.3rem;
+        font-weight: 800;
+    }
+    .site-author-name a {
+        color: #0f172a;
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+    .site-author-name a:hover {
+        color: #2563eb;
+    }
+    .site-author-socials {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .site-author-socials a {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #f1f5f9;
+        color: #475569;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+    }
+    .site-author-socials a:hover {
+        background: #0f172a;
+        color: #ffffff;
+        transform: translateY(-2px);
+    }
+    .site-trust-statement {
+        background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
+        border: 1px solid #dbeafe;
+        border-left: 4px solid #2563eb;
+        border-radius: 12px;
+        padding: 24px 28px;
+    }
+    .site-trust-statement p {
+        margin: 0;
+        color: #334155;
+        font-size: 1rem;
+        line-height: 1.75;
+        font-weight: 500;
+    }
+    @media (max-width: 640px) {
+        .site-author-card {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .site-author-socials {
+            justify-content: center;
+        }
     }
 
     /* =========================================
