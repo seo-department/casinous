@@ -263,6 +263,14 @@ const manualGuides = [
 // Process Users for Team Section
 let teamMembers = result.data?.users?.nodes || []
 
+// Pull Kylie's bio from the already-fetched `users` data for the hero author card
+const heroAuthorRaw = (result.data?.users?.nodes || []).find((u: any) =>
+    (u.name || "").toLowerCase().includes("kylie"),
+)
+const heroAuthorBio =
+    stripWp(heroAuthorRaw?.description) ||
+    "Kylie Johnston is a seasoned expert in online casino gaming and the Content Editor at Casino US. With a background in journalism and certifications in digital marketing and SEO, she blends engaging content creation with in-depth industry knowledge. Her expertise spans slots, table games, and emerging casino trends, making complex topics accessible to all players. Kylie's passion for gaming extends beyond work—she enjoys local poker nights and stays ahead of industry trends through conferences. Her work at Casino US helps educate, inform, and connect the online gambling community."
+
 // Fallback to authors if WP 'users' query is empty
 if (teamMembers.length === 0) {
     const uniqueAuthors = new Map()
@@ -866,6 +874,7 @@ teamMembers = teamMembers
                     <h3 class="site-author-name">
                         <a href="/about-us/kylie-johnston/">Kylie Johnston</a>
                     </h3>
+                    <p class="site-author-bio" set:html={heroAuthorBio} />
                     <div class="site-author-socials">
                         
                            <a href="https://www.facebook.com/people/Casino-US/100092756866754/"
@@ -1133,6 +1142,13 @@ teamMembers = teamMembers
             #cc2366 75%,
             #bc1888 100%
         );
+    }
+
+    .site-author-bio {
+        color: #4b5563;
+        font-size: 0.92rem;
+        line-height: 1.65;
+        margin: 0 0 0.85rem 0;
     }
 
     /* Mobile Responsive Author Box */
