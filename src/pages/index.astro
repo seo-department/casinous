@@ -921,6 +921,109 @@ teamMembers = teamMembers
         color: #111827;
     }
 
+
+    /* ===== Site trust / author card (above footer) ===== */
+    .site-trust-section {
+        margin-top: 4rem;
+        padding-top: 3rem;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    .site-author-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-top: 4px solid #111827;
+        border-radius: 8px;
+        padding: 1.75rem;
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    .site-author-avatar {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+        border: 2px solid #e5e7eb;
+    }
+    .site-author-info {
+        flex: 1;
+        min-width: 0;
+    }
+    .site-author-name {
+        margin: 0 0 0.75rem 0;
+        font-size: 1.15rem;
+        font-weight: 800;
+    }
+    .site-author-name a {
+        color: #111827;
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+    .site-author-name a:hover {
+        color: #dc2626;
+    }
+    .site-author-socials {
+        display: flex;
+        gap: 0.75rem;
+    }
+    .site-author-socials a {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff !important;
+        font-size: 0.95rem;
+        transition: transform 0.2s ease, filter 0.2s ease;
+    }
+    .site-author-socials a:nth-child(1) {
+        background-color: #1877f2;
+    }
+    .site-author-socials a:nth-child(2) {
+        background: linear-gradient(
+            45deg,
+            #f09433 0%,
+            #e6683c 25%,
+            #dc2743 50%,
+            #cc2366 75%,
+            #bc1888 100%
+        );
+    }
+    .site-author-socials a:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.1);
+    }
+    .site-trust-statement {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-left: 4px solid #dc2626;
+        border-radius: 6px;
+        padding: 1.5rem 1.75rem;
+    }
+    .site-trust-statement p {
+        margin: 0;
+        color: #374151;
+        font-size: 1rem;
+        line-height: 1.75;
+        font-weight: 500;
+    }
+    @media (max-width: 640px) {
+        .site-author-card {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .site-author-socials {
+            justify-content: center;
+        }
+    }
+
     
     /* =========================================
    AUTHOR META BOX
