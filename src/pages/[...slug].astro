@@ -91,7 +91,7 @@ export async function getStaticPaths() {
                             nodes {
                                 uri title content date modified
                                 featuredImage { node { sourceUrl altText } }
-                                author { node { name firstName lastName uri url avatar { url } seo { social { facebook twitter instagram linkedIn } } } }
+                                author { node { name firstName lastName description uri url avatar { url } seo { social { facebook twitter instagram linkedIn } } } }
                                 seo { 
                                     title metaDesc focuskw canonical metaRobotsNoindex metaRobotsNofollow schema { raw } 
                                     breadcrumbs {
@@ -215,16 +215,22 @@ const yoastDesc = (post.seo?.metaDesc || "").replaceAll("[year]", currentYear)
 let yoastSchema = post.seo?.schema?.raw || undefined
 if (yoastSchema) {
     yoastSchema = yoastSchema
-        .replaceAll("https://wordpress-1621926-6409582.cloudwaysapps.com", "https://www.casinous.com")
+        .replaceAll(
+            "https://wordpress-1621926-6409582.cloudwaysapps.com",
+            "https://www.casinous.com",
+        )
         .replaceAll("/uncategorized/", "/blog/")
 }
 
 // 🚨 FIX: Force the Yoast canonical URL to use the live domain AND fix the uncategorized path
-let canonicalUrl = post.seo?.canonical || undefined;
+let canonicalUrl = post.seo?.canonical || undefined
 if (canonicalUrl) {
     canonicalUrl = canonicalUrl
-        .replace("https://wordpress-1621926-6409582.cloudwaysapps.com", "https://www.casinous.com")
-        .replace("/uncategorized/", "/blog/");
+        .replace(
+            "https://wordpress-1621926-6409582.cloudwaysapps.com",
+            "https://www.casinous.com",
+        )
+        .replace("/uncategorized/", "/blog/")
 }
 const focusKeyword = post.seo?.focuskw || undefined
 
@@ -232,28 +238,32 @@ const focusKeyword = post.seo?.focuskw || undefined
 const rawBreadcrumbs = post.seo?.breadcrumbs || []
 const yoastBreadcrumbs = rawBreadcrumbs.map((crumb: any, index: number) => {
     let cleanUrl = crumb.url || "/"
-    
+
     // Strip both the live domain and the Cloudways domain to make links relative
     cleanUrl = cleanUrl.replace(/https?:\/\/(www\.)?casinous\.com/gi, "")
-    cleanUrl = cleanUrl.replace(/https?:\/+wordpress-[a-zA-Z0-9-]+\.cloudwaysapps\.com/gi, "")
+    cleanUrl = cleanUrl.replace(
+        /https?:\/+wordpress-[a-zA-Z0-9-]+\.cloudwaysapps\.com/gi,
+        "",
+    )
     // Fix uncategorized breadcrumb paths
     cleanUrl = cleanUrl.replace("/uncategorized/", "/blog/")
-    
+
     if (cleanUrl === "") cleanUrl = "/"
 
-    const isLastItem = index === rawBreadcrumbs.length - 1;
+    const isLastItem = index === rawBreadcrumbs.length - 1
 
     // Override the text with the Focus Keyword if it is the last item in the chain
-    let displayText = crumb.text;
+    let displayText = crumb.text
     if (isLastItem && focusKeyword) {
         // Capitalize the first letter so it looks like a proper title
-        displayText = focusKeyword.charAt(0).toUpperCase() + focusKeyword.slice(1);
+        displayText =
+            focusKeyword.charAt(0).toUpperCase() + focusKeyword.slice(1)
     }
 
     return {
         text: displayText,
         url: cleanUrl,
-        isLast: isLastItem
+        isLast: isLastItem,
     }
 })
 
@@ -350,7 +360,7 @@ if (featuredImageUrl) {
     try {
         const parsedUrl = new URL(featuredImageUrl)
         // 🚨 FIX: Extract relative path for the proxy
-        featuredImageUrl = parsedUrl.pathname 
+        featuredImageUrl = parsedUrl.pathname
     } catch (e) {}
 }
 
@@ -408,11 +418,11 @@ const fixedContent = contentWithToc
     .replace(/src="[^"]*placeholder[^"]*"/gi, "")
     .replaceAll('data-src="/wp-content/', 'src="/wp-content/')
     .replaceAll('data-srcset="/wp-content/', 'srcset="/wp-content/')
-    
+
     // 🚨 BULLETPROOF FIX: Globally strip the Cloudways domain from the entire HTML string.
     // This catches hrefs, src, and all the comma-separated links hiding inside srcset.
-    .replaceAll(wpDomain, "") 
-    
+    .replaceAll(wpDomain, "")
+
     .replaceAll("<img ", '<img referrerpolicy="no-referrer" ')
     .replaceAll("<p>&nbsp;</p>", "")
     .replaceAll("<p>[author_reviewer]</p>", "")
@@ -859,26 +869,18 @@ const fixedContent = contentWithToc
                     </h3>
                     <p class="site-author-bio">{authorBio}</p>
                     <div class="site-author-socials">
-                        {twitterLink && (
-                            <a href={twitterLink} target="_blank" rel="noopener noreferrer" aria-label="Twitter">
-                                <i class="fa-brands fa-twitter" />
-                            </a>
-                        )}
-                        {facebookLink && (
-                            <a href={facebookLink} target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-                                <i class="fa-brands fa-facebook-f" />
-                            </a>
-                        )}
-                        {instagramLink && (
-                            <a href={instagramLink} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-                                <i class="fa-brands fa-instagram" />
-                            </a>
-                        )}
-                        {linkedinLink && (
-                            <a href={linkedinLink} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
-                                <i class="fa-brands fa-linkedin-in" />
-                            </a>
-                        )}
+                        {
+                            authorNode?.url && (
+                                <a
+                                    href={authorNode.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label="Website"
+                                >
+                                    <i class="fa-solid fa-globe" />
+                                </a>
+                            )
+                        }
                     </div>
                 </div>
             </div>
@@ -886,13 +888,12 @@ const fixedContent = contentWithToc
             <div class="site-trust-statement">
                 <p>
                     Casino US is your trusted source for timely industry
-                    updates, in-depth analysis, and honest operator reviews.
-                    Our editorial team brings years of specialized gaming
-                    industry knowledge to every story, holding ourselves to
-                    strict standards of accuracy and objectivity. We're
-                    dedicated to providing straightforward, unbiased, and
-                    reliable reporting on the US gambling landscape and
-                    beyond.
+                    updates, in-depth analysis, and honest operator reviews. Our
+                    editorial team brings years of specialized gaming industry
+                    knowledge to every story, holding ourselves to strict
+                    standards of accuracy and objectivity. We're dedicated to
+                    providing straightforward, unbiased, and reliable reporting
+                    on the US gambling landscape and beyond.
                 </p>
             </div>
         </div>
@@ -990,7 +991,7 @@ const fixedContent = contentWithToc
         line-height: 1.65;
         margin: 0 0 16px 0;
     }
-    
+
     .site-author-name {
         margin: 0 0 12px 0;
         font-size: 1.3rem;
