@@ -6242,10 +6242,9 @@ const canonicalURL = canonical || Astro.url.href
             display: block;
         }
         
-        /* Apply mobile styles to both header-nav and the header-right wrapper */
-        .header-nav, .header-right {
+        /* 1. The wrapper acts as the dropdown box */
+        .header-right {
             display: none;
-            flex-direction: column;
             position: absolute;
             top: 100%;
             left: 0;
@@ -6257,14 +6256,23 @@ const canonicalURL = canonical || Astro.url.href
             box-shadow: 0 10px 15px rgba(0, 0, 0, 0.5);
         }
         
-        .nav-dropdown {
-            width: 100%;
+        /* Show wrapper when active */
+        .header-right.active {
             display: block;
         }
         
-        /* Activate both elements when toggled */
-        .header-nav.active, .header-right.active {
-            display: flex;
+        /* 2. The inner nav just stacks the links normally inside the box */
+        .header-nav {
+            display: flex !important;
+            flex-direction: column;
+            position: static;
+            width: 100%;
+            gap: 0 !important;
+        }
+        
+        .nav-dropdown {
+            width: 100%;
+            display: block;
         }
         
         .header-nav .nav-dropdown-toggle,
@@ -6282,6 +6290,7 @@ const canonicalURL = canonical || Astro.url.href
             margin: 0;
             box-sizing: border-box;
         }
+        
         .nav-dropdown-menu {
             display: none;
             position: static;
@@ -6290,33 +6299,25 @@ const canonicalURL = canonical || Astro.url.href
             flex-direction: column;
             width: 100%;
         }
+        
         .nav-dropdown.open .nav-dropdown-menu {
             display: flex;
         }
+        
         .mega-menu {
             flex-direction: column;
         }
+        
         .mega-column {
             margin-bottom: 15px;
             display: flex;
             flex-direction: column;
         }
+        
         .mega-column a {
             padding: 8px 0;
             color: #ccc;
             text-decoration: none;
-        }
-    }
-    @media (max-width: 768px) {
-        .cus-heading {
-            font-size: 1.8rem;
-        }
-        .cus-steps li {
-            padding: 1rem 1rem 1rem 3.5rem;
-        }
-        .cus-steps li::before {
-            left: 1rem;
-            top: 0.9rem;
         }
     }
     .cus-related-heading {
@@ -12190,68 +12191,74 @@ table td {
 </script>
 
 <script>
-    // Wrap the logic in a function so it can be called safely
     function initMobileMenu() {
-        const toggleBtn = document.querySelector(".mobile-menu-toggle")
-        const nav = document.querySelector(".header-nav")
+        const toggleBtn = document.querySelector(".mobile-menu-toggle");
+        
+        // 1. Target BOTH the wrapper and the inner nav
+        const navWrapper = document.querySelector(".header-right");
+        const navInner = document.querySelector(".header-nav");
 
-        // ASTRO FIX: Prevent errors if elements don't exist on the current page
-        if (!toggleBtn || !nav) return
+        if (!toggleBtn || !navWrapper || !navInner) return;
 
-        const icon = toggleBtn.querySelector("i")
+        // Prevent double binding in Astro
+        if (toggleBtn.dataset.bound === "true") return;
+        toggleBtn.dataset.bound = "true";
 
-        // 1. Main Mobile Menu Toggle
+        // 2. Target your SVG icons properly
+        const iconBars = toggleBtn.querySelector(".icon-bars");
+        const iconClose = toggleBtn.querySelector(".icon-close");
+
+        // Main Mobile Menu Toggle
         toggleBtn.addEventListener("click", function () {
-            nav.classList.toggle("active")
+            // Toggle the active class on both elements
+            const isOpen = navWrapper.classList.toggle("active");
+            navInner.classList.toggle("active", isOpen);
 
-            // ASTRO FIX: Check if icon exists before manipulating
-            if (icon) {
-                if (nav.classList.contains("active")) {
-                    icon.classList.remove("fa-bars")
-                    icon.classList.add("fa-xmark")
-                } else {
-                    icon.classList.remove("fa-xmark")
-                    icon.classList.add("fa-bars")
-                }
-            }
-        })
+            toggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
 
-        // 2. Mobile Dropdown Toggle (Accordion effect)
-        const dropdownToggles = document.querySelectorAll(
-            ".nav-dropdown-toggle",
-        )
+            // Swap SVG displays
+            if (iconBars) iconBars.style.display = isOpen ? "none" : "block";
+            if (iconClose) iconClose.style.display = isOpen ? "block" : "none";
+        });
+
+        // Mobile Dropdown Toggle (Accordion effect)
+        const dropdownToggles = document.querySelectorAll(".nav-dropdown-toggle");
 
         dropdownToggles.forEach(btn => {
-            // ASTRO FIX: Remove old event listeners to prevent duplicates during View Transitions
-            // (Astro runs scripts multiple times if you navigate back and forth)
-            const newBtn = btn.cloneNode(true)
-            btn.parentNode.replaceChild(newBtn, btn)
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
 
             newBtn.addEventListener("click", function (e) {
                 if (window.innerWidth <= 991) {
-                    e.preventDefault()
+                    e.preventDefault();
 
-                    const parentDropdown = this.parentElement
-                    if (!parentDropdown) return
+                    const parentDropdown = this.parentElement;
+                    if (!parentDropdown) return;
 
-                    parentDropdown.classList.toggle("open")
+                    parentDropdown.classList.toggle("open");
 
-                    const chevron = this.querySelector(".fa-chevron-down")
+                    const chevron = this.querySelector(".fa-chevron-down");
                     if (chevron) {
                         if (parentDropdown.classList.contains("open")) {
-                            chevron.style.transform = "rotate(180deg)"
+                            chevron.style.transform = "rotate(180deg)";
                         } else {
-                            chevron.style.transform = "rotate(0deg)"
+                            chevron.style.transform = "rotate(0deg)";
                         }
                     }
                 }
-            })
-        })
+            });
+        });
     }
 
-    // ASTRO FIX: Support both standard loads and Astro View Transitions
-    document.addEventListener("DOMContentLoaded", initMobileMenu)
-    document.addEventListener("astro:page-load", initMobileMenu)
+    // THE FIX: Check if DOM is already loaded because Astro defers scripts
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initMobileMenu);
+    } else {
+        initMobileMenu();
+    }
+
+    // Support Astro View Transitions
+    document.addEventListener("astro:page-load", initMobileMenu);
 </script>
 
 <script>
