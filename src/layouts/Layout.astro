@@ -6241,7 +6241,9 @@ const canonicalURL = canonical || Astro.url.href
         .mobile-menu-toggle {
             display: block;
         }
-        .header-nav {
+        
+        /* Apply mobile styles to both header-nav and the header-right wrapper */
+        .header-nav, .header-right {
             display: none;
             flex-direction: column;
             position: absolute;
@@ -6254,13 +6256,17 @@ const canonicalURL = canonical || Astro.url.href
             z-index: 999;
             box-shadow: 0 10px 15px rgba(0, 0, 0, 0.5);
         }
+        
         .nav-dropdown {
             width: 100%;
             display: block;
         }
-        .header-nav.active {
+        
+        /* Activate both elements when toggled */
+        .header-nav.active, .header-right.active {
             display: flex;
         }
+        
         .header-nav .nav-dropdown-toggle,
         .header-nav .nav-link {
             width: 100%;
