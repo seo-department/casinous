@@ -400,23 +400,10 @@ const blogPosts = recentPosts.slice(3, 7)
 									spent several weeks reviewing leading casino
 									sites using <b>50+ evaluation criteria</b>.
 								</span>
-								<button
-									id="cus-toggle-1"
-									class="show-more-link cus-toggle"
-									aria-expanded="false"
-									aria-controls="cus-hidden-1"
-									onclick="toggleCustomBlock(this, 'cus-hidden-1')"
-									>Show More <i
-										class="fa-solid fa-chevron-down"
-									></i></button
-								>
+								
 							</p>
 
-							<div
-								id="cus-hidden-1"
-								class="cus-hidden"
-								style="display: none;"
-							>
+							
 								<p>
 									These included licensing, payment methods,
 									bonuses, game selection, payout speed,
@@ -429,26 +416,16 @@ const blogPosts = recentPosts.slice(3, 7)
 									cryptocurrency payment methods.
 								</p>
 
+								<p>
+									Whether you're opening your first online casino account or comparing operators before making a deposit, this guide is designed to help new players make informed and confident decisions.
+								</p>
+
 
 								<div class="table-responsive"></div>
-							</div>
+							
 						</div>
 					</div>
 
-					<div class="hero-search-wrapper">
-						<input
-							type="text"
-							placeholder="Search over 2000 bonuses, casinos and slots..."
-							class="hero-search-input"
-						/>
-						<button
-							type="submit"
-							class="hero-search-btn"
-							aria-label="Search"
-						>
-							<i class="fa-solid fa-search"></i>
-						</button>
-					</div>
 				</div>
 
 				<div class="hero-right">
@@ -469,17 +446,9 @@ const blogPosts = recentPosts.slice(3, 7)
 							<b>Disclaimer:</b> 18+ | Gamble Responsibly - Gambling
 							should be treated as a form of entertainment rather than
 							a way to make real money. In the United States,
-							<button
-								class="show-more-link show-more-btn"
-								onclick="toggleContent(this)"
-								>Show More <i class="fa-solid fa-chevron-down"
-								></i></button
-							>
+							
 						</p>
-						<div
-							class="content1"
-							style="display: none; margin-top: 1rem;"
-						>
+						
 							<p>
 								<a
 									href="/gambling-laws/"
@@ -517,7 +486,7 @@ const blogPosts = recentPosts.slice(3, 7)
 								responsibly and have fun, while making sure you
 								gamble within your means.
 							</p>
-						</div>
+						
 					</div>
 				</div>
 			</div>
@@ -806,6 +775,11 @@ const blogPosts = recentPosts.slice(3, 7)
 </script>
 
 <style is:global>
+
+	.hero-bottom-meta-section p {
+    margin-bottom: 17px !important;
+}
+
 	/* =========================================
        NEW AUTHOR META BOX
     ========================================= */
@@ -822,6 +796,10 @@ const blogPosts = recentPosts.slice(3, 7)
 		gap: 1.5rem;
 		box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 	}
+
+	.disclaimer-cl p {
+    margin-bottom: 19px !important;
+}
 
 	.amb-left,
 	.amb-middle {
@@ -945,7 +923,7 @@ const blogPosts = recentPosts.slice(3, 7)
 		color: #cbd5e1 !important; /* Soft light slate to match image */
 		font-size: 0.95rem !important;
 		line-height: 1.6 !important;
-		margin: 0 !important;
+
 	}
 
 	/* Bold 'Disclaimer:' text */
@@ -2348,8 +2326,8 @@ const blogPosts = recentPosts.slice(3, 7)
     ========================================= */
 	.hero-bottom-meta-section {
 		border-top: 1px solid rgba(255, 255, 255, 0.1);
-		padding-top: 2rem;
-		margin-top: 2rem;
+		padding-top: 13px;
+		margin-top: -1rem;
 	}
 
 	/* Responsive Adjustments */
@@ -4316,6 +4294,77 @@ const blogPosts = recentPosts.slice(3, 7)
 		border: 1px solid #f3f4f6;
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 	}
+
+
+	.key-insights-box {
+    background-color: #f8f9fa;
+    border-left: 3px solid #1a1a1a;
+    padding: 28px 32px;
+    margin: 2rem 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.key-insights-box .key-insights-title {
+    font-weight: 800;
+    font-style: italic;
+    font-size: 1.05rem;
+    color: #0f172a;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin: 0 0 20px 0;
+}
+
+.key-insights-box ul {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+}
+
+.key-insights-box ul li {
+    position: relative;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 0 0 1.5rem !important;
+    margin: 0 0 16px 0 !important;
+    font-size: 1.02rem;
+    line-height: 1.7;
+    color: #1e293b;
+}
+
+.key-insights-box ul li:last-child {
+    margin-bottom: 0 !important;
+}
+
+.key-insights-box ul li::before {
+    content: "•";
+    position: absolute;
+    left: 0.25rem;
+    top: 0;
+    color: #1e293b;
+    font-weight: 700;
+}
+
+.key-insights-box ul li strong {
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    font-size: inherit !important;
+}
+
+.key-insights-box ul li em {
+    font-style: italic;
+    color: #1e293b;
+}
+
+@media (max-width: 600px) {
+    .key-insights-box {
+        padding: 22px 20px;
+    }
+    .key-insights-box ul li {
+        font-size: 0.95rem;
+    }
+}
 </style>
 
 <script>

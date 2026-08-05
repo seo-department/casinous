@@ -484,6 +484,8 @@ const canonicalURL = canonical || Astro.url.href
             transform: scale(1);
         }
     }
+
+   
     .cus-casino-list-wrapper .cus-casino-card:first-child .cus-claim-btn {
         display: inline-block;
         animation: breathe 2s ease-in-out infinite;
@@ -11635,6 +11637,77 @@ table td {
         padding: 12px;
     }
 }
+
+.key-insights-box {
+    background-color: #f8f9fa;
+    border-left: 3px solid #1a1a1a;
+    padding: 28px 32px;
+    margin: 2rem 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.key-insights-box .key-insights-title {
+    font-weight: 800;
+    font-style: italic;
+    font-size: 1.05rem;
+    color: #0f172a;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin: 0 0 20px 0;
+}
+
+.key-insights-box ul {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+}
+
+.key-insights-box ul li {
+    position: relative;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 0 0 1.5rem !important;
+    margin: 0 0 16px 0 !important;
+    font-size: 1.02rem;
+    line-height: 1.7;
+    color: #1e293b;
+}
+
+.key-insights-box ul li:last-child {
+    margin-bottom: 0 !important;
+}
+
+.key-insights-box ul li::before {
+    content: "•";
+    position: absolute;
+    left: 0.25rem;
+    top: 0;
+    color: #1e293b;
+    font-weight: 700;
+}
+
+.key-insights-box ul li strong {
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    font-size: inherit !important;
+}
+
+.key-insights-box ul li em {
+    font-style: italic;
+    color: #1e293b;
+}
+
+@media (max-width: 600px) {
+    .key-insights-box {
+        padding: 22px 20px;
+    }
+    .key-insights-box ul li {
+        font-size: 0.95rem;
+    }
+}
+
 </style>
 
 <script>
