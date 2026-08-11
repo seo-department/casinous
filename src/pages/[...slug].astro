@@ -418,31 +418,28 @@ const fixedContent = contentWithToc
     .replace(/src="[^"]*placeholder[^"]*"/gi, "")
     .replaceAll('data-src="/wp-content/', 'src="/wp-content/')
     .replaceAll('data-srcset="/wp-content/', 'srcset="/wp-content/')
-
-    // 🚨 BULLETPROOF FIX: Globally strip the Cloudways domain from the entire HTML string.
-    // This catches hrefs, src, and all the comma-separated links hiding inside srcset.
     .replaceAll(wpDomain, "")
-
     .replaceAll("<img ", '<img referrerpolicy="no-referrer" ')
     .replaceAll("<p>&nbsp;</p>", "")
     .replaceAll("<p>[author_reviewer]</p>", "")
-    .replace(
-        /<p>\s*<(strong|b)>\s*Accepts players from:\s*<\/(strong|b)>.*?<\/p>/gi,
-        "",
-    )
-    .replace(
-        /<p[^>]*>\s*<(strong|b)[^>]*>\s*Last Update:\s*<\/(strong|b)>[\s\S]*?<\/p>/gi,
-        "",
-    )
-    .replace(
-        /<p>\s*<(strong|b)>.*?Reviews and Ratings\s*<\/(strong|b)>\s*<\/p>/gi,
-        "",
-    )
+    .replace(/<p>\s*<(strong|b)>\s*Accepts players from:\s*<\/(strong|b)>.*?<\/p>/gi, "")
+    .replace(/<p[^>]*>\s*<(strong|b)[^>]*>\s*Last Update:\s*<\/(strong|b)>[\s\S]*?<\/p>/gi, "")
+    .replace(/<p>\s*<(strong|b)>.*?Reviews and Ratings\s*<\/(strong|b)>\s*<\/p>/gi, "")
     .replace(/<p>\s*\[casino_toc\]\s*<\/p>/gi, "")
-    .replaceAll("[casino_toc]", "") // Failsafe in case it's not in a <p> tag
+    .replaceAll("[casino_toc]", "")
     .replace(/<p>\s*<(strong|b)>\s*Updated:\s*<\/(strong|b)>.*?<\/p>/gi, "")
     .replace(/<h1[^>]*>[\s\S]*?<\/h1>/i, "")
     .replaceAll("[year]", currentYear)
+
+const editorialStatementHtml = `<div class="cus-editorial-statement"><p><em><strong>Editorial Statement:</strong> Every operator featured on Casino US goes through our own independent review process. We test the platforms, dig into the terms, and form our own conclusions before anything gets published. Some links on this site are affiliate links, and we may earn a commission when a reader signs up through them — but that relationship has zero bearing on how we score or talk about a casino. If a site falls short somewhere, we say so, commercial partnership or not. Our <a href="https://www.casinous.com/how-we-rate-online-casinos/">evaluation criteria are laid out publicly</a>, and every review — good, bad, or mixed — reflects what our team found, not what a partner wants us to say.</em></p></div>`
+
+let finalContent = fixedContent
+if (finalContent.includes("cus-casino-list-wrapper")) {
+    finalContent = finalContent.replace(
+        '<div class="cus-casino-list-wrapper">',
+        editorialStatementHtml + '<div class="cus-casino-list-wrapper">',
+    )
+}
 ---
 
 <Layout
@@ -635,7 +632,7 @@ const fixedContent = contentWithToc
                 )
             }
 
-            <div class="wp-content" set:html={fixedContent} />
+            <div class="wp-content" set:html={finalContent} />
         </article>
     </main>
 
@@ -887,13 +884,13 @@ const fixedContent = contentWithToc
 
             <div class="site-trust-statement">
                 <p>
-                    <b>Editorial Statement: </b> Casino US is your trusted source for timely industry
-                    updates, in-depth analysis, and honest operator reviews. Our
-                    editorial team brings years of specialized gaming industry
-                    knowledge to every story, holding ourselves to strict
-                    standards of accuracy and objectivity. We're dedicated to
-                    providing straightforward, unbiased, and reliable reporting
-                    on the US gambling landscape and beyond.
+                    <b>Editorial Statement: </b> Casino US is your trusted source
+                    for timely industry updates, in-depth analysis, and honest operator
+                    reviews. Our editorial team brings years of specialized gaming
+                    industry knowledge to every story, holding ourselves to strict
+                    standards of accuracy and objectivity. We're dedicated to providing
+                    straightforward, unbiased, and reliable reporting on the US gambling
+                    landscape and beyond.
                 </p>
             </div>
         </div>
@@ -945,6 +942,29 @@ const fixedContent = contentWithToc
 <style is:global>
     html {
         scroll-behavior: smooth;
+    }
+
+    .cus-editorial-statement {
+        margin: 0 0 1.5rem 0;
+    }
+    .cus-editorial-statement p {
+        font-size: 0.9rem;
+        font-style: italic;
+        color: #64748b;
+        line-height: 1.6;
+        margin: 0;
+    }
+    .cus-editorial-statement strong {
+        color: #475569;
+        font-style: italic;
+    }
+    .cus-editorial-statement a {
+        color: #64748b;
+        text-decoration: underline;
+        font-style: italic;
+    }
+    .cus-editorial-statement a:hover {
+        color: #2563eb;
     }
 
     /* ===== Site trust / author card (above footer) ===== */
