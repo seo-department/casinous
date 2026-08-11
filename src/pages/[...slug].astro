@@ -422,9 +422,18 @@ const fixedContent = contentWithToc
     .replaceAll("<img ", '<img referrerpolicy="no-referrer" ')
     .replaceAll("<p>&nbsp;</p>", "")
     .replaceAll("<p>[author_reviewer]</p>", "")
-    .replace(/<p>\s*<(strong|b)>\s*Accepts players from:\s*<\/(strong|b)>.*?<\/p>/gi, "")
-    .replace(/<p[^>]*>\s*<(strong|b)[^>]*>\s*Last Update:\s*<\/(strong|b)>[\s\S]*?<\/p>/gi, "")
-    .replace(/<p>\s*<(strong|b)>.*?Reviews and Ratings\s*<\/(strong|b)>\s*<\/p>/gi, "")
+    .replace(
+        /<p>\s*<(strong|b)>\s*Accepts players from:\s*<\/(strong|b)>.*?<\/p>/gi,
+        "",
+    )
+    .replace(
+        /<p[^>]*>\s*<(strong|b)[^>]*>\s*Last Update:\s*<\/(strong|b)>[\s\S]*?<\/p>/gi,
+        "",
+    )
+    .replace(
+        /<p>\s*<(strong|b)>.*?Reviews and Ratings\s*<\/(strong|b)>\s*<\/p>/gi,
+        "",
+    )
     .replace(/<p>\s*\[casino_toc\]\s*<\/p>/gi, "")
     .replaceAll("[casino_toc]", "")
     .replace(/<p>\s*<(strong|b)>\s*Updated:\s*<\/(strong|b)>.*?<\/p>/gi, "")
@@ -433,12 +442,59 @@ const fixedContent = contentWithToc
 
 const editorialStatementHtml = `<div class="cus-editorial-statement"><p><em><strong>Editorial Statement:</strong> Every operator featured on Casino US goes through our own independent review process. We test the platforms, dig into the terms, and form our own conclusions before anything gets published. Some links on this site are affiliate links, and we may earn a commission when a reader signs up through them — but that relationship has zero bearing on how we score or talk about a casino. If a site falls short somewhere, we say so, commercial partnership or not. Our <a href="https://www.casinous.com/how-we-rate-online-casinos/">evaluation criteria are laid out publicly</a>, and every review — good, bad, or mixed — reflects what our team found, not what a partner wants us to say.</em></p></div>`
 
+const affiliateDisclosureHtml = `<div class="cus-affiliate-disclosure"><p><em><strong>Affiliate Disclosure:</strong> Casino US is written and maintained by a team with real experience in the US online gambling space, and every page follows our internal <a href="https://www.casinous.com/editorial-policy/">editorial standards</a> for accuracy and fairness. By browsing this site, you're agreeing to our <a href="https://www.casinous.com/terms-and-conditions/">Terms and Conditions</a>. Some of the links you'll find here are affiliate links, meaning we may earn a commission if you sign up with an operator through them — this never changes which sites we recommend or how we rate them. You can read more in our full <a href="https://www.casinous.com/advertising-disclosure/">Advertising &amp; Affiliate Disclosure</a>. Keep in mind that online casino gambling is regulated on a state-by-state basis, so double-check that it's legal in your location before playing. You must be 21 or older to gamble. If gambling stops feeling like fun and starts feeling like a problem, the <a href="https://www.ncpgambling.org/">National Problem Gambling Helpline</a> is available anytime at 1-800-522-4700.</em></p></div>`
+
+// Helper: finds the index right after the CLOSING tag that matches the
+// wrapper's opening <div>, by counting nested divs (not just the next </div>).
+function findWrapperEndIndex(html: string, openTagIndex: number): number {
+    const divOpenRegex = /<div\b/gi
+    const divCloseRegex = /<\/div>/gi
+    let depth = 0
+    let searchFrom = openTagIndex
+    let cursor = openTagIndex
+
+    while (cursor < html.length) {
+        divOpenRegex.lastIndex = cursor
+        divCloseRegex.lastIndex = cursor
+        const nextOpen = divOpenRegex.exec(html)
+        const nextClose = divCloseRegex.exec(html)
+
+        if (!nextClose) return -1
+
+        if (nextOpen && nextOpen.index < nextClose.index) {
+            depth++
+            cursor = nextOpen.index + nextOpen[0].length
+        } else {
+            depth--
+            cursor = nextClose.index + nextClose[0].length
+            if (depth === 0) return cursor
+        }
+    }
+    return -1
+}
+
 let finalContent = fixedContent
-if (finalContent.includes("cus-casino-list-wrapper")) {
-    finalContent = finalContent.replace(
-        '<div class="cus-casino-list-wrapper">',
-        editorialStatementHtml + '<div class="cus-casino-list-wrapper">',
-    )
+const wrapperOpenTag = '<div class="cus-casino-list-wrapper">'
+const wrapperStart = finalContent.indexOf(wrapperOpenTag)
+
+if (wrapperStart !== -1) {
+    // Insert the editorial statement BEFORE the table
+    finalContent =
+        finalContent.slice(0, wrapperStart) +
+        editorialStatementHtml +
+        finalContent.slice(wrapperStart)
+
+    // Recalculate positions after the insertion above, then find where the
+    // table wrapper actually closes so we can drop the disclosure right after it
+    const newWrapperStart = finalContent.indexOf(wrapperOpenTag)
+    const wrapperEnd = findWrapperEndIndex(finalContent, newWrapperStart)
+
+    if (wrapperEnd !== -1) {
+        finalContent =
+            finalContent.slice(0, wrapperEnd) +
+            affiliateDisclosureHtml +
+            finalContent.slice(wrapperEnd)
+    }
 }
 ---
 
@@ -942,6 +998,29 @@ if (finalContent.includes("cus-casino-list-wrapper")) {
 <style is:global>
     html {
         scroll-behavior: smooth;
+    }
+
+    .cus-affiliate-disclosure {
+        margin: 1.5rem 0 0 0;
+    }
+    .cus-affiliate-disclosure p {
+        font-size: 0.9rem;
+        font-style: italic;
+        color: #64748b;
+        line-height: 1.6;
+        margin: 0;
+    }
+    .cus-affiliate-disclosure strong {
+        color: #475569;
+        font-style: italic;
+    }
+    .cus-affiliate-disclosure a {
+        color: #64748b;
+        text-decoration: underline;
+        font-style: italic;
+    }
+    .cus-affiliate-disclosure a:hover {
+        color: #2563eb;
     }
 
     .cus-editorial-statement {
