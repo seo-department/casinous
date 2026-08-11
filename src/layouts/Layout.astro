@@ -86,6 +86,24 @@ const canonicalURL = canonical || Astro.url.href
         </noscript>
     </head>
     <body>
+        <div class="header-topbar">
+            <div class="header-topbar-container">
+                <nav class="topbar-links">
+                    <a href="/about-us/">About</a>
+                    <a href="/contact-us/">Contact</a>
+                    <a href="/editorial-policy/">Editorial Policy</a>
+                </nav>
+                <div class="topbar-right">
+                    <button
+                        class="topbar-lang-btn"
+                        aria-label="Change language"
+                    >
+                        <i class="fa-solid fa-globe"></i>
+                        <span>English</span>
+                    </button>
+                </div>
+            </div>
+        </div>
         <header class="header-bar">
             <div class="header-container">
                 <div class="brand-group">
@@ -145,6 +163,7 @@ const canonicalURL = canonical || Astro.url.href
                 </div>
             </div>
         </header>
+
         <main>
             <slot />
         </main>
@@ -208,6 +227,7 @@ const canonicalURL = canonical || Astro.url.href
                         <li>
                             <a href="/copyright-policy/">Copyright Policy</a>
                         </li>
+
                         <li>
                             <a href="/sitemap/">Sitemap</a>
                         </li>
@@ -217,23 +237,26 @@ const canonicalURL = canonical || Astro.url.href
                 <div class="footer-section social-section">
                     <strong>Follow Us</strong>
                     <div class="social-icons">
-                        
-                           <a href="https://www.facebook.com/people/Casino-US/100092756866754/"
+                        <a
+                            href="https://www.facebook.com/people/Casino-US/100092756866754/"
                             aria-label="Facebook"
                             ><i class="fa-brands fa-facebook-f"></i></a
                         >
-                        
-                           <a href="https://x.com/Real_CasinoUS"
+
+                        <a
+                            href="https://x.com/Real_CasinoUS"
                             aria-label="X (Twitter)"
                             ><i class="fa-brands fa-x-twitter"></i></a
                         >
-                        
-                           <a href="https://www.instagram.com/realcasino_us/"
+
+                        <a
+                            href="https://www.instagram.com/realcasino_us/"
                             aria-label="Instagram"
                             ><i class="fa-brands fa-instagram"></i></a
                         >
-                        
-                           <a href="https://www.youtube.com/@casinousus"
+
+                        <a
+                            href="https://www.youtube.com/@casinousus"
                             aria-label="YouTube"
                             ><i class="fa-brands fa-youtube"></i></a
                         >
@@ -274,6 +297,86 @@ const canonicalURL = canonical || Astro.url.href
 </html>
 
 <style is:global>
+
+    .header-topbar {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+}
+.header-topbar-container {
+    max-width: 1356px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 40px;
+}
+.topbar-links {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+.topbar-links a {
+    color: #334155;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+.topbar-links a:hover {
+    color: #2563eb;
+}
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+.topbar-lang-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: none;
+    border: none;
+    color: #334155;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0.25rem;
+}
+.topbar-lang-btn i {
+    font-size: 0.9rem;
+    color: #64748b;
+}
+.topbar-search-btn {
+    background: none;
+    border: none;
+    color: #334155;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 0.25rem;
+    transition: color 0.2s ease;
+}
+.topbar-search-btn:hover,
+.topbar-lang-btn:hover {
+    color: #2563eb;
+}
+@media (max-width: 768px) {
+    .header-topbar-container {
+        height: auto;
+        padding: 0.5rem 1rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+    .topbar-links {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1rem;
+    }
+}
+
     .header-nav {
         gap: 14px !important;
     }
@@ -291,8 +394,12 @@ const canonicalURL = canonical || Astro.url.href
         animation: cusCookieSlideUp 0.4s ease;
     }
     @keyframes cusCookieSlideUp {
-        from { transform: translateY(100%); }
-        to { transform: translateY(0); }
+        from {
+            transform: translateY(100%);
+        }
+        to {
+            transform: translateY(0);
+        }
     }
     .cus-cookie-inner {
         max-width: 1200px;
@@ -359,7 +466,6 @@ const canonicalURL = canonical || Astro.url.href
         }
     }
 
-   
     .cus-vote-btn {
         transition: all 0.2s ease !important;
     }
@@ -489,7 +595,6 @@ const canonicalURL = canonical || Astro.url.href
         }
     }
 
-   
     .cus-casino-list-wrapper .cus-casino-card:first-child .cus-claim-btn {
         display: inline-block;
         animation: breathe 2s ease-in-out infinite;
@@ -6247,7 +6352,7 @@ const canonicalURL = canonical || Astro.url.href
         .mobile-menu-toggle {
             display: block;
         }
-        
+
         /* 1. The wrapper acts as the dropdown box */
         .header-right {
             display: none;
@@ -6261,12 +6366,12 @@ const canonicalURL = canonical || Astro.url.href
             z-index: 999;
             box-shadow: 0 10px 15px rgba(0, 0, 0, 0.5);
         }
-        
+
         /* Show wrapper when active */
         .header-right.active {
             display: block;
         }
-        
+
         /* 2. The inner nav just stacks the links normally inside the box */
         .header-nav {
             display: flex !important;
@@ -6275,12 +6380,12 @@ const canonicalURL = canonical || Astro.url.href
             width: 100%;
             gap: 0 !important;
         }
-        
+
         .nav-dropdown {
             width: 100%;
             display: block;
         }
-        
+
         .header-nav .nav-dropdown-toggle,
         .header-nav .nav-link {
             width: 100%;
@@ -6296,7 +6401,7 @@ const canonicalURL = canonical || Astro.url.href
             margin: 0;
             box-sizing: border-box;
         }
-        
+
         .nav-dropdown-menu {
             display: none;
             position: static;
@@ -6305,21 +6410,21 @@ const canonicalURL = canonical || Astro.url.href
             flex-direction: column;
             width: 100%;
         }
-        
+
         .nav-dropdown.open .nav-dropdown-menu {
             display: flex;
         }
-        
+
         .mega-menu {
             flex-direction: column;
         }
-        
+
         .mega-column {
             margin-bottom: 15px;
             display: flex;
             flex-direction: column;
         }
-        
+
         .mega-column a {
             padding: 8px 0;
             color: #ccc;
@@ -11577,141 +11682,145 @@ const canonicalURL = canonical || Astro.url.href
         }
     }
 
-
     table {
-    width: 100% !important;
-    border-collapse: collapse;
-    margin: 2rem 0;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
-    overflow: hidden;
-    background: #fff;
-    font-size: 15px;
-    line-height: 1.6;
-}
-
-table thead {
-    background: #1e3a8a;
-    color: #fff;
-}
-
-table thead td {
-    font-weight: 700;
-    font-size: 16px;
-    padding: 16px;
-}
-
-table tbody td {
-    padding: 16px;
-    border-bottom: 1px solid #e5e7eb;
-    vertical-align: top;
-}
-
-table tbody tr:nth-child(even) {
-    background: #f8fafc;
-}
-
-table tbody tr:hover {
-    background: #eef6ff;
-}
-
-table tbody td:first-child {
-    font-weight: 600;
-    width: 22%;
-}
-
-table tbody td:last-child strong {
-    color: #d32f2f;
-}
-
-table td {
-    word-break: break-word;
-}
-
-@media (max-width: 768px) {
-    table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-        font-size: 14px;
+        width: 100% !important;
+        border-collapse: collapse;
+        margin: 2rem 0;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
+        font-size: 15px;
+        line-height: 1.6;
     }
 
-    table thead td,
+    table thead {
+        background: #1e3a8a;
+        color: #fff;
+    }
+
+    table thead td {
+        font-weight: 700;
+        font-size: 16px;
+        padding: 16px;
+    }
+
     table tbody td {
-        padding: 12px;
+        padding: 16px;
+        border-bottom: 1px solid #e5e7eb;
+        vertical-align: top;
     }
-}
 
-.key-insights-box {
-    background-color: #f8f9fa;
-    border-left: 3px solid #1a1a1a;
-    padding: 28px 32px;
-    margin: 2rem 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
+    table tbody tr:nth-child(even) {
+        background: #f8fafc;
+    }
 
-.key-insights-box .key-insights-title {
-    font-weight: 800;
-    font-style: italic;
-    font-size: 1.05rem;
-    color: #0f172a;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    margin: 0 0 20px 0;
-}
+    table tbody tr:hover {
+        background: #eef6ff;
+    }
 
-.key-insights-box ul {
-    list-style: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    display: block !important;
-}
+    table tbody td:first-child {
+        font-weight: 600;
+        width: 22%;
+    }
 
-.key-insights-box ul li {
-    position: relative;
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    padding: 0 0 0 1.5rem !important;
-    margin: 0 0 16px 0 !important;
-    font-size: 1.02rem;
-    line-height: 1.7;
-    color: #1e293b;
-}
+    table tbody td:last-child strong {
+        color: #d32f2f;
+    }
 
-.key-insights-box ul li:last-child {
-    margin-bottom: 0 !important;
-}
+    table td {
+        word-break: break-word;
+    }
 
-.key-insights-box ul li::before {
-    content: "•";
-    position: absolute;
-    left: 0.25rem;
-    top: 0;
-    color: #1e293b;
-    font-weight: 700;
-}
+    @media (max-width: 768px) {
+        table {
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+            font-size: 14px;
+        }
 
-.key-insights-box ul li strong {
-    color: #0f172a !important;
-    font-weight: 700 !important;
-    font-size: inherit !important;
-}
+        table thead td,
+        table tbody td {
+            padding: 12px;
+        }
+    }
 
-.key-insights-box ul li em {
-    font-style: italic;
-    color: #1e293b;
-}
-
-@media (max-width: 600px) {
     .key-insights-box {
-        padding: 22px 20px;
+        background-color: #f8f9fa;
+        border-left: 3px solid #1a1a1a;
+        padding: 28px 32px;
+        margin: 2rem 0;
+        font-family:
+            system-ui,
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            Roboto,
+            sans-serif;
     }
-    .key-insights-box ul li {
-        font-size: 0.95rem;
-    }
-}
 
+    .key-insights-box .key-insights-title {
+        font-weight: 800;
+        font-style: italic;
+        font-size: 1.05rem;
+        color: #0f172a;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin: 0 0 20px 0;
+    }
+
+    .key-insights-box ul {
+        list-style: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+    }
+
+    .key-insights-box ul li {
+        position: relative;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 0 0 1.5rem !important;
+        margin: 0 0 16px 0 !important;
+        font-size: 1.02rem;
+        line-height: 1.7;
+        color: #1e293b;
+    }
+
+    .key-insights-box ul li:last-child {
+        margin-bottom: 0 !important;
+    }
+
+    .key-insights-box ul li::before {
+        content: "•";
+        position: absolute;
+        left: 0.25rem;
+        top: 0;
+        color: #1e293b;
+        font-weight: 700;
+    }
+
+    .key-insights-box ul li strong {
+        color: #0f172a !important;
+        font-weight: 700 !important;
+        font-size: inherit !important;
+    }
+
+    .key-insights-box ul li em {
+        font-style: italic;
+        color: #1e293b;
+    }
+
+    @media (max-width: 600px) {
+        .key-insights-box {
+            padding: 22px 20px;
+        }
+        .key-insights-box ul li {
+            font-size: 0.95rem;
+        }
+    }
 </style>
 
 <script>
@@ -12001,72 +12110,71 @@ table td {
     })
 </script>
 
-
 <script is:inline>
-	function scrollToFaqOnCurrentPage(query) {
-		const candidates = document.querySelectorAll(
-			"main h2, main h3, main h4, main strong, main p"
-		);
+    function scrollToFaqOnCurrentPage(query) {
+        const candidates = document.querySelectorAll(
+            "main h2, main h3, main h4, main strong, main p",
+        )
 
-		let match = null;
-		for (const el of candidates) {
-			const text = (el.textContent || "").trim().toLowerCase();
-			if (text === query || text.includes(query)) {
-				match = el;
-				break;
-			}
-		}
+        let match = null
+        for (const el of candidates) {
+            const text = (el.textContent || "").trim().toLowerCase()
+            if (text === query || text.includes(query)) {
+                match = el
+                break
+            }
+        }
 
-		if (match) {
-			const target = match.closest("h2, h3, h4, p") || match;
-			target.scrollIntoView({ behavior: "smooth", block: "center" });
-			return true;
-		}
-		return false;
-	}
+        if (match) {
+            const target = match.closest("h2, h3, h4, p") || match
+            target.scrollIntoView({ behavior: "smooth", block: "center" })
+            return true
+        }
+        return false
+    }
 
-	function initFaqJumpLinks() {
-		document.querySelectorAll(".faq-jump-link").forEach(link => {
-			if (link.dataset.faqBound === "true") return;
-			link.dataset.faqBound = "true";
+    function initFaqJumpLinks() {
+        document.querySelectorAll(".faq-jump-link").forEach(link => {
+            if (link.dataset.faqBound === "true") return
+            link.dataset.faqBound = "true"
 
-			link.addEventListener("click", e => {
-				const targetUri = link.getAttribute("data-faq-uri");
-				const question = (link.getAttribute("data-faq-question") || "")
-					.trim()
-					.toLowerCase();
-				const samePage =
-					window.location.pathname.replace(/\/$/, "") ===
-					targetUri.replace(/\/$/, "");
+            link.addEventListener("click", e => {
+                const targetUri = link.getAttribute("data-faq-uri")
+                const question = (link.getAttribute("data-faq-question") || "")
+                    .trim()
+                    .toLowerCase()
+                const samePage =
+                    window.location.pathname.replace(/\/$/, "") ===
+                    targetUri.replace(/\/$/, "")
 
-				if (samePage) {
-					// Already on the target page: intercept the click, just scroll, no navigation, no hash
-					e.preventDefault();
-					scrollToFaqOnCurrentPage(question);
-				} else {
-					// Different page: let the normal navigation happen (real href),
-					// then scroll once the new page has loaded, via sessionStorage handoff
-					sessionStorage.setItem("pendingFaqScroll", question);
-					// allow default navigation to proceed (no preventDefault)
-				}
-			});
-		});
-	}
+                if (samePage) {
+                    // Already on the target page: intercept the click, just scroll, no navigation, no hash
+                    e.preventDefault()
+                    scrollToFaqOnCurrentPage(question)
+                } else {
+                    // Different page: let the normal navigation happen (real href),
+                    // then scroll once the new page has loaded, via sessionStorage handoff
+                    sessionStorage.setItem("pendingFaqScroll", question)
+                    // allow default navigation to proceed (no preventDefault)
+                }
+            })
+        })
+    }
 
-	function checkPendingFaqScroll() {
-		const pending = sessionStorage.getItem("pendingFaqScroll");
-		if (!pending) return;
-		sessionStorage.removeItem("pendingFaqScroll");
-		scrollToFaqOnCurrentPage(pending);
-	}
+    function checkPendingFaqScroll() {
+        const pending = sessionStorage.getItem("pendingFaqScroll")
+        if (!pending) return
+        sessionStorage.removeItem("pendingFaqScroll")
+        scrollToFaqOnCurrentPage(pending)
+    }
 
-	function initFaqJump() {
-		initFaqJumpLinks();
-		checkPendingFaqScroll();
-	}
+    function initFaqJump() {
+        initFaqJumpLinks()
+        checkPendingFaqScroll()
+    }
 
-	document.addEventListener("DOMContentLoaded", initFaqJump);
-	document.addEventListener("astro:page-load", initFaqJump);
+    document.addEventListener("DOMContentLoaded", initFaqJump)
+    document.addEventListener("astro:page-load", initFaqJump)
 </script>
 
 <script is:inline>
@@ -12269,73 +12377,75 @@ table td {
 
 <script>
     function initMobileMenu() {
-        const toggleBtn = document.querySelector(".mobile-menu-toggle");
-        
-        // 1. Target BOTH the wrapper and the inner nav
-        const navWrapper = document.querySelector(".header-right");
-        const navInner = document.querySelector(".header-nav");
+        const toggleBtn = document.querySelector(".mobile-menu-toggle")
 
-        if (!toggleBtn || !navWrapper || !navInner) return;
+        // 1. Target BOTH the wrapper and the inner nav
+        const navWrapper = document.querySelector(".header-right")
+        const navInner = document.querySelector(".header-nav")
+
+        if (!toggleBtn || !navWrapper || !navInner) return
 
         // Prevent double binding in Astro
-        if (toggleBtn.dataset.bound === "true") return;
-        toggleBtn.dataset.bound = "true";
+        if (toggleBtn.dataset.bound === "true") return
+        toggleBtn.dataset.bound = "true"
 
         // 2. Target your SVG icons properly
-        const iconBars = toggleBtn.querySelector(".icon-bars");
-        const iconClose = toggleBtn.querySelector(".icon-close");
+        const iconBars = toggleBtn.querySelector(".icon-bars")
+        const iconClose = toggleBtn.querySelector(".icon-close")
 
         // Main Mobile Menu Toggle
         toggleBtn.addEventListener("click", function () {
             // Toggle the active class on both elements
-            const isOpen = navWrapper.classList.toggle("active");
-            navInner.classList.toggle("active", isOpen);
+            const isOpen = navWrapper.classList.toggle("active")
+            navInner.classList.toggle("active", isOpen)
 
-            toggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+            toggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false")
 
             // Swap SVG displays
-            if (iconBars) iconBars.style.display = isOpen ? "none" : "block";
-            if (iconClose) iconClose.style.display = isOpen ? "block" : "none";
-        });
+            if (iconBars) iconBars.style.display = isOpen ? "none" : "block"
+            if (iconClose) iconClose.style.display = isOpen ? "block" : "none"
+        })
 
         // Mobile Dropdown Toggle (Accordion effect)
-        const dropdownToggles = document.querySelectorAll(".nav-dropdown-toggle");
+        const dropdownToggles = document.querySelectorAll(
+            ".nav-dropdown-toggle",
+        )
 
         dropdownToggles.forEach(btn => {
-            const newBtn = btn.cloneNode(true);
-            btn.parentNode.replaceChild(newBtn, btn);
+            const newBtn = btn.cloneNode(true)
+            btn.parentNode.replaceChild(newBtn, btn)
 
             newBtn.addEventListener("click", function (e) {
                 if (window.innerWidth <= 991) {
-                    e.preventDefault();
+                    e.preventDefault()
 
-                    const parentDropdown = this.parentElement;
-                    if (!parentDropdown) return;
+                    const parentDropdown = this.parentElement
+                    if (!parentDropdown) return
 
-                    parentDropdown.classList.toggle("open");
+                    parentDropdown.classList.toggle("open")
 
-                    const chevron = this.querySelector(".fa-chevron-down");
+                    const chevron = this.querySelector(".fa-chevron-down")
                     if (chevron) {
                         if (parentDropdown.classList.contains("open")) {
-                            chevron.style.transform = "rotate(180deg)";
+                            chevron.style.transform = "rotate(180deg)"
                         } else {
-                            chevron.style.transform = "rotate(0deg)";
+                            chevron.style.transform = "rotate(0deg)"
                         }
                     }
                 }
-            });
-        });
+            })
+        })
     }
 
     // THE FIX: Check if DOM is already loaded because Astro defers scripts
     if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", initMobileMenu);
+        document.addEventListener("DOMContentLoaded", initMobileMenu)
     } else {
-        initMobileMenu();
+        initMobileMenu()
     }
 
     // Support Astro View Transitions
-    document.addEventListener("astro:page-load", initMobileMenu);
+    document.addEventListener("astro:page-load", initMobileMenu)
 </script>
 
 <script>
@@ -12392,9 +12502,8 @@ table td {
     }
 </script>
 
-
 <script is:inline>
-    (function () {
+    ;(function () {
         const banner = document.getElementById("cusCookieBanner")
         if (!banner) return
         // document.cookie is the real cookie store — check for our consent cookie
@@ -12408,7 +12517,11 @@ table td {
             document.cookie = `cus_cookie_consent=${value}; path=/; max-age=${oneYear}; SameSite=Lax`
             banner.hidden = true
         }
-        document.getElementById("cusCookieAccept")?.addEventListener("click", () => setConsent("accepted"))
-        document.getElementById("cusCookieDecline")?.addEventListener("click", () => setConsent("declined"))
+        document
+            .getElementById("cusCookieAccept")
+            ?.addEventListener("click", () => setConsent("accepted"))
+        document
+            .getElementById("cusCookieDecline")
+            ?.addEventListener("click", () => setConsent("declined"))
     })()
 </script>
