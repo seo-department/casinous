@@ -79,9 +79,11 @@ if (result.errors) {
 // --- 2. PROCESS SEO DATA ---
 const page = result.data?.nodeByUri
 const currentYear = new Date().getFullYear().toString()
-const yoastTitle = "Casino US | Independent Online Casino Reviews, News & Guides"
-const yoastDesc =
-    "Casino US is your trusted source for Online Casinos in the USA, for 10+ years. Honest Casino reviews, expert analysis, and guides to help you play smarter."
+const yoastTitle = (page?.seo?.title || page?.title || "Casino US").replaceAll(
+    "[year]",
+    currentYear,
+)
+const yoastDesc = (page?.seo?.metaDesc || "").replaceAll("[year]", currentYear)
 
 const wpDomain = "https://wordpress-1621926-6409582.cloudwaysapps.com"
 let yoastSchema = page?.seo?.schema?.raw || undefined
@@ -158,54 +160,113 @@ const qaPosts = recentPosts.slice(25, 30)
 
 const manualFaqs = [
     {
+        category: "Casino",
         title: "Can I win real money at an online casino?",
         excerpt:
             "Yes. Players win real money at licensed online casinos every day. RNG casino games use certified random number generators, independently tested by labs including eCOGRA and iTech Labs, to produce fair outcomes. The house edge means the casino has a mathematical advantage over time, but individual sessions, and individual players, absolutely do produce real winnings. Short-term variance is high, particularly on high-volatility slots.",
         uri: "/online-casinos/",
     },
     {
+        category: "Casino",
         title: "Are online casinos legal in the US?",
         excerpt:
             "Real-money online casino gambling is legal in seven states: New Jersey, Pennsylvania, Michigan, West Virginia, Delaware, Connecticut, and Rhode Island. Players outside those states can access offshore platforms, which operate under international licences and accept US players without federal restriction on individual play. The UIGEA of 2006 governs payment processing rather than the act of playing. Always check your state's specific position before depositing.",
         uri: "/online-casinos/",
     },
     {
+        category: "Sports Betting",
+        title: "Is Online Sports Betting Legal in the USA?",
+        excerpt:
+            "Yes, sports betting has been legal in the USA since the Supreme Court overturned PASPA, allowing states to regulate and legalise sports betting. Around 30 states have regulated the market, but there are offshore options if you live in a state where they have not legalised it.",
+        uri: "/sports-betting/",
+    },
+    {
+        category: "Sports Betting",
+        title: "How quickly do Online Sportsbetting sites pay out?",
+        excerpt:
+            "The payout speed of online sportsbooks largely depends on the payout method you are trying to use. Some payout options, like cryptocurrencies, can pay out within a few minutes. However, if you withdraw your winnings with a wire transfer, it will take several days.",
+        uri: "/sports-betting/",
+    },
+    {
+        category: "Sports Betting",
+        title: "Can I make sports bets from my smartphone?",
+        excerpt:
+            "Definitely! Players who want to place bets on sports games can do so as they normally would play mobile casino games, either via a smartphone app or via a mobile browser at certain casinos and online sportsbooks. Mobile betting has never been easier!",
+        uri: "/sports-betting/",
+    },
+    {
+        category: "Sports Betting",
+        title: "Is online sports betting safe in the USA?",
+        excerpt:
+            "Yes, it is safe to place sports bets online, as long as you use a trusted online sportsbook. All our recommended sportsbooks are regulated and safe to use. Since the USA overturned the federal ban on sports betting, over 30 states have legalized and regulated sportsbooks.",
+        uri: "/sports-betting/",
+    },
+    {
+        category: "Sports Betting",
+        title: "Is it possible to make money with online sports betting?",
+        excerpt:
+            "Yes. Many American players use sports betting as a fun pastime that gives them the chance to boost their bank balances while playing a fun game. Players should not use sports betting as their primary source of income, nor is it meant to replace a salary. Sports betting simply allows players to have fun, while still having the chance to make some money.",
+        uri: "/sports-betting/",
+    },
+    {
+        category: "Sports Betting",
+        title: "How does fantasy sports betting differ from regular sports betting?",
+        excerpt:
+            "Fantasy sports betting works a lot differently from regular sports betting. Fantasy sports require that players create their teams. Players are given points according to their chosen fantasy team players’ performance in real life. At the end of a season/tournament, players win money based on their position on a leaderboard.",
+        uri: "/sports-betting/",
+    },
+    {
+        category: "Casino",
         title: "What are the best payout casino games?",
         excerpt:
-            "The best payout casino games are Roulette, Blackjack, and Video Poker. These games offer the lowest house edge and give the player the best chance to win. Some of them even allow a player's skill to improve their chances of winning. Online slots have some of the biggest payouts, but generally, the house edge is larger, and winning is completely dependent on luck.",
+              "The best payout casino games are Roulette, Blackjack, and Video Poker. These games offer the lowest house edge and give the player the best chance to win. Some of them even allow a player's skill to improve their chances of winning. Online slots have some of the biggest payouts, but generally, the house edge is larger, and winning is completely dependent on luck.",
         uri: "/best-payout-casinos/",
     },
     {
+        category: "Casino",
         title: "Which payout method should I use at online casinos for fast payouts?",
         excerpt:
-            "Opt for cryptocurrencies and e-wallets, if available, for fast payouts at online casinos. Cryptocurrencies such as Bitcoin, Ethereum, or Litecoin offer decentralized and efficient withdrawal options for instant access to your funds.",
-        uri: "/fastest-payout-casinos/",
-    },
-    {
-        title: "How do I know if a new online casino is safe?",
-        excerpt:
-            "This can be a bit tricky, but it is important to make sure it is before depositing any money. The best way is to make sure the new casino is to ensure it is properly licensed and regulated. Never deposit cash at a new site before it gets its license sorted.",
+            "  Opt for cryptocurrencies and e-wallets, if available, for fast payouts at online casinos. Cryptocurrencies such as Bitcoin, Ethereum, or Litecoin offer decentralized and efficient withdrawal options for instant access to your funds. ",
         uri: "/new-online-casinos/",
     },
+
+
     {
-        title: "Are Online Gambling Sites Safe?",
+        category: "Casino",
+        title: "How do I know if a new online casino is safe?",
         excerpt:
-            "State-licensed gambling sites are regulated to specific standards that require player fund protection, game fairness testing by independent labs, and clear complaint procedures. Sites licensed by the NJDGE, PGCB, or Michigan Gaming Control Board are subject to regular audits. Unlicensed offshore sites carry higher risk: no guaranteed player protections, no regulatory oversight from US authorities, and limited options if a withdrawal dispute arises.",
-        uri: "/online-gambling/",
+              "  This can be a bit tricky, but it is important to make sure it is before depositing any money. The best way is to make sure the new casino is to ensure it is properly licensed and regulated. Never deposit cash at a new site before it gets its license sorted. ",
+        uri: "/best-payout-casinos/",
     },
     {
+        category: "Casino",
+        title: "Are Online Gambling Sites Safe?",
+        excerpt:
+            "  State-licensed gambling sites are regulated to specific standards that require player fund protection, game fairness testing by independent labs, and clear complaint procedures. Sites licensed by the NJDGE, PGCB, or Michigan Gaming Control Board are subject to regular audits. Unlicensed offshore sites carry higher risk: no guaranteed player protections, no regulatory oversight from US authorities, and limited options if a withdrawal dispute arises. ",
+        uri: "/online-gambling/",
+    },
+
+
+    {
+        category: "Casino",
         title: "Are online slots rigged?",
         excerpt:
-            "Online slots from licensed software providers like RTG, NetEnt, and Betsoft use the same RNG as the real money version. The algorithm is identical only the currency changes. Games certified by eCOGRA or GLI are independently audited. Avoid demo slots from unverified studios with no third-party certification.",
+              "  Online slots from licensed software providers like RTG, NetEnt, and Betsoft use the same RNG as the real money version. The algorithm is identical only the currency changes. Games certified by eCOGRA or GLI are independently audited. Avoid demo slots from unverified studios with no third-party certification.",
         uri: "/online-slots/",
     },
     {
+        category: "Casino",
         title: "Do I need a bonus code to claim a welcome bonus?",
         excerpt:
-            "Some casinos require a bonus code to be entered at the cashier before you deposit. Others activate the welcome offer automatically. Check the specific offer page before depositing; a missed code usually cannot be applied retroactively. If no code is shown, the offer likely activates on deposit.",
+            "   Some casinos require a bonus code to be entered at the cashier before you deposit. Others activate the welcome offer automatically. Check the specific offer page before depositing; a missed code usually cannot be applied retroactively. If no code is shown, the offer likely activates on deposit. ",
         uri: "/casino-bonuses/",
     },
+ 
+   
 ]
+
+// Topic tabs for the Q&A block, built from the categories present (first-seen order).
+const faqCategories = [...new Set(manualFaqs.map((f: any) => f.category))]
 
 const manualGuides = [
     {
@@ -776,8 +837,13 @@ teamMembers = teamMembers
             </div>
         </header>
 
-        <div class="tab-filters-pill mb-md">
-            <button class="active">All Q&As</button>
+        <div class="tab-filters-pill mb-md" id="faq-filters">
+            <button type="button" class="active" data-filter="all">All Q&As</button>
+            {
+                faqCategories.map((cat: string) => (
+                    <button type="button" data-filter={cat}>{cat}</button>
+                ))
+            }
         </div>
 
         <section class="qa-grid">
@@ -787,6 +853,7 @@ teamMembers = teamMembers
                        <a href={getRelativeUrl(qa.uri)}
                         data-faq-uri={getRelativeUrl(qa.uri)}
                         data-faq-question={qa.title}
+                        data-faq-category={qa.category}
                         class="qa-card group-hover-wrap block-link faq-jump-link"
                     >
                         <div class="qa-text">
@@ -909,6 +976,33 @@ teamMembers = teamMembers
         </section>
     </main>
 </Layout>
+
+<script>
+    // Q&A topic tabs: filter the cards by category on click.
+    function initFaqTabs() {
+        const bar = document.getElementById("faq-filters")
+        if (!bar || bar.dataset.faqBound) return
+        bar.dataset.faqBound = "1"
+
+        const buttons = bar.querySelectorAll("button")
+        const cards = document.querySelectorAll(".qa-grid .qa-card")
+
+        buttons.forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const filter = btn.getAttribute("data-filter")
+                buttons.forEach((b) => b.classList.toggle("active", b === btn))
+                cards.forEach((card) => {
+                    const cat = card.getAttribute("data-faq-category")
+                    card.classList.toggle("is-hidden", filter !== "all" && cat !== filter)
+                })
+            })
+        })
+    }
+
+    // Run on first load and again after Astro view transitions (if enabled).
+    initFaqTabs()
+    document.addEventListener("astro:page-load", initFaqTabs)
+</script>
 
 <style>
     /* ========================================================
@@ -1754,6 +1848,9 @@ teamMembers = teamMembers
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
         gap: 1rem;
+    }
+    .qa-card.is-hidden {
+        display: none;
     }
     .qa-card {
         border: 1px solid #e5e7eb;
