@@ -79,11 +79,8 @@ if (result.errors) {
 // --- 2. PROCESS SEO DATA ---
 const page = result.data?.nodeByUri
 const currentYear = new Date().getFullYear().toString()
-const yoastTitle = (page?.seo?.title || page?.title || "Casino US").replaceAll(
-    "[year]",
-    currentYear,
-)
-const yoastDesc = (page?.seo?.metaDesc || "").replaceAll("[year]", currentYear)
+const yoastTitle = "Casino US | Independent Online Casino Reviews, News & Guides"
+const yoastDesc = "Casino US is your trusted source for Online Casinos in the USA, for 10+ years. Honest Casino reviews, expert analysis, and guides to help you play smarter."
 
 const wpDomain = "https://wordpress-1621926-6409582.cloudwaysapps.com"
 let yoastSchema = page?.seo?.schema?.raw || undefined
