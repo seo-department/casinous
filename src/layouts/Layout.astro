@@ -231,6 +231,9 @@ const canonicalURL = canonical || Astro.url.href
                         <li>
                             <a href="/sitemap/">Sitemap</a>
                         </li>
+                        <li>
+                            <a href="/blog/">Blogs</a>
+                        </li>
                     </ul>
                 </div>
 
@@ -853,6 +856,12 @@ const canonicalURL = canonical || Astro.url.href
         gap: 0.4rem;
         cursor: pointer;
     }
+
+    figure {
+    width: 100% !important;
+}
+
+
     .cus-claim-btn {
         display: flex;
         align-items: center;
@@ -3736,6 +3745,23 @@ const canonicalURL = canonical || Astro.url.href
         border: 2px solid #334155;
         object-fit: cover;
     }
+
+    /* --- Fix for the overflowing 624px callout tables --- */
+table[width="624"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    table-layout: fixed !important; /* Forces the table to strictly obey the container's width */
+    box-sizing: border-box;
+}
+
+table[width="624"] td {
+    white-space: normal !important; /* Overrides any inherited rules preventing text wrapping */
+    word-wrap: break-word !important; /* Ensures long strings don't break the layout */
+    overflow-wrap: break-word !important;
+    box-sizing: border-box;
+}
+
+
     .meta-name {
         display: block;
         font-size: 1rem;

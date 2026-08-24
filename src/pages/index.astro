@@ -271,48 +271,64 @@ const manualGuides = [
         uri: "/online-casinos/",
         image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2025/05/Best-online-casinos-for-US-players.webp",
         author: "Paige Williams",
+        date: "2026-06-15",
+        popularity: 90,
     },
     {
         title: "Fastest Payout Casinos Online USA 2026",
         uri: "/fastest-payout-casinos/",
         image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2025/03/BetUS-Casino-Reviews.jpg",
         author: "Alex Harper",
+        date: "2026-03-20",
+        popularity: 70,
     },
     {
         title: "Best Payout Online Casinos USA",
         uri: "/best-payout-casinos/",
         image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2025/04/CUS-paying-online-casinos-1.png",
         author: "Alex Harper",
+        date: "2025-04-10",
+        popularity: 95,
     },
     {
         title: "Best Casino Bonuses in the USA",
         uri: "/casino-bonuses/",
         image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2026/06/sun-palace-casino-bonuses.png",
         author: "Paige Williams",
+        date: "2026-06-01",
+        popularity: 99,
     },
     {
         title: "Best Real Money Online Slots USA 2026",
         uri: "/online-slots/",
         image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2025/04/CasinoUS-Online-Slots.png",
         author: "Lara Johns",
+        date: "2025-04-05",
+        popularity: 60,
     },
     {
         title: "Top Online Gambling Sites in the USA",
         uri: "/online-gambling/",
         image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2025/03/stage-1.png",
         author: "Alex Harper",
+        date: "2025-03-12",
+        popularity: 85,
     },
     {
         title: "Best No Deposit Bonus USA",
         uri: "/no-deposit-bonus/",
         image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2025/03/no-deposit-promo.png",
         author: "Paige Williams",
+        date: "2025-03-01",
+        popularity: 40,
     },
     {
         title: "Honest & Trusted Online Casino Reviews",
         uri: "/casino-reviews/",
         image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2025/03/Club-World-Casino-Reviews.jpg",
         author: "Lara Johns",
+        date: "2025-03-01",
+        popularity: 50,
     },
 ]
 
@@ -789,17 +805,30 @@ teamMembers = teamMembers
             </h2>
             <div class="nav-arrows">
                 <a href="/betting-systems/" class="more-link">More &rarr;</a>
+                <button type="button" id="guides-prev" aria-label="Previous guides">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button type="button" id="guides-next" aria-label="Next guides">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
             </div>
         </header>
 
-        <div class="tab-filters-small">
-            <button class="active">Top Picks</button>
+        <div class="tab-filters-small" id="guides-filters">
+            <button type="button" class="active" data-filter="top-picks">Top Picks</button>
+            <button type="button" data-filter="most-popular">Most Popular</button>
+            <button type="button" data-filter="newest">Newest</button>
         </div>
 
-        <section class="guides-grid">
+        <section class="guides-grid" id="guides-track">
             {
                 manualGuides.map((guide: any) => (
-                    <a href={guide.uri} class="guide-card group-hover-wrap">
+                    <a
+                        href={guide.uri}
+                        class="guide-card group-hover-wrap"
+                        data-popularity={guide.popularity}
+                        data-date={guide.date}
+                    >
                         <img
                             src={guide.image}
                             alt={guide.title}
@@ -846,8 +875,8 @@ teamMembers = teamMembers
         <section class="qa-grid">
             {
                 manualFaqs.map((qa: any) => (
-                    
-                       <a href={getRelativeUrl(qa.uri)}
+                    <a
+                        href={getRelativeUrl(qa.uri)}
                         data-faq-uri={getRelativeUrl(qa.uri)}
                         data-faq-question={qa.title}
                         data-faq-category={qa.category}
@@ -938,16 +967,16 @@ teamMembers = teamMembers
                     </h3>
                     <p class="site-author-bio" set:html={heroAuthorBio} />
                     <div class="site-author-socials">
-                        
-                           <a href="https://www.facebook.com/people/Casino-US/100092756866754/"
+                        <a
+                            href="https://www.facebook.com/people/Casino-US/100092756866754/"
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label="Facebook"
                         >
                             <i class="fa-brands fa-facebook-f" />
                         </a>
-                        
-                           <a href="https://www.instagram.com/realcasino_us/"
+                        <a
+                            href="https://www.instagram.com/realcasino_us/"
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label="Instagram"
@@ -996,9 +1025,59 @@ teamMembers = teamMembers
         })
     }
 
+    // Guides row: Top Picks / Most Popular / Newest tabs + prev/next scroll arrows.
+    function initGuidesSection() {
+        const track = document.getElementById("guides-track")
+        const filterBar = document.getElementById("guides-filters")
+        const prevBtn = document.getElementById("guides-prev")
+        const nextBtn = document.getElementById("guides-next")
+        if (!track || track.dataset.guidesBound) return
+        track.dataset.guidesBound = "1"
+
+        const originalOrder = Array.from(track.querySelectorAll(".guide-card"))
+
+        if (filterBar) {
+            const buttons = filterBar.querySelectorAll("button")
+            buttons.forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    buttons.forEach((b) => b.classList.toggle("active", b === btn))
+                    const filter = btn.getAttribute("data-filter")
+                    const cards = originalOrder.slice()
+
+                    if (filter === "most-popular") {
+                        cards
+                            .sort((a, b) => Number(b.dataset.popularity || 0) - Number(a.dataset.popularity || 0))
+                            .forEach((card) => track.appendChild(card))
+                    } else if (filter === "newest") {
+                        cards
+                            .sort((a, b) => new Date(b.dataset.date || 0).getTime() - new Date(a.dataset.date || 0).getTime())
+                            .forEach((card) => track.appendChild(card))
+                    } else {
+                        cards.forEach((card) => track.appendChild(card))
+                    }
+
+                    track.scrollTo({ left: 0, behavior: "smooth" })
+                })
+            })
+        }
+
+        const scrollStep = () => {
+            const card = track.querySelector(".guide-card")
+            return card ? card.getBoundingClientRect().width + 16 : 280
+        }
+        prevBtn?.addEventListener("click", () => {
+            track.scrollBy({ left: -scrollStep(), behavior: "smooth" })
+        })
+        nextBtn?.addEventListener("click", () => {
+            track.scrollBy({ left: scrollStep(), behavior: "smooth" })
+        })
+    }
+
     // Run on first load and again after Astro view transitions (if enabled).
     initFaqTabs()
+    initGuidesSection()
     document.addEventListener("astro:page-load", initFaqTabs)
+    document.addEventListener("astro:page-load", initGuidesSection)
 </script>
 
 <style>
@@ -1018,7 +1097,6 @@ teamMembers = teamMembers
             sans-serif;
         color: #111827;
     }
-
 
     /* ===== Site trust / author card (above footer) ===== */
     .site-trust-section {
@@ -1122,7 +1200,6 @@ teamMembers = teamMembers
         }
     }
 
-    
     /* =========================================
    AUTHOR META BOX
 ========================================= */
@@ -1256,8 +1333,6 @@ teamMembers = teamMembers
             justify-content: flex-start;
         }
     }
-
-    
 
     .news-portal-container a {
         text-decoration: none;
@@ -1453,114 +1528,119 @@ teamMembers = teamMembers
         border-color: #dc2626;
     }
 
-
+    /* GUIDES ROW (single horizontal scroll) */
     .guides-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-}
-
-.guide-card {
-    position: relative;
-    aspect-ratio: 4 / 5;
-    overflow: hidden;
-    text-decoration: none;
-    display: flex;
-    align-items: flex-end;
-    background: #0a0a0a;
-    border-radius: 6px;
-}
-
-
-
-.guide-title {
-    color: #fff;
-    font-size: 1.05rem;
-    font-weight: 800;
-    line-height: 1.3;
-    margin: 0 0 0.5rem 0;
-    padding-left: 0.9rem;
-    border-left: 3px solid #dc2626;
-}
-
-.guide-bg-img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100% !important;
-    object-fit: cover;
-    filter: grayscale(100%) contrast(1.1);
-    transition: transform 0.4s ease;
-    z-index: 0;
-}
-
-.guide-card:hover .guide-bg-img {
-    transform: scale(1.06);
-}
-
-/* Diagonal red stripe accent, top-right corner */
-.guide-card::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 140px;
-    height: 140px;
-    background: repeating-linear-gradient(
-        135deg,
-        #dc2626 0px,
-        #dc2626 18px,
-        transparent 18px,
-        transparent 36px
-    );
-    clip-path: polygon(100% 0, 0 0, 100% 100%);
-    z-index: 1;
-    opacity: 0.9;
-}
-
-/* Dark gradient so text stays readable at the bottom */
-/* Dark gradient so text stays readable at the bottom, image shows through the rest */
-.guide-card::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgb(30 41 59) 0%, rgb(30 41 59) 22%, transparent 45%);
-    z-index: 1;
-}
-
-.guide-content {
-    position: relative;
-    z-index: 2;
-    padding: 1.25rem 1.25rem 1.5rem;
-    width: 100%;
-}
-
-
-
-.guide-meta {
-    padding-left: 0.9rem;
-    color: #cbd5e1;
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.guide-meta span {
-    color: #fff;
-}
-
-@media (max-width: 1024px) {
-    .guides-grid {
-        grid-template-columns: repeat(2, 1fr);
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 1rem;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        scroll-snap-type: x mandatory;
+        padding-bottom: 0.25rem;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
-}
-
-@media (max-width: 600px) {
-    .guides-grid {
-        grid-template-columns: 1fr;
+    .guides-grid::-webkit-scrollbar {
+        display: none;
     }
-}
+    .guides-grid .guide-card {
+        flex: 0 0 260px;
+        scroll-snap-align: start;
+    }
+    .guide-card.is-hidden {
+        display: none;
+    }
+
+    .guide-card {
+        position: relative;
+        aspect-ratio: 4 / 5;
+        overflow: hidden;
+        text-decoration: none;
+        display: flex;
+        align-items: flex-end;
+        background: #0a0a0a;
+        border-radius: 6px;
+    }
+
+    .guide-title {
+        color: #fff;
+        font-size: 1.05rem;
+        font-weight: 800;
+        line-height: 1.3;
+        margin: 0 0 0.5rem 0;
+        padding-left: 0.9rem;
+        border-left: 3px solid #dc2626;
+    }
+
+    .guide-bg-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100% !important;
+        object-fit: cover;
+        filter: grayscale(100%) contrast(1.1);
+        transition: transform 0.4s ease;
+        z-index: 0;
+    }
+
+    .guide-card:hover .guide-bg-img {
+        transform: scale(1.06);
+    }
+
+    /* Diagonal red stripe accent, top-right corner */
+    .guide-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 140px;
+        height: 140px;
+        background: repeating-linear-gradient(
+            135deg,
+            #dc2626 0px,
+            #dc2626 18px,
+            transparent 18px,
+            transparent 36px
+        );
+        clip-path: polygon(100% 0, 0 0, 100% 100%);
+        z-index: 1;
+        opacity: 0.9;
+    }
+
+    /* Dark gradient so text stays readable at the bottom, image shows through the rest */
+    .guide-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgb(30 41 59) 0%, rgb(30 41 59) 22%, transparent 45%);
+        z-index: 1;
+    }
+
+    .guide-content {
+        position: relative;
+        z-index: 2;
+        padding: 1.25rem 1.25rem 1.5rem;
+        width: 100%;
+    }
+
+    .guide-meta {
+        padding-left: 0.9rem;
+        color: #cbd5e1;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .guide-meta span {
+        color: #fff;
+    }
+
+    @media (max-width: 600px) {
+        .guides-grid .guide-card {
+            flex-basis: 220px;
+        }
+    }
 
     /* LAYOUT GRIDS */
     .layout-main {
@@ -1693,6 +1773,7 @@ teamMembers = teamMembers
         padding-top: 2rem;
         border-top: 1px solid #e5e7eb;
     }
+
     @media (min-width: 768px) {
         .sub-posts-grid {
             grid-template-columns: 1fr 1fr;
@@ -1839,7 +1920,6 @@ teamMembers = teamMembers
         background: #333;
     }
 
-    
     /* ================= Q&A GRID ================= */
     .qa-grid {
         display: grid;
