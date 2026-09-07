@@ -408,6 +408,13 @@ if (tocItems.length > 0) {
 
 const displayTitle = (post.title || "").replaceAll("[year]", currentYear)
 
+// 🚨 SIDEBAR: Mission statement copy for the sticky sidebar (posts & pages)
+const missionPoints = [
+    "Reviews written by testers with hands-on US casino experience",
+    "Data-driven ratings on bonuses, payouts, and game libraries",
+    "Transparent editorial standards applied to every review, good or bad",
+]
+
 // --- 7. FINAL CONTENT REPLACEMENTS ---
 let contentWithToc = contentWithIds
 if (tocHTML && !contentWithIds.includes("[casino_toc]")) {
@@ -629,67 +636,124 @@ if (wrapperStart !== -1) {
         </div>
     </header>
     <main class={isPost ? "post-wrapper" : "page-wrapper"}>
-        <article
-            class={isPost
-                ? "post-container"
-                : "page-container cus-page-container"}
-        >
-            {
-                isPost && featuredImageUrl && (
-                    <div class="featured-image-wrapper">
-                        <img
-                            src={featuredImageUrl}
-                            alt={post.title}
-                            class="featured-image"
-                            referrerpolicy="no-referrer"
-                        />
-                    </div>
-                )
-            }
+        <div class="content-with-sidebar">
+            <article
+                class={isPost
+                    ? "post-container"
+                    : "page-container cus-page-container"}
+            >
+                {
+                    isPost && featuredImageUrl && (
+                        <div class="featured-image-wrapper">
+                            <img
+                                src={featuredImageUrl}
+                                alt={post.title}
+                                class="featured-image"
+                                referrerpolicy="no-referrer"
+                            />
+                        </div>
+                    )
+                }
 
-            {
-                isPost && (
-                    <div
-                        class="cus-author-profiles"
-                        style="margin-bottom: 2rem; display: flex; gap: 1.5rem; align-items: center; justify-content: flex-start; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;"
-                    >
+                {
+                    isPost && (
                         <div
-                            class="cus-author-item"
-                            style="display: flex; gap: 1rem; align-items: center;"
+                            class="cus-author-profiles"
+                            style="margin-bottom: 2rem; display: flex; gap: 1.5rem; align-items: center; justify-content: flex-start; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;"
                         >
-                            <a
-                                href={reviewerLink}
-                                aria-label={`View ${reviewerName}'s profile`}
+                            <div
+                                class="cus-author-item"
+                                style="display: flex; gap: 1rem; align-items: center;"
                             >
-                                <Image
-                                    src={reviewerAvatar}
-                                    alt={`Reviewer ${reviewerName}`}
-                                    width={50}
-                                    height={50}
-                                    class="meta-avatar"
-                                />
-                            </a>
-                            <div>
-                                <span style="display: block; font-size: 0.9rem; color: #475569;">
-                                    Reviewed By{" "}
-                                    <a
-                                        href={reviewerLink}
-                                        style="color: #0f172a; text-decoration: none;"
-                                    >
-                                        <strong>{reviewerName}</strong>
-                                    </a>
-                                </span>
-                                <span style="display: block; font-size: 0.8rem; color: #64748b;">
-                                    Casino Expert
-                                </span>
+                                <a
+                                    href={reviewerLink}
+                                    aria-label={`View ${reviewerName}'s profile`}
+                                >
+                                    <Image
+                                        src={reviewerAvatar}
+                                        alt={`Reviewer ${reviewerName}`}
+                                        width={50}
+                                        height={50}
+                                        class="meta-avatar"
+                                    />
+                                </a>
+                                <div>
+                                    <span style="display: block; font-size: 0.9rem; color: #475569;">
+                                        Reviewed By{" "}
+                                        <a
+                                            href={reviewerLink}
+                                            style="color: #0f172a; text-decoration: none;"
+                                        >
+                                            <strong>{reviewerName}</strong>
+                                        </a>
+                                    </span>
+                                    <span style="display: block; font-size: 0.8rem; color: #64748b;">
+                                        Casino Expert
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )
-            }
+                    )
+                }
 
-            <div class="wp-content" set:html={finalContent} />
-        </article>
+                <div class="wp-content" set:html={finalContent} />
+            </article>
+
+            <aside class="post-sidebar" aria-label="Page navigation and trust info">
+                <div class="sidebar-sticky-wrap">
+                    <div class="sidebar-mission-card">
+                        <div class="sidebar-mission-badge">
+                            <i class="fa-solid fa-shield-halved" />
+                            <span>Mission Statement</span>
+                        </div>
+                        <h3 class="sidebar-mission-heading">
+                            Casino US is your independent guide to legal
+                            online casinos in America
+                        </h3>
+                        <ul class="sidebar-mission-list">
+                            {
+                                missionPoints.map(point => (
+                                    <li>
+                                        <i class="fa-solid fa-check" />
+                                        <span>{point}</span>
+                                    </li>
+                                ))
+                            }
+                        </ul>
+                        <a
+                            href="/how-we-rate-online-casinos/"
+                            class="sidebar-mission-btn"
+                        >
+                            How We Rate Casinos
+                        </a>
+                    </div>
+
+                    {
+                        tocItems.length > 0 && (
+                            <div class="sidebar-toc-card">
+                                <div class="sidebar-toc-heading">
+                                    <span class="sidebar-toc-bar" />
+                                    Table of Contents
+                                </div>
+                                <ul class="sidebar-toc-list">
+                                    {tocItems.map(item => (
+                                        <li>
+                                            <a
+                                                href={`#${item.slug}`}
+                                                class="sidebar-toc-link toc-jump-link"
+                                                data-toc-target={item.slug}
+                                            >
+                                                {item.text}
+                                            </a>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )
+                    }
+                </div>
+            </aside>
+        </div>
     </main>
 
     {/* RELATED POSTS - Moved OUTSIDE the main tag to allow full width */}
@@ -993,6 +1057,56 @@ if (wrapperStart !== -1) {
             btn.innerText = "Show less"
         }
     }
+
+    // 🚨 SIDEBAR TOC: highlight the section currently in view
+    ;(function () {
+        function initSidebarToc() {
+            const sidebarLinks = document.querySelectorAll(
+                ".sidebar-toc-link[data-toc-target]",
+            )
+            if (!sidebarLinks.length) return
+
+            const headings = Array.from(sidebarLinks)
+                .map(link => document.getElementById(link.dataset.tocTarget))
+                .filter(Boolean)
+
+            if (!headings.length) return
+
+            const setActive = id => {
+                sidebarLinks.forEach(link => {
+                    link.classList.toggle(
+                        "active",
+                        link.dataset.tocTarget === id,
+                    )
+                })
+            }
+
+            const observer = new IntersectionObserver(
+                entries => {
+                    const visible = entries
+                        .filter(entry => entry.isIntersecting)
+                        .sort(
+                            (a, b) =>
+                                a.boundingClientRect.top -
+                                b.boundingClientRect.top,
+                        )
+                    if (visible.length > 0) {
+                        setActive(visible[0].target.id)
+                    }
+                },
+                { rootMargin: "-15% 0px -70% 0px", threshold: 0 },
+            )
+
+            headings.forEach(heading => observer.observe(heading))
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", initSidebarToc)
+        } else {
+            initSidebarToc()
+        }
+        document.addEventListener("astro:page-load", initSidebarToc)
+    })()
 </script>
 
 <style is:global>
@@ -1152,7 +1266,8 @@ if (wrapperStart !== -1) {
     }
 
     /* =========================================
-       TABLE OF CONTENTS (TOC) STYLES
+       TABLE OF CONTENTS (TOC) STYLES — mobile dropdown
+       (hidden on desktop; the sticky sidebar TOC takes over there)
     ========================================= */
     .custom-toc {
         background: #f8fafc;
@@ -1210,6 +1325,13 @@ if (wrapperStart !== -1) {
     .toc-list a:hover {
         color: #2563eb !important;
         padding-left: 5px;
+    }
+
+    @media (min-width: 901px) {
+        /* Desktop has the sticky sidebar TOC, so the in-content dropdown is redundant */
+        .custom-toc {
+            display: none;
+        }
     }
 
     /* =========================================
@@ -1403,25 +1525,187 @@ if (wrapperStart !== -1) {
         padding: 2rem 1rem 5rem;
     }
 
-    .post-container {
+    /* =========================================
+       CONTENT + STICKY SIDEBAR GRID
+    ========================================= */
+    .content-with-sidebar {
         max-width: 1200px;
         margin: 0 auto;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 2rem;
+        align-items: start;
+    }
+
+    .post-container {
         background-color: #ffffff;
         border-radius: 12px;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
         border: 1px solid #e2e8f0;
         transform: translateY(-2rem);
         padding: 2.5rem;
+        min-width: 0;
     }
 
     .page-container {
-        max-width: 1200px;
-        margin: 0 auto;
         background-color: #ffffff;
         border-radius: 12px;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         border: 1px solid #e2e8f0;
         padding: 2.5rem;
+        min-width: 0;
+    }
+
+    .post-sidebar {
+        min-width: 0;
+    }
+
+    .sidebar-sticky-wrap {
+        position: sticky;
+        top: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .sidebar-mission-card,
+    .sidebar-toc-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+
+    .sidebar-mission-badge {
+        background: #0f172a;
+        color: #ffffff;
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 0.85rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .sidebar-mission-badge i {
+        color: #60a5fa;
+    }
+
+    .sidebar-mission-heading {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.4;
+        margin: 1.25rem 1.25rem 1rem;
+        letter-spacing: -0.2px;
+    }
+
+    .sidebar-mission-list {
+        list-style: none;
+        margin: 0;
+        padding: 0 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+    .sidebar-mission-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.6rem;
+        font-size: 0.9rem;
+        color: #475569;
+        line-height: 1.5;
+    }
+    .sidebar-mission-list i {
+        color: #16a34a;
+        margin-top: 0.2rem;
+        flex-shrink: 0;
+    }
+
+    .sidebar-mission-btn {
+        display: block;
+        margin: 1.25rem;
+        padding: 0.75rem 1rem;
+        text-align: center;
+        border: 1.5px solid #2563eb;
+        color: #2563eb;
+        font-weight: 700;
+        font-size: 0.9rem;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    .sidebar-mission-btn:hover {
+        background: #2563eb;
+        color: #ffffff;
+    }
+
+    .sidebar-toc-heading {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.8rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #0f172a;
+        padding: 1.1rem 1.25rem 0.9rem;
+        font-style: italic;
+    }
+    .sidebar-toc-bar {
+        width: 18px;
+        height: 4px;
+        background: #2563eb;
+        border-radius: 2px;
+        flex-shrink: 0;
+    }
+
+    .sidebar-toc-list {
+        list-style: none;
+        margin: 0;
+        padding: 0 1.25rem 1.25rem;
+        max-height: 420px;
+        overflow-y: auto;
+    }
+    .sidebar-toc-list li {
+        border-top: 1px solid #f1f5f9;
+    }
+    .sidebar-toc-list li:first-child {
+        border-top: none;
+    }
+    .sidebar-toc-link {
+        display: block;
+        padding: 0.6rem 0;
+        font-size: 0.88rem;
+        color: #475569 !important;
+        text-decoration: none !important;
+        font-weight: 600;
+        line-height: 1.4;
+        transition:
+            color 0.2s ease,
+            padding-left 0.2s ease;
+    }
+    .sidebar-toc-link:hover {
+        color: #2563eb !important;
+        padding-left: 4px;
+    }
+    .sidebar-toc-link.active {
+        color: #2563eb !important;
+        font-weight: 800;
+    }
+
+    @media (max-width: 900px) {
+        .content-with-sidebar {
+            grid-template-columns: 1fr;
+        }
+        .sidebar-sticky-wrap {
+            position: static;
+        }
+        .sidebar-toc-list {
+            max-height: none;
+        }
     }
 
     .cus-faq-question {
@@ -1745,4 +2029,8 @@ if (wrapperStart !== -1) {
             width: 100%;
         }
     }
+
+    article.page-container.cus-page-container {
+    margin-left: -5px !important;
+}
 </style>

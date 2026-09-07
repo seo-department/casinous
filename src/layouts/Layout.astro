@@ -194,6 +194,7 @@ const canonicalURL = canonical || Astro.url.href
                         <li><a href="/">Home</a></li>
                         <li><a href="/about-us/">About Us</a></li>
                         <li><a href="/contact-us/">Contact Us</a></li>
+                        <li><a href="/blog/">Blogs</a></li>
                     </ul>
                 </div>
 
@@ -231,9 +232,7 @@ const canonicalURL = canonical || Astro.url.href
                         <li>
                             <a href="/sitemap/">Sitemap</a>
                         </li>
-                        <li>
-                            <a href="/blog/">Blogs</a>
-                        </li>
+                        
                     </ul>
                 </div>
 
@@ -625,6 +624,14 @@ const canonicalURL = canonical || Astro.url.href
         display: block;
     }
 
+    .wp-content ul {
+    margin-bottom: 1.75rem;
+    color: #334155 !important;
+    line-height: 1.8 !important;
+    font-size: 15px !important;
+}
+
+
     .cus-rating {
         font-size: 0.9rem;
         font-weight: 700;
@@ -762,6 +769,19 @@ const canonicalURL = canonical || Astro.url.href
             background: #94a3b8 !important;
         }
     }
+
+    .footer-section.links-section strong {
+    margin-top: 5px !important;
+    display: block;
+}
+
+.social-icons {
+    margin-top: 18px;
+}
+
+.footer-section.brand-section p {
+    margin-top: 16px;
+}
 
     #free-spin-terms-and-conditions > div.tw-bg-white {
         background-color: rgba(255, 255, 255, 0.02) !important;
