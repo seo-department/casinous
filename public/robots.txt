@@ -2,12 +2,67 @@ User-agent: *
 Disallow: /play/
 Disallow: */play/*
 Disallow: /wp-admin/
-Disallow: /*?s=   
-Disallow: /profile/   
+Disallow: /*?s=
+Disallow: /profile/
 Disallow: /about-us/paul-jacobs/
 Disallow: /about-us/about-us-paul-jacobs/
 Disallow: /about-us/about-us-about-us-paul-jacobs/
 Disallow: /author/paul/
 Disallow: /about-us/paul/
+
+# Blocked Bots & Scrapers
+User-agent: Barkrowler
+Disallow: /
+
+User-agent: Black Hole
+Disallow: /
+
+User-agent: BlowFish/1.0
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: CherryPicker
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: EroCrawler
+Disallow: /
+
+User-agent: ia_archiver
+Disallow: /
+
+User-agent: LinkWalker
+Disallow: /
+
+User-agent: LNSpiderguy
+Disallow: /
+
+User-agent: lwp-trivial
+Disallow: /
+
+User-agent: Mister PiX
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: moget
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
+
+User-agent: TextTrust Crawler
+Disallow: /
+
+User-agent: VelenPublicWebCrawler
+Disallow: /
 
 Sitemap: https://www.casinous.com/sitemap.xml
