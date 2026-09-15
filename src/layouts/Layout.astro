@@ -44,13 +44,29 @@ const canonicalURL = canonical || Astro.url.href
         <link rel="canonical" href={canonicalURL} />
 
         <link rel="manifest" href="/manifest.json" />
-<meta name="theme-color" content="#0b1120" />
+        <meta name="theme-color" content="#0b1120" />
 
-    <!-- iOS PWA support (Safari ignores manifest.json almost entirely) -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Casino Us" />
-    <link rel="apple-touch-icon" href="/images/pwa/icon-192.png" />
+        <script
+            is:inline
+            src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js"
+            defer></script>
+        <script is:inline>
+            window.OneSignalDeferred = window.OneSignalDeferred || []
+            OneSignalDeferred.push(async function (OneSignal) {
+                await OneSignal.init({
+                    appId: "0fe454b9-25f5-4d29-871b-efc6500e1b43",
+                })
+            })
+        </script>
+
+        <!-- iOS PWA support (Safari ignores manifest.json almost entirely) -->
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta
+            name="apple-mobile-web-app-status-bar-style"
+            content="black-translucent"
+        />
+        <meta name="apple-mobile-web-app-title" content="Casino Us" />
+        <link rel="apple-touch-icon" href="/images/pwa/icon-192.png" />
 
         <link rel="icon" type="image/png" href="/images/favicon-cus.png" />
 
@@ -241,7 +257,6 @@ const canonicalURL = canonical || Astro.url.href
                         <li>
                             <a href="/sitemap/">Sitemap</a>
                         </li>
-                        
                     </ul>
                 </div>
 
@@ -281,6 +296,10 @@ const canonicalURL = canonical || Astro.url.href
                 </p>
             </div>
 
+            <button id="scrollTopBtn" aria-label="Back to top" type="button">
+                <i class="fa-solid fa-arrow-up"></i>
+            </button>
+
             <div class="cus-cookie-banner" id="cusCookieBanner" hidden>
                 <div class="cus-cookie-inner">
                     <p class="cus-cookie-text">
@@ -308,85 +327,127 @@ const canonicalURL = canonical || Astro.url.href
 </html>
 
 <style is:global>
+    #scrollTopBtn {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 999;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background-color: #2563eb;
+        color: #fff;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(10px);
+        transition:
+            opacity 0.25s ease,
+            transform 0.25s ease,
+            background-color 0.2s ease,
+            visibility 0.25s ease;
+    }
+    #scrollTopBtn.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+    #scrollTopBtn:hover {
+        background-color: #1d4ed8;
+    }
+    @media (max-width: 600px) {
+        #scrollTopBtn {
+            bottom: 16px;
+            right: 16px;
+            width: 44px;
+            height: 44px;
+        }
+    }
 
     .header-topbar {
-    background-color: #ffffff;
-    border-bottom: 1px solid #e2e8f0;
-}
-.header-topbar-container {
-    max-width: 1356px;
-    margin: 0 auto;
-    padding: 0 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 40px;
-}
-.topbar-links {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-}
-.topbar-links a {
-    color: #334155;
-    text-decoration: none;
-    font-size: 0.85rem;
-    font-weight: 500;
-    transition: color 0.2s ease;
-}
-.topbar-links a:hover {
-    color: #2563eb;
-}
-.topbar-right {
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-}
-.topbar-lang-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    background: none;
-    border: none;
-    color: #334155;
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    padding: 0.25rem;
-}
-.topbar-lang-btn i {
-    font-size: 0.9rem;
-    color: #64748b;
-}
-.topbar-search-btn {
-    background: none;
-    border: none;
-    color: #334155;
-    font-size: 1rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    padding: 0.25rem;
-    transition: color 0.2s ease;
-}
-.topbar-search-btn:hover,
-.topbar-lang-btn:hover {
-    color: #2563eb;
-}
-@media (max-width: 768px) {
+        background-color: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+    }
     .header-topbar-container {
-        height: auto;
-        padding: 0.5rem 1rem;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        justify-content: center;
+        max-width: 1356px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 40px;
     }
     .topbar-links {
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
     }
-}
+    .topbar-links a {
+        color: #334155;
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: color 0.2s ease;
+    }
+    .topbar-links a:hover {
+        color: #2563eb;
+    }
+    .topbar-right {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+    }
+    .topbar-lang-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: none;
+        border: none;
+        color: #334155;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        padding: 0.25rem;
+    }
+    .topbar-lang-btn i {
+        font-size: 0.9rem;
+        color: #64748b;
+    }
+    .topbar-search-btn {
+        background: none;
+        border: none;
+        color: #334155;
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        padding: 0.25rem;
+        transition: color 0.2s ease;
+    }
+    .topbar-search-btn:hover,
+    .topbar-lang-btn:hover {
+        color: #2563eb;
+    }
+    @media (max-width: 768px) {
+        .header-topbar-container {
+            height: auto;
+            padding: 0.5rem 1rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+        .topbar-links {
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+        }
+    }
 
     .header-nav {
         gap: 14px !important;
@@ -634,12 +695,11 @@ const canonicalURL = canonical || Astro.url.href
     }
 
     .wp-content ul {
-    margin-bottom: 1.75rem;
-    color: #334155 !important;
-    line-height: 1.8 !important;
-    font-size: 15px !important;
-}
-
+        margin-bottom: 1.75rem;
+        color: #334155 !important;
+        line-height: 1.8 !important;
+        font-size: 15px !important;
+    }
 
     .cus-rating {
         font-size: 0.9rem;
@@ -780,17 +840,17 @@ const canonicalURL = canonical || Astro.url.href
     }
 
     .footer-section.links-section strong {
-    margin-top: 5px !important;
-    display: block;
-}
+        margin-top: 5px !important;
+        display: block;
+    }
 
-.social-icons {
-    margin-top: 18px;
-}
+    .social-icons {
+        margin-top: 18px;
+    }
 
-.footer-section.brand-section p {
-    margin-top: 16px;
-}
+    .footer-section.brand-section p {
+        margin-top: 16px;
+    }
 
     #free-spin-terms-and-conditions > div.tw-bg-white {
         background-color: rgba(255, 255, 255, 0.02) !important;
@@ -887,9 +947,8 @@ const canonicalURL = canonical || Astro.url.href
     }
 
     figure {
-    width: 100% !important;
-}
-
+        width: 100% !important;
+    }
 
     .cus-claim-btn {
         display: flex;
@@ -3776,20 +3835,19 @@ const canonicalURL = canonical || Astro.url.href
     }
 
     /* --- Fix for the overflowing 624px callout tables --- */
-table[width="624"] {
-    width: 100% !important;
-    max-width: 100% !important;
-    table-layout: fixed !important; /* Forces the table to strictly obey the container's width */
-    box-sizing: border-box;
-}
+    table[width="624"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        table-layout: fixed !important; /* Forces the table to strictly obey the container's width */
+        box-sizing: border-box;
+    }
 
-table[width="624"] td {
-    white-space: normal !important; /* Overrides any inherited rules preventing text wrapping */
-    word-wrap: break-word !important; /* Ensures long strings don't break the layout */
-    overflow-wrap: break-word !important;
-    box-sizing: border-box;
-}
-
+    table[width="624"] td {
+        white-space: normal !important; /* Overrides any inherited rules preventing text wrapping */
+        word-wrap: break-word !important; /* Ensures long strings don't break the layout */
+        overflow-wrap: break-word !important;
+        box-sizing: border-box;
+    }
 
     .meta-name {
         display: block;
@@ -3897,10 +3955,10 @@ table[width="624"] td {
         margin-bottom: 1.75rem;
     }
     em {
-    font-size: 12px !important;
-    line-height: 18px !important;
-    display: block;
-}
+        font-size: 12px !important;
+        line-height: 18px !important;
+        display: block;
+    }
 
     .wp-content h2 {
         color: #0f172a;
@@ -12588,11 +12646,37 @@ table[width="624"] td {
 </script>
 
 <script is:inline>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/sw.js").catch((err) => {
-        console.warn("SW registration failed:", err);
-      });
-    });
-  }
+    if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+            navigator.serviceWorker.register("/sw.js").catch(err => {
+                console.warn("SW registration failed:", err)
+            })
+        })
+    }
+</script>
+
+<script is:inline>
+    function initScrollTopBtn() {
+        const btn = document.getElementById("scrollTopBtn")
+        if (!btn || btn.dataset.bound === "true") return
+        btn.dataset.bound = "true"
+
+        const toggleVisibility = () => {
+            if (window.scrollY > 400) {
+                btn.classList.add("show")
+            } else {
+                btn.classList.remove("show")
+            }
+        }
+
+        window.addEventListener("scroll", toggleVisibility, { passive: true })
+        toggleVisibility()
+
+        btn.addEventListener("click", () => {
+            window.scrollTo({ top: 0, behavior: "smooth" })
+        })
+    }
+
+    document.addEventListener("DOMContentLoaded", initScrollTopBtn)
+    document.addEventListener("astro:page-load", initScrollTopBtn)
 </script>
