@@ -43,6 +43,15 @@ const canonicalURL = canonical || Astro.url.href
         {schema && <script type="application/ld+json" set:html={schema} />}
         <link rel="canonical" href={canonicalURL} />
 
+        <link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#0b1120" />
+
+    <!-- iOS PWA support (Safari ignores manifest.json almost entirely) -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Casino Us" />
+    <link rel="apple-touch-icon" href="/images/pwa/icon-192.png" />
+
         <link rel="icon" type="image/png" href="/images/favicon-cus.png" />
 
         <!-- Open Graph -->
@@ -12576,4 +12585,14 @@ table[width="624"] td {
             .getElementById("cusCookieDecline")
             ?.addEventListener("click", () => setConsent("declined"))
     })()
+</script>
+
+<script is:inline>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js").catch((err) => {
+        console.warn("SW registration failed:", err);
+      });
+    });
+  }
 </script>
