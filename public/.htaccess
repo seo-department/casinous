@@ -1,0 +1,10 @@
+RewriteEngine On
+
+# Disallow: /play/  (path starting with /play/)
+RewriteRule ^play/ - [F,L]
+
+# Disallow: */play/*  (any path containing a /play/ segment anywhere)
+RewriteRule (^|/)play/ - [F,L]
+
+# Disallow: /play-now/
+RewriteRule ^play-now/ - [F,L]

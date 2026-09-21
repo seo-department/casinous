@@ -189,6 +189,8 @@ const canonicalURL = canonical || Astro.url.href
             </div>
         </header>
 
+        <div class="cus-mtoc" id="cusMobileToc" hidden></div>
+
         <main>
             <slot />
         </main>
@@ -327,6 +329,80 @@ const canonicalURL = canonical || Astro.url.href
 </html>
 
 <style is:global>
+    /* Mobile-only table of contents, sits right under the header nav */
+    .cus-mtoc {
+        display: none;
+    }
+    @media (max-width: 768px) {
+        .cus-mtoc {
+            display: block;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+    }
+    .cus-mtoc-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        cursor: pointer;
+        user-select: none;
+    }
+    .cus-mtoc-header strong {
+        font-size: 14px;
+        font-weight: 700;
+        color: #1e293b;
+    }
+    .cus-mtoc-arrow {
+        font-size: 11px;
+        color: #64748b;
+        transition: transform 0.25s ease;
+    }
+    .cus-mtoc.is-open .cus-mtoc-arrow {
+        transform: rotate(180deg);
+    }
+    .cus-mtoc-body {
+        display: none;
+        padding: 0 16px 14px 16px;
+        height: auto;
+        overflow: visible;
+        border-top: 1px solid #f1f5f9;
+    }
+    .cus-mtoc.is-open .cus-mtoc-body {
+        display: block;
+        padding-top: 12px;
+    }
+    .cus-mtoc-body ol {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+    .cus-mtoc-body li {
+        margin-bottom: 10px;
+    }
+    .cus-mtoc-body li:last-child {
+        margin-bottom: 0;
+    }
+    .cus-mtoc-body li a {
+        display: block;
+        font-size: 13.5px;
+        font-weight: 500;
+        color: #334155;
+        text-decoration: none;
+        line-height: 1.4;
+    }
+
+   
+    .cus-mtoc-body li a:active,
+    .cus-mtoc-body li a:hover {
+        color: #2563eb;
+    }
+
+    .cus-mtoc-body li {
+    border-bottom: 1px solid #ededed;
+}
+
     #scrollTopBtn {
         position: fixed;
         bottom: 24px;
@@ -6693,7 +6769,7 @@ const canonicalURL = canonical || Astro.url.href
         .featured-image-wrapper {
             margin: -1.5rem -1.5rem 1.5rem -1.5rem;
         }
-        
+
         .post-breadcrumbs .current {
             max-width: 150px;
         }
@@ -12677,4 +12753,89 @@ const canonicalURL = canonical || Astro.url.href
 
     document.addEventListener("DOMContentLoaded", initScrollTopBtn)
     document.addEventListener("astro:page-load", initScrollTopBtn)
+</script>
+
+<script is:inline>
+    function cusSlugifyMtoc(text) {
+        return text
+            .toLowerCase()
+            .trim()
+            .replace(/[^\w\s-]/g, "")
+            .replace(/\s+/g, "-")
+            .replace(/-+/g, "-")
+    }
+
+    function buildMobileToc() {
+        const toc = document.getElementById("cusMobileToc")
+        if (!toc) return
+
+        const container =
+            document.querySelector(".wp-content") ||
+            document.querySelector(".post-container") ||
+            document.querySelector(".page-container")
+
+        if (!container) {
+            toc.hidden = true
+            toc.innerHTML = ""
+            return
+        }
+
+        const headings = Array.from(container.querySelectorAll("h2"))
+        if (headings.length < 2) {
+            toc.hidden = true
+            toc.innerHTML = ""
+            return
+        }
+
+        const usedIds = new Set()
+        const items = headings.map(h => {
+            let id = h.id
+            if (!id) {
+                const base =
+                    cusSlugifyMtoc(h.textContent || "section") || "section"
+                id = base
+                let i = 2
+                while (usedIds.has(id) || document.getElementById(id)) {
+                    id = `${base}-${i}`
+                    i++
+                }
+                h.id = id
+            }
+            usedIds.add(id)
+            return { id, text: h.textContent.trim() }
+        })
+
+        toc.hidden = false
+        toc.classList.remove("is-open")
+        toc.innerHTML = `
+            <div class="cus-mtoc-header">
+                <strong>Table of contents</strong>
+                <span class="cus-mtoc-arrow"><i class="fa-solid fa-chevron-down"></i></span>
+            </div>
+            <div class="cus-mtoc-body">
+                <ol>
+                    ${items
+                        .map(
+                            item =>
+                                `<li><a href="#${item.id}">${item.text}</a></li>`,
+                        )
+                        .join("")}
+                </ol>
+            </div>
+        `
+
+        toc.querySelector(".cus-mtoc-header").addEventListener("click", () => {
+            toc.classList.toggle("is-open")
+        })
+
+        // Collapse the panel after tapping a link, so the user lands on the section
+        toc.querySelectorAll(".cus-mtoc-body a").forEach(link => {
+            link.addEventListener("click", () => {
+                toc.classList.remove("is-open")
+            })
+        })
+    }
+
+    document.addEventListener("DOMContentLoaded", buildMobileToc)
+    document.addEventListener("astro:page-load", buildMobileToc)
 </script>
