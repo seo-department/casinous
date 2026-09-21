@@ -329,7 +329,6 @@ const canonicalURL = canonical || Astro.url.href
 </html>
 
 <style is:global>
-    /* Mobile-only table of contents, sits right under the header nav */
     .cus-mtoc {
         display: none;
     }
@@ -339,8 +338,17 @@ const canonicalURL = canonical || Astro.url.href
             background-color: #ffffff;
             border-bottom: 1px solid #e2e8f0;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            position: sticky;
+            top: var(--cus-mtoc-top, 0px);
+            z-index: 90;
+            transition: transform 0.25s ease;
+            will-change: transform;
+        }
+        .cus-mtoc.cus-mtoc--hidden {
+            transform: translateY(-110%);
         }
     }
+
     .cus-mtoc-header {
         display: flex;
         justify-content: space-between;
@@ -393,15 +401,14 @@ const canonicalURL = canonical || Astro.url.href
         line-height: 1.4;
     }
 
-   
     .cus-mtoc-body li a:active,
     .cus-mtoc-body li a:hover {
         color: #2563eb;
     }
 
     .cus-mtoc-body li {
-    border-bottom: 1px solid #ededed;
-}
+        border-bottom: 1px solid #ededed;
+    }
 
     #scrollTopBtn {
         position: fixed;
@@ -12838,4 +12845,28 @@ const canonicalURL = canonical || Astro.url.href
 
     document.addEventListener("DOMContentLoaded", buildMobileToc)
     document.addEventListener("astro:page-load", buildMobileToc)
+</script>
+
+<script>
+    function initMobileTocScrollBehavior() {
+        const toc = document.getElementById("cusMobileToc")
+        const header = document.querySelector(".header-bar")
+
+        if (!toc || !header) return
+        if (toc.dataset.scrollBound === "true") return
+        toc.dataset.scrollBound = "true"
+
+        function updateOffset() {
+            document.documentElement.style.setProperty(
+                "--cus-mtoc-top",
+                header.getBoundingClientRect().height + "px",
+            )
+        }
+
+        updateOffset()
+        window.addEventListener("resize", updateOffset, { passive: true })
+    }
+
+    document.addEventListener("DOMContentLoaded", initMobileTocScrollBehavior)
+    document.addEventListener("astro:page-load", initMobileTocScrollBehavior)
 </script>
