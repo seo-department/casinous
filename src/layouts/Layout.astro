@@ -43,6 +43,17 @@ const canonicalURL = canonical || Astro.url.href
         {schema && <script type="application/ld+json" set:html={schema} />}
         <link rel="canonical" href={canonicalURL} />
 
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width" />
+        <!-- ... -->
+
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+            rel="stylesheet"
+        />
+
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#0b1120" />
 
@@ -446,8 +457,8 @@ const canonicalURL = canonical || Astro.url.href
     }
     @media (max-width: 600px) {
         .sidebar-toc-card {
-    display: none !important;
-}
+            display: none !important;
+        }
         #scrollTopBtn {
             bottom: 16px;
             right: 16px;
@@ -782,9 +793,13 @@ const canonicalURL = canonical || Astro.url.href
 
     .wp-content ul {
         margin-bottom: 1.75rem;
-        color: #334155 !important;
+        color: #475569 !important;
         line-height: 1.8 !important;
-        font-size: 15px !important;
+        font-size: 14px !important;
+    }
+
+     .wp-content ul li{
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
     }
 
     .cus-rating {
@@ -1187,13 +1202,7 @@ const canonicalURL = canonical || Astro.url.href
         margin: 0;
         padding: 0;
         box-sizing: border-box;
-        font-family:
-            system-ui,
-            -apple-system,
-            BlinkMacSystemFont,
-            "Segoe UI",
-            Roboto,
-            sans-serif;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
         background-color: var(--bg-main);
         color: var(--text-main);
         min-height: 100vh;
@@ -4011,7 +4020,7 @@ const canonicalURL = canonical || Astro.url.href
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
         border: 1px solid #e2e8f0;
         transform: translateY(-2rem);
-        padding: 2.5rem;
+        padding: 8px;
     }
     .page-container {
         max-width: 1200px;
@@ -4020,7 +4029,7 @@ const canonicalURL = canonical || Astro.url.href
         border-radius: 12px;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         border: 1px solid #e2e8f0;
-        padding: 2.5rem;
+        padding: 8px;
     }
     .featured-image-wrapper {
         margin: -2.5rem -2.5rem 2.5rem -2.5rem;
@@ -4036,7 +4045,7 @@ const canonicalURL = canonical || Astro.url.href
     }
     .wp-content p {
         line-height: 1.8;
-        color: #334155;
+        color: #475569;
         font-size: 14px !important;
         margin-bottom: 1.75rem;
     }
@@ -4067,7 +4076,6 @@ const canonicalURL = canonical || Astro.url.href
         margin-bottom: 1.75rem;
         color: #334155;
         line-height: 1.8;
-        font-size: 1.15rem;
     }
     .wp-content a {
         color: #2563eb;

@@ -162,6 +162,30 @@ export async function getStaticPaths() {
     // Grab 8 recent posts total to divide between the two sections later
     const recentPosts = allPostsList.slice(0, 8)
 
+    // 🚨 AUTHOR POPUP: build a name -> posts (newest first) map from the
+    // posts we already fetched above, so "Latest Posts By" needs no extra
+    // GraphQL round-trip and stays in sync automatically for every author.
+    const getDisplayAuthorName = (node: any) => {
+        const authorNode = node.author?.node
+        if (!authorNode) return "Editorial Team"
+        return authorNode.firstName && authorNode.lastName
+            ? `${authorNode.firstName} ${authorNode.lastName}`
+            : authorNode.name || "Editorial Team"
+    }
+
+    const authorPostsMap = new Map<string, any[]>()
+    for (const p of allPostsList) {
+        const name = getDisplayAuthorName(p)
+        if (!authorPostsMap.has(name)) authorPostsMap.set(name, [])
+        authorPostsMap.get(name)!.push(p)
+    }
+    for (const list of authorPostsMap.values()) {
+        list.sort(
+            (a: any, b: any) =>
+                new Date(b.date).getTime() - new Date(a.date).getTime(),
+        )
+    }
+
     return validNodes.map((node: any) => {
         const cleanSlug = sanitizeSlug(node.uri)
 
@@ -171,12 +195,36 @@ export async function getStaticPaths() {
                 ? recentPosts.filter(p => p.uri !== node.uri).slice(0, 7)
                 : []
 
+        // Build this node's "Latest Posts By [Author]" list for the popup
+        const nodeAuthorName = getDisplayAuthorName(node)
+        const authorRawPosts = authorPostsMap.get(nodeAuthorName) || []
+        const authorLatestPosts = authorRawPosts
+            .filter((p: any) => p.uri !== node.uri)
+            .slice(0, 5)
+            .map((p: any) => {
+                let img = p.featuredImage?.node?.sourceUrl || ""
+                if (img) {
+                    try {
+                        img = new URL(img).pathname
+                    } catch (e) {}
+                }
+                const relUri = (p.uri || "").replace(/https?:\/\/[^\/]+/g, "")
+                const link = `/${relUri.replace(/^\/|\/$/g, "")}/`
+                const date = new Date(p.date).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                })
+                return { title: p.title, link, image: img, date }
+            })
+
         return {
             params: { slug: cleanSlug || undefined },
             props: {
                 post: node,
                 contentType: node.contentType,
                 relatedPosts: related,
+                authorLatestPosts,
             },
         }
     })
@@ -187,9 +235,15 @@ interface Props {
     contentType: "post" | "page"
     relatedPosts: any[]
     post: any
+    authorLatestPosts: {
+        title: string
+        link: string
+        image: string
+        date: string
+    }[]
 }
 
-const { post, contentType, relatedPosts } = Astro.props
+const { post, contentType, relatedPosts, authorLatestPosts } = Astro.props
 const { slug } = Astro.params
 
 // 🚨 SPLIT THE POSTS FOR THE FOOTER LAYOUT
@@ -302,6 +356,18 @@ const stripHtmlTags = (html: string) => {
 const authorBio = authorNode?.description
     ? stripHtmlTags(authorNode.description.replaceAll(wpDomain, ""))
     : `${authorName} is part of our editorial team, contributing casino guides, news, and reviews.`
+
+// 🚨 Shorter bio just for the hover popup, so the card stays compact
+// regardless of how long an author's full bio runs. Cuts at a word
+// boundary and adds an ellipsis, matching the crazyvegas reference card.
+const AUTHOR_POPUP_BIO_LIMIT = 170
+const authorBioPopup =
+    authorBio.length > AUTHOR_POPUP_BIO_LIMIT
+        ? authorBio
+              .slice(0, AUTHOR_POPUP_BIO_LIMIT)
+              .replace(/\s+\S*$/, "")
+              .trim() + "…"
+        : authorBio
 
 const formatSocial = (value: string | undefined, domain: string) => {
     if (!value) return null
@@ -560,6 +626,7 @@ if (wrapperStart !== -1) {
                         href={authorLink}
                         class="author-image-link"
                         aria-label={`View ${authorName}'s profile`}
+                        data-open-author-popup="true"
                     >
                         <img
                             src={authorAvatar}
@@ -570,7 +637,10 @@ if (wrapperStart !== -1) {
                     </a>
                     <div>
                         <span class="meta-name"
-                            >By <a href={authorLink} class="author-text-link"
+                            >By <a
+                                href={authorLink}
+                                class="author-text-link"
+                                data-open-author-popup="true"
                                 ><strong>{authorName}</strong></a
                             ></span
                         >
@@ -982,10 +1052,14 @@ if (wrapperStart !== -1) {
                     alt={authorName}
                     class="site-author-avatar"
                     referrerpolicy="no-referrer"
+                    data-open-author-popup="true"
+                    style="cursor: pointer;"
                 />
                 <div class="site-author-info">
                     <h3 class="site-author-name">
-                        <a href={authorLink}>{authorName}</a>
+                        <a href={authorLink} data-open-author-popup="true">
+                            {authorName}
+                        </a>
                     </h3>
                     <p class="site-author-bio">{authorBio}</p>
                     <div class="site-author-socials">
@@ -1018,6 +1092,86 @@ if (wrapperStart !== -1) {
             </div>
         </div>
     </section>
+
+    {/* 🚨 AUTHOR POPUP — built dynamically per-page from real WP author data
+         and the author's own latest posts (no hardcoding, works for every
+         author on every post/page automatically). */}
+    <div
+        class="author-popup-card"
+        id="author-popup-card"
+        role="dialog"
+        aria-label={`About ${authorName}`}
+        aria-hidden="true"
+    >
+        <button
+            type="button"
+            class="author-popup-close"
+            id="author-popup-close"
+            aria-label="Close"
+        >
+            <i class="fa-solid fa-xmark" />
+        </button>
+
+        <div class="author-popup-header">
+            <img
+                src={authorAvatar}
+                alt={authorName}
+                class="author-popup-avatar"
+                referrerpolicy="no-referrer"
+            />
+            <span class="author-popup-eyebrow">Author</span>
+            <h3 class="author-popup-name">{authorName}</h3>
+        </div>
+
+        <div class="author-popup-body">
+            <span class="author-popup-label">About Author</span>
+            <p class="author-popup-bio">{authorBioPopup}</p>
+
+            {
+                authorLatestPosts.length > 0 && (
+                    <>
+                        <span class="author-popup-label author-popup-label-posts">
+                            Latest Posts By: {authorName}
+                        </span>
+                        <ul class="author-popup-posts">
+                            {authorLatestPosts.map(item => (
+                                <li>
+                                    <a
+                                        href={item.link}
+                                        class="author-popup-post-link"
+                                    >
+                                        {item.image && (
+                                            <img
+                                                src={item.image}
+                                                alt=""
+                                                loading="lazy"
+                                                referrerpolicy="no-referrer"
+                                                class="author-popup-post-thumb"
+                                            />
+                                        )}
+                                        <span class="author-popup-post-text">
+                                            <span
+                                                class="author-popup-post-title"
+                                                set:html={item.title}
+                                            />
+                                            <span class="author-popup-post-date">
+                                                {item.date}
+                                            </span>
+                                        </span>
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </>
+                )
+            }
+        </div>
+
+        <a href={authorLink} class="author-popup-also-wrote">
+            Also Wrote!
+            <i class="fa-solid fa-chevron-right" />
+        </a>
+    </div>
 </Layout>
 
 <script is:inline>
@@ -1109,6 +1263,135 @@ if (wrapperStart !== -1) {
             initSidebarToc()
         }
         document.addEventListener("astro:page-load", initSidebarToc)
+    })()
+
+    // 🚨 AUTHOR POPUP: shows on hover (desktop) / tap (touch & keyboard
+    // focus), positioned next to whichever trigger you're over. One shared
+    // card is reused and repositioned per-trigger so this works identically
+    // for every author on every post/page. `dataset.authorPopupBound`
+    // guards against double-binding across DOMContentLoaded and
+    // astro:page-load (view-transitions).
+    ;(function () {
+        function initAuthorPopup() {
+            const card = document.getElementById("author-popup-card")
+            if (!card) return
+
+            const closeBtn = document.getElementById("author-popup-close")
+            const triggers = document.querySelectorAll(
+                "[data-open-author-popup]",
+            )
+            if (!triggers.length) return
+
+            let hideTimer = null
+
+            function cancelHide() {
+                if (hideTimer) {
+                    clearTimeout(hideTimer)
+                    hideTimer = null
+                }
+            }
+
+            function scheduleHide(delay) {
+                cancelHide()
+                hideTimer = setTimeout(() => {
+                    card.classList.remove("is-open")
+                    card.setAttribute("aria-hidden", "true")
+                }, delay === undefined ? 220 : delay)
+            }
+
+            function positionCard(trigger) {
+                const isMobile = window.innerWidth < 640
+                if (isMobile) {
+                    card.classList.add("author-popup-mobile")
+                    return
+                }
+                card.classList.remove("author-popup-mobile")
+
+                const rect = trigger.getBoundingClientRect()
+                const cardWidth = card.offsetWidth || 380
+                const margin = 16
+
+                let left = rect.left
+                if (left + cardWidth > window.innerWidth - margin) {
+                    left = window.innerWidth - cardWidth - margin
+                }
+                if (left < margin) left = margin
+
+                let top = rect.bottom + 10
+                const cardHeight = card.offsetHeight || 420
+                // If it would run off the bottom, flip it above the trigger
+                if (top + cardHeight > window.innerHeight - margin) {
+                    const above = rect.top - cardHeight - 10
+                    top = above > margin ? above : margin
+                }
+
+                card.style.left = `${left}px`
+                card.style.top = `${top}px`
+            }
+
+            function showCard(trigger) {
+                cancelHide()
+                positionCard(trigger)
+                card.classList.add("is-open")
+                card.setAttribute("aria-hidden", "false")
+            }
+
+            triggers.forEach(el => {
+                if (el.dataset.authorPopupBound) return
+                el.dataset.authorPopupBound = "true"
+
+                el.addEventListener("mouseenter", () => showCard(el))
+                el.addEventListener("mouseleave", () => scheduleHide())
+                el.addEventListener("focus", () => showCard(el))
+                el.addEventListener("blur", () => scheduleHide(120))
+
+                // Touch / click devices: toggle instead of relying on hover
+                el.addEventListener("click", e => {
+                    e.preventDefault()
+                    if (card.classList.contains("is-open")) {
+                        scheduleHide(0)
+                    } else {
+                        showCard(el)
+                    }
+                })
+            })
+
+            if (!card.dataset.authorPopupBound) {
+                card.dataset.authorPopupBound = "true"
+                card.addEventListener("mouseenter", cancelHide)
+                card.addEventListener("mouseleave", () => scheduleHide())
+            }
+
+            if (closeBtn && !closeBtn.dataset.authorPopupBound) {
+                closeBtn.dataset.authorPopupBound = "true"
+                closeBtn.addEventListener("click", () => scheduleHide(0))
+            }
+
+            document.addEventListener("click", e => {
+                if (!card.classList.contains("is-open")) return
+                const clickedTrigger = e.target.closest(
+                    "[data-open-author-popup]",
+                )
+                if (clickedTrigger) return
+                if (!card.contains(e.target)) scheduleHide(0)
+            })
+
+            document.addEventListener("keydown", e => {
+                if (e.key === "Escape") scheduleHide(0)
+            })
+
+            window.addEventListener("scroll", () => scheduleHide(0), {
+                passive: true,
+            })
+            window.addEventListener("resize", () => scheduleHide(0))
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", initAuthorPopup)
+        } else {
+            initAuthorPopup()
+        }
+        document.addEventListener("astro:page-load", initAuthorPopup)
     })()
 </script>
 
@@ -1203,7 +1486,7 @@ if (wrapperStart !== -1) {
 
     .site-author-bio {
         color: #475569;
-        font-size: 0.95rem;
+        font-size: 14px;
         line-height: 1.65;
         margin: 0 0 16px 0;
     }
@@ -1253,9 +1536,9 @@ if (wrapperStart !== -1) {
     .site-trust-statement p {
         margin: 0;
         color: #334155;
-        font-size: 1rem;
+        font-size: 14px;
         line-height: 1.75;
-        font-weight: 500;
+
     }
     @media (max-width: 640px) {
         .site-author-card {
@@ -1266,6 +1549,202 @@ if (wrapperStart !== -1) {
         .site-author-socials {
             justify-content: center;
         }
+    }
+
+    /* =========================================
+       AUTHOR POPUP (hover author name/avatar;
+       tap/click and keyboard focus also work)
+    ========================================= */
+    .author-popup-card {
+        background: #ffffff;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 380px;
+        max-height: min(560px, 80vh);
+        overflow-y: auto;
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25);
+        position: fixed;
+        top: -9999px;
+        left: -9999px;
+        z-index: 1000;
+        padding: 1.5rem 1.5rem 1.25rem;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translateY(6px);
+        transition:
+            opacity 0.15s ease,
+            transform 0.15s ease,
+            visibility 0.15s;
+    }
+    .author-popup-card.is-open {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translateY(0);
+    }
+    @media (max-width: 640px) {
+        .author-popup-card.author-popup-mobile {
+            left: 0 !important;
+            right: 0;
+            top: auto !important;
+            bottom: 0;
+            width: 100%;
+            max-width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border-radius: 16px 16px 0 0;
+            transform: translateY(12px);
+        }
+        .author-popup-card.author-popup-mobile.is-open {
+            transform: translateY(0);
+        }
+    }
+    .author-popup-close {
+        position: absolute;
+        top: 0.85rem;
+        right: 0.85rem;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: none;
+        background: #f1f5f9;
+        color: #475569;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.15s ease;
+    }
+    .author-popup-close:hover {
+        background: #0f172a;
+        color: #ffffff;
+    }
+    .author-popup-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        margin-bottom: 0.9rem;
+    }
+    .author-popup-avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #f1f5f9;
+        margin-bottom: 0.6rem;
+    }
+    .author-popup-eyebrow {
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #2563eb;
+        margin-bottom: 0.25rem;
+    }
+    .author-popup-name {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #0f172a;
+    }
+    .author-popup-body {
+        border-top: 1px solid #f1f5f9;
+        padding-top: 0.85rem;
+    }
+    .author-popup-label {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #94a3b8;
+        margin-bottom: 0.4rem;
+    }
+    .author-popup-label-posts {
+        margin-top: 0.9rem;
+        padding-top: 0.85rem;
+        border-top: 1px solid #f1f5f9;
+    }
+    .author-popup-bio {
+        margin: 0;
+        color: #334155;
+        font-size: 0.88rem;
+        line-height: 1.5;
+    }
+    .author-popup-posts {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        max-height: 230px;
+        overflow-y: auto;
+    }
+    .author-popup-post-link {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        text-decoration: none;
+        padding: 0.3rem;
+        border-radius: 8px;
+        transition: background 0.15s ease;
+    }
+    .author-popup-post-link:hover {
+        background: #f8fafc;
+    }
+    .author-popup-post-thumb {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+    .author-popup-post-text {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        min-width: 0;
+    }
+    .author-popup-post-title {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.35;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .author-popup-post-date {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        font-weight: 600;
+    }
+    .author-popup-also-wrote {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        margin-top: 1.25rem;
+        padding: 0.7rem 1rem;
+        border-radius: 999px;
+        background: #eff6ff;
+        color: #2563eb;
+        font-weight: 800;
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: all 0.15s ease;
+    }
+    .author-popup-also-wrote:hover {
+        background: #2563eb;
+        color: #ffffff;
+    }
+    .author-popup-also-wrote i {
+        font-size: 0.75rem;
     }
 
     /* =========================================
@@ -1442,6 +1921,7 @@ if (wrapperStart !== -1) {
     .author-image-link {
         display: block;
         transition: transform 0.2s ease;
+        cursor: pointer;
     }
     .author-image-link:hover {
         transform: scale(1.05);
@@ -1462,6 +1942,7 @@ if (wrapperStart !== -1) {
         color: #ffffff;
         text-decoration: none;
         transition: color 0.2s ease;
+        cursor: pointer;
     }
     .author-text-link:hover {
         color: #60a5fa;
@@ -1555,7 +2036,7 @@ if (wrapperStart !== -1) {
         border-radius: 12px;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         border: 1px solid #e2e8f0;
-        padding: 11px;
+        padding: 8px;
         min-width: 0;
     }
 
@@ -1723,7 +2204,7 @@ if (wrapperStart !== -1) {
 
     .wp-content p {
         line-height: 1.8;
-        color: #334155;
+        color: #475569;
         margin-bottom: 1.75rem;
     }
     .wp-content h2 {
@@ -1750,7 +2231,6 @@ if (wrapperStart !== -1) {
         color: #334155;
         line-height: 1.8;
         padding-left: 1.5rem;
-        font-size: 1.15rem;
     }
     .wp-content a {
         color: #2563eb;
@@ -2029,6 +2509,10 @@ if (wrapperStart !== -1) {
             height: 160px;
             flex: none;
             width: 100%;
+        }
+
+        .author-popup-card {
+            max-width: 100%;
         }
     }
 
