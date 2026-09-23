@@ -24,13 +24,14 @@ const response = await fetch(wpUrl, {
                                 name
                                 firstName
                                 lastName
+                                description
                                 avatar { url }
                                 seo { social { facebook twitter instagram linkedIn } }
                             }
                         }
                     }
                 }
-                posts(first: 8) {
+                posts(first: 30) {
                     nodes {
                         uri
                         title
@@ -50,6 +51,16 @@ const response = await fetch(wpUrl, {
                                 avatar { url }
                             }
                         }
+                    }
+                }
+                users(first: 10) {
+                    nodes {
+                        name
+                        firstName
+                        lastName
+                        description
+                        slug
+                        avatar { url }
                     }
                 }
             }
@@ -285,6 +296,147 @@ if (contentWithIds.includes("[casino_toc]")) {
 const recentPosts = result.data?.posts?.nodes || []
 const breakingStories = recentPosts.slice(0, 3)
 const blogPosts = recentPosts.slice(3, 7)
+
+// 🚨 AUTHOR / REVIEWER POPUP — hover card for BOTH bylines in the hero
+// meta box: the real page author, and the (currently hardcoded) reviewer.
+// One shared card, refilled per-person and per-role (Author vs Reviewer)
+// from JSON built at build time, reusing data we already fetched (users
+// for bios, the 30 posts for avatars/backfill + "latest posts by").
+const AUTHOR_POPUP_BIO_LIMIT = 170
+const truncateBio = (bio: string) =>
+	bio.length > AUTHOR_POPUP_BIO_LIMIT
+		? bio
+				.slice(0, AUTHOR_POPUP_BIO_LIMIT)
+				.replace(/\s+\S*$/, "")
+				.trim() + "…"
+		: bio
+
+const stripHtmlForPopup = (html: string) =>
+	html.replace(/<\/?[^>]+(>|$)/g, "").trim()
+
+// Manual avatar overrides for people whose byline avatar here is a
+// hand-picked Gravatar rather than their WP avatar.
+const AUTHOR_AVATAR_OVERRIDES: Record<string, string> = {
+	[reviewerName]: reviewerAvatar,
+}
+
+const authorPopupMap = new Map<
+	string,
+	{
+		name: string
+		avatar: string
+		bio: string
+		link: string
+		posts: { title: string; link: string; image: string; date: string }[]
+	}
+>()
+
+const registerAuthorForPopup = (
+	name: string | undefined,
+	avatarUrl: string | undefined,
+	rawBio: string | undefined,
+) => {
+	if (!name) return
+	const avatar =
+		AUTHOR_AVATAR_OVERRIDES[name] ||
+		(avatarUrl
+			? avatarUrl.replaceAll(wpDomain, liveDomain)
+			: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=f1f5f9&color=1e293b&bold=true`)
+
+	if (authorPopupMap.has(name)) {
+		const existing = authorPopupMap.get(name)!
+		if (rawBio && existing.bio.startsWith(`${name} is part of`)) {
+			existing.bio = truncateBio(
+				stripHtmlForPopup(rawBio.replaceAll(wpDomain, liveDomain)),
+			)
+		}
+		return
+	}
+
+	authorPopupMap.set(name, {
+		name,
+		avatar,
+		bio: rawBio
+			? truncateBio(
+					stripHtmlForPopup(rawBio.replaceAll(wpDomain, liveDomain)),
+				)
+			: `${name} is part of our editorial team, contributing casino guides, news, and reviews.`,
+		link: `/about-us/${name
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, "-")
+			.replace(/(^-|-$)+/g, "")}/`,
+		posts: [],
+	})
+}
+
+// Seed from `users` (real bios for whoever's in WP's top 10 users)
+;(result.data?.users?.nodes || []).forEach((u: any) => {
+	const name =
+		u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : u.name
+	registerAuthorForPopup(name, u.avatar?.url, u.description)
+})
+
+// Make sure the reviewer exists even if she isn't in the top 10 users
+registerAuthorForPopup(reviewerName, reviewerAvatar, undefined)
+
+// Backfill with any post byline the `users` query missed
+recentPosts.forEach((p: any) => {
+	const a = p.author?.node
+	if (!a) return
+	const name = a.firstName && a.lastName ? `${a.firstName} ${a.lastName}` : a.name
+	registerAuthorForPopup(name, a.avatar?.url, undefined)
+})
+
+// The page's own author record has the most authoritative bio for this
+// page, so it wins even if `users` already filled in a generic one.
+if (authorObj?.description) {
+	const entry = authorPopupMap.get(authorName)
+	if (entry) {
+		entry.bio = truncateBio(
+			stripHtmlForPopup(authorObj.description.replaceAll(wpDomain, liveDomain)),
+		)
+	}
+}
+
+// Attach each person's latest posts (from the 30 we already fetched)
+const postsByAuthorNameForPopup = new Map<string, any[]>()
+recentPosts.forEach((p: any) => {
+	const a = p.author?.node
+	const name = a
+		? a.firstName && a.lastName
+			? `${a.firstName} ${a.lastName}`
+			: a.name
+		: null
+	if (!name) return
+	if (!postsByAuthorNameForPopup.has(name)) postsByAuthorNameForPopup.set(name, [])
+	postsByAuthorNameForPopup.get(name)!.push(p)
+})
+
+authorPopupMap.forEach((entry, name) => {
+	entry.posts = (postsByAuthorNameForPopup.get(name) || []).slice(0, 5).map((p: any) => {
+		let img = p.featuredImage?.node?.sourceUrl || ""
+		if (img) {
+			try {
+				img = new URL(img).pathname
+			} catch (e) {}
+		}
+		const relUri = (p.uri || "").replace(/https?:\/\/[^\/]+/g, "")
+		return {
+			title: p.title,
+			link: `/${relUri.replace(/^\/|\/$/g, "")}/`,
+			image: img,
+			date: new Date(p.date).toLocaleDateString("en-US", {
+				year: "numeric",
+				month: "short",
+				day: "numeric",
+			}),
+		}
+	})
+})
+
+const authorPopupJson = JSON.stringify(
+	Object.fromEntries(authorPopupMap),
+).replace(/</g, "\\u003c")
 ---
 
 <Layout
@@ -310,11 +462,19 @@ const blogPosts = recentPosts.slice(3, 7)
 								src={authorAvatar}
 								alt={authorName}
 								class="amb-avatar"
+								data-open-author-popup="true"
+								data-author-key={authorName}
+								data-author-role="author"
 							/>
 							<div class="amb-info">
 								<span class="amb-name"
 									>By <strong
-										><a href={authorLink}>{authorName}</a
+										><a
+											href={authorLink}
+											data-open-author-popup="true"
+											data-author-key={authorName}
+											data-author-role="author"
+											>{authorName}</a
 										></strong
 									></span
 								>
@@ -331,11 +491,18 @@ const blogPosts = recentPosts.slice(3, 7)
 								src={reviewerAvatar}
 								alt={reviewerName}
 								class="amb-avatar"
+								data-open-author-popup="true"
+								data-author-key={reviewerName}
+								data-author-role="reviewer"
 							/>
 							<div class="amb-info">
 								<span class="amb-name"
 									>Reviewed by <strong
-										><a href={reviewerLink}
+										><a
+											href={reviewerLink}
+											data-open-author-popup="true"
+											data-author-key={reviewerName}
+											data-author-role="reviewer"
 											>{reviewerName}</a
 										></strong
 									></span
@@ -392,40 +559,31 @@ const blogPosts = recentPosts.slice(3, 7)
 						>
 							<p class="hero-lead-text">
 								<span class="cus-teaser">
-									Real money online casinos in the US provide
-									a convenient way to enjoy casino gaming
-									without traveling to a physical venue. They
-									offer instant access to hundreds of games
-									from virtually anywhere. Throughout 2026, we
-									spent several weeks reviewing leading casino
-									sites using <b>50+ evaluation criteria</b>.
+									Looking for an online casino that accepts US
+									players? CasinoUS reviews international and
+									offshore casino sites available to American
+									players, comparing licensing, security,
+									bonuses, banking options, payout times, game
+									selection and responsible gambling tools.
+									Our reviews focus on the details that matter
+									before you create an account, including
+									minimum deposits, withdrawal conditions, KYC
+									requirements and state restrictions.
 								</span>
-								
 							</p>
 
-							
-								<p>
-									These included licensing, payment methods,
-									bonuses, game selection, payout speed,
-									mobile compatibility, and player safety.
-									Based on our research, the best online
-									casinos offer welcome bonuses of up to
-									$4,000. They also feature reasonable
-									wagering requirements and fast USD
-									withdrawals through Visa, Mastercard, and
-									cryptocurrency payment methods.
-								</p>
+							<p>
+								<i>Important</i>: The casinos featured on this page are
+								not the same as state-regulated US online
+								casinos. They operate under international
+								licences and availability can vary by state.
+								Always check the applicable laws and the
+								casino's current terms before registering.
+							</p>
 
-								<p>
-									Whether you're opening your first online casino account or comparing operators before making a deposit, this guide is designed to help new players make informed and confident decisions.
-								</p>
-
-
-								<div class="table-responsive"></div>
-							
+							<div class="table-responsive"></div>
 						</div>
 					</div>
-
 				</div>
 
 				<div class="hero-right">
@@ -446,47 +604,42 @@ const blogPosts = recentPosts.slice(3, 7)
 							<b>Disclaimer:</b> 18+ | Gamble Responsibly - Gambling
 							should be treated as a form of entertainment rather than
 							a way to make real money. In the United States,
-							
 						</p>
-						
-							<p>
-								<a
-									href="/gambling-laws/"
-									style="color: #60a5fa;"
-									>online gambling laws</a
-								> differ from state to state, so it is important
-								to confirm that you meet the minimum legal gambling
-								age and follow all applicable local regulations before
-								participating. Because gambling can become addictive,
-								we recommend setting personal limits and <a
-									href="/gambling-addiction/"
-									style="color: #60a5fa;"
-									>seeking professional support</a
-								> if necessary.
-							</p>
-							<p>
-								Certain links on CasinoUS are affiliate links,
-								meaning we may receive a commission at no extra
-								cost to you if you click a link and deposit at
-								one of our partner sites. Our reviews, guides,
-								and recommendations are created through
-								independent research and a careful editorial
-								process to ensure they remain accurate, fair,
-								and trustworthy. You can learn more about how we
-								evaluate sites on our <a
-									href="/how-we-rate-online-casinos/"
-									style="color: #60a5fa;">How We Rate page</a
-								>.
-							</p>
-							<p>
-								For complete transparency, please review our
-								Affiliate Disclosure. If you have any questions,
-								concerns, or feedback, don’t hesitate to reach
-								out to our team. Remember: Always enjoy gaming
-								responsibly and have fun, while making sure you
-								gamble within your means.
-							</p>
-						
+
+						<p>
+							<a href="/gambling-laws/" style="color: #60a5fa;"
+								>online gambling laws</a
+							> differ from state to state, so it is important to confirm
+							that you meet the minimum legal gambling age and follow
+							all applicable local regulations before participating.
+							Because gambling can become addictive, we recommend setting
+							personal limits and <a
+								href="/gambling-addiction/"
+								style="color: #60a5fa;"
+								>seeking professional support</a
+							> if necessary.
+						</p>
+						<p>
+							Certain links on CasinoUS are affiliate links,
+							meaning we may receive a commission at no extra cost
+							to you if you click a link and deposit at one of our
+							partner sites. Our reviews, guides, and
+							recommendations are created through independent
+							research and a careful editorial process to ensure
+							they remain accurate, fair, and trustworthy. You can
+							learn more about how we evaluate sites on our <a
+								href="/how-we-rate-online-casinos/"
+								style="color: #60a5fa;">How We Rate page</a
+							>.
+						</p>
+						<p>
+							For complete transparency, please review our
+							Affiliate Disclosure. If you have any questions,
+							concerns, or feedback, don’t hesitate to reach out
+							to our team. Remember: Always enjoy gaming
+							responsibly and have fun, while making sure you
+							gamble within your means.
+						</p>
 					</div>
 				</div>
 			</div>
@@ -717,6 +870,70 @@ const blogPosts = recentPosts.slice(3, 7)
 			</section>
 		)
 	}
+
+	{/* 🚨 AUTHOR / REVIEWER POPUP — one shared card, filled per-person and
+	     per-role (Author vs Reviewer) on hover/tap from the JSON payload
+	     below. */}
+	<div
+		class="author-popup-card"
+		id="author-popup-card"
+		role="dialog"
+		aria-hidden="true"
+	>
+		<button
+			type="button"
+			class="author-popup-close"
+			id="author-popup-close"
+			aria-label="Close"
+		>
+			<i class="fa-solid fa-xmark" />
+		</button>
+
+		<div class="author-popup-header">
+			<img
+				src=""
+				alt=""
+				class="author-popup-avatar"
+				id="author-popup-avatar"
+				referrerpolicy="no-referrer"
+			/>
+			<span class="author-popup-eyebrow" id="author-popup-eyebrow"
+				>Author</span
+			>
+			<h3 class="author-popup-name" id="author-popup-name" />
+		</div>
+
+		<div class="author-popup-body">
+			<span
+				class="author-popup-label"
+				id="author-popup-about-label"
+			>
+				About Author
+			</span>
+			<p class="author-popup-bio" id="author-popup-bio" />
+
+			<span
+				class="author-popup-label author-popup-label-posts"
+				id="author-popup-posts-label"
+			/>
+			<ul class="author-popup-posts" id="author-popup-posts" />
+		</div>
+
+		<a
+			href="/about-us/"
+			class="author-popup-also-wrote"
+			id="author-popup-also-wrote"
+		>
+			<span id="author-popup-cta-text">Also Wrote!</span>
+			<i class="fa-solid fa-chevron-right" />
+		</a>
+	</div>
+	<script
+		type="application/json"
+		id="author-popup-data"
+		is:inline
+		set:html={authorPopupJson}
+	/>
 </Layout>
 
 <script is:inline>
@@ -772,13 +989,219 @@ const blogPosts = recentPosts.slice(3, 7)
 			btn.innerHTML = 'Show Less <i class="fa-solid fa-chevron-up"></i>'
 		}
 	}
+
+	// 🚨 AUTHOR / REVIEWER POPUP: shows on hover (desktop), tap (touch/click)
+	// and keyboard focus. One shared card, repositioned + refilled per
+	// trigger, with copy that swaps between "Author"/"Reviewer" based on
+	// each trigger's data-author-role. `dataset.authorPopupBound` guards
+	// against double-binding.
+	function initAuthorPopup() {
+		const card = document.getElementById("author-popup-card")
+		const dataEl = document.getElementById("author-popup-data")
+		if (!card || !dataEl) return
+
+		let authorData = {}
+		try {
+			authorData = JSON.parse(dataEl.textContent || "{}")
+		} catch (e) {
+			console.error("Author popup data failed to parse:", e)
+		}
+
+		const closeBtn = document.getElementById("author-popup-close")
+		const avatarEl = document.getElementById("author-popup-avatar")
+		const eyebrowEl = document.getElementById("author-popup-eyebrow")
+		const nameEl = document.getElementById("author-popup-name")
+		const aboutLabelEl = document.getElementById("author-popup-about-label")
+		const bioEl = document.getElementById("author-popup-bio")
+		const postsLabelEl = document.getElementById("author-popup-posts-label")
+		const postsListEl = document.getElementById("author-popup-posts")
+		const alsoWroteEl = document.getElementById("author-popup-also-wrote")
+		const ctaTextEl = document.getElementById("author-popup-cta-text")
+
+		const triggers = document.querySelectorAll("[data-open-author-popup]")
+		if (!triggers.length) return
+
+		let hideTimer = null
+		let currentKey = null
+
+		function cancelHide() {
+			if (hideTimer) {
+				clearTimeout(hideTimer)
+				hideTimer = null
+			}
+		}
+
+		function scheduleHide(delay) {
+			cancelHide()
+			hideTimer = setTimeout(() => {
+				card.classList.remove("is-open")
+				card.setAttribute("aria-hidden", "true")
+				currentKey = null
+			}, delay === undefined ? 220 : delay)
+		}
+
+		function fillCard(entry, role) {
+			const isReviewer = role === "reviewer"
+
+			avatarEl.src = entry.avatar
+			avatarEl.alt = entry.name
+			eyebrowEl.textContent = isReviewer ? "Reviewer" : "Author"
+			nameEl.textContent = entry.name
+			aboutLabelEl.textContent = isReviewer
+				? "About Reviewer"
+				: "About Author"
+			bioEl.textContent = entry.bio
+			alsoWroteEl.href = entry.link
+			ctaTextEl.textContent = isReviewer
+				? "Reviewer Wrote!"
+				: "Also Wrote!"
+
+			postsListEl.innerHTML = ""
+			if (entry.posts && entry.posts.length > 0) {
+				postsLabelEl.textContent = `Latest Posts By: ${entry.name}`
+				postsLabelEl.style.display = ""
+				entry.posts.forEach((post) => {
+					const li = document.createElement("li")
+					const a = document.createElement("a")
+					a.href = post.link
+					a.className = "author-popup-post-link"
+
+					if (post.image) {
+						const img = document.createElement("img")
+						img.src = post.image
+						img.alt = ""
+						img.loading = "lazy"
+						img.referrerPolicy = "no-referrer"
+						img.className = "author-popup-post-thumb"
+						a.appendChild(img)
+					}
+
+					const textWrap = document.createElement("span")
+					textWrap.className = "author-popup-post-text"
+
+					const titleSpan = document.createElement("span")
+					titleSpan.className = "author-popup-post-title"
+					titleSpan.textContent = post.title
+
+					const dateSpan = document.createElement("span")
+					dateSpan.className = "author-popup-post-date"
+					dateSpan.textContent = post.date
+
+					textWrap.appendChild(titleSpan)
+					textWrap.appendChild(dateSpan)
+					a.appendChild(textWrap)
+					li.appendChild(a)
+					postsListEl.appendChild(li)
+				})
+			} else {
+				postsLabelEl.style.display = "none"
+			}
+		}
+
+		function positionCard(trigger) {
+			const isMobile = window.innerWidth < 640
+			if (isMobile) {
+				card.classList.add("author-popup-mobile")
+				return
+			}
+			card.classList.remove("author-popup-mobile")
+
+			const rect = trigger.getBoundingClientRect()
+			const cardWidth = card.offsetWidth || 380
+			const margin = 16
+
+			let left = rect.left
+			if (left + cardWidth > window.innerWidth - margin) {
+				left = window.innerWidth - cardWidth - margin
+			}
+			if (left < margin) left = margin
+
+			let top = rect.bottom + 10
+			const cardHeight = card.offsetHeight || 420
+			if (top + cardHeight > window.innerHeight - margin) {
+				const above = rect.top - cardHeight - 10
+				top = above > margin ? above : margin
+			}
+
+			card.style.left = `${left}px`
+			card.style.top = `${top}px`
+		}
+
+		function showCard(trigger) {
+			const key = trigger.dataset.authorKey
+			if (!key) return
+			const entry = authorData[key] || authorData["Editorial Team"]
+			if (!entry) return
+			const role = trigger.dataset.authorRole || "author"
+			const cacheKey = `${key}::${role}`
+
+			cancelHide()
+			if (currentKey !== cacheKey) {
+				fillCard(entry, role)
+				currentKey = cacheKey
+			}
+			positionCard(trigger)
+			card.classList.add("is-open")
+			card.setAttribute("aria-hidden", "false")
+		}
+
+		triggers.forEach((el) => {
+			if (el.dataset.authorPopupBound) return
+			el.dataset.authorPopupBound = "true"
+
+			el.addEventListener("mouseenter", () => showCard(el))
+			el.addEventListener("mouseleave", () => scheduleHide())
+			el.addEventListener("focus", () => showCard(el))
+			el.addEventListener("blur", () => scheduleHide(120))
+
+			el.addEventListener("click", (e) => {
+				e.preventDefault()
+				const key = `${el.dataset.authorKey}::${el.dataset.authorRole || "author"}`
+				if (card.classList.contains("is-open") && currentKey === key) {
+					scheduleHide(0)
+				} else {
+					showCard(el)
+				}
+			})
+		})
+
+		if (!card.dataset.authorPopupBound) {
+			card.dataset.authorPopupBound = "true"
+			card.addEventListener("mouseenter", cancelHide)
+			card.addEventListener("mouseleave", () => scheduleHide())
+		}
+
+		if (closeBtn && !closeBtn.dataset.authorPopupBound) {
+			closeBtn.dataset.authorPopupBound = "true"
+			closeBtn.addEventListener("click", () => scheduleHide(0))
+		}
+
+		document.addEventListener("click", (e) => {
+			if (!card.classList.contains("is-open")) return
+			if (e.target.closest("[data-open-author-popup]")) return
+			if (!card.contains(e.target)) scheduleHide(0)
+		})
+
+		document.addEventListener("keydown", (e) => {
+			if (e.key === "Escape") scheduleHide(0)
+		})
+
+		window.addEventListener("scroll", () => scheduleHide(0), { passive: true })
+		window.addEventListener("resize", () => scheduleHide(0))
+	}
+
+	if (document.readyState === "loading") {
+		document.addEventListener("DOMContentLoaded", initAuthorPopup)
+	} else {
+		initAuthorPopup()
+	}
+	document.addEventListener("astro:page-load", initAuthorPopup)
 </script>
 
 <style is:global>
-
 	.hero-bottom-meta-section p {
-    margin-bottom: 17px !important;
-}
+		margin-bottom: 17px !important;
+	}
 
 	/* =========================================
        NEW AUTHOR META BOX
@@ -798,14 +1221,18 @@ const blogPosts = recentPosts.slice(3, 7)
 	}
 
 	.disclaimer-cl p {
-    margin-bottom: 19px !important;
-}
+		margin-bottom: 19px !important;
+	}
 
 	.amb-left,
 	.amb-middle {
 		display: flex;
 		align-items: center;
 		gap: 1.25rem;
+	}
+
+	[data-open-author-popup] {
+		cursor: pointer;
 	}
 
 	.amb-avatar {
@@ -923,7 +1350,6 @@ const blogPosts = recentPosts.slice(3, 7)
 		color: #cbd5e1 !important; /* Soft light slate to match image */
 		font-size: 0.95rem !important;
 		line-height: 1.6 !important;
-
 	}
 
 	/* Bold 'Disclaimer:' text */
@@ -4295,76 +4721,284 @@ const blogPosts = recentPosts.slice(3, 7)
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 	}
 
-
 	.key-insights-box {
-    background-color: #f8f9fa;
-    border-left: 3px solid #1a1a1a;
-    padding: 28px 32px;
-    margin: 2rem 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
+		background-color: #f8f9fa;
+		border-left: 3px solid #1a1a1a;
+		padding: 28px 32px;
+		margin: 2rem 0;
+		font-family:
+			system-ui,
+			-apple-system,
+			BlinkMacSystemFont,
+			"Segoe UI",
+			Roboto,
+			sans-serif;
+	}
 
-.key-insights-box .key-insights-title {
-    font-weight: 800;
-    font-style: italic;
-    font-size: 1.05rem;
-    color: #0f172a;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    margin: 0 0 20px 0;
-}
+	.key-insights-box .key-insights-title {
+		font-weight: 800;
+		font-style: italic;
+		font-size: 1.05rem;
+		color: #0f172a;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+		margin: 0 0 20px 0;
+	}
 
-.key-insights-box ul {
-    list-style: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    display: block !important;
-}
+	.key-insights-box ul {
+		list-style: none !important;
+		margin: 0 !important;
+		padding: 0 !important;
+		display: block !important;
+	}
 
-.key-insights-box ul li {
-    position: relative;
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    padding: 0 0 0 1.5rem !important;
-    margin: 0 0 16px 0 !important;
-    font-size: 1.02rem;
-    line-height: 1.7;
-    color: #1e293b;
-}
+	.key-insights-box ul li {
+		position: relative;
+		background: transparent !important;
+		border: none !important;
+		box-shadow: none !important;
+		padding: 0 0 0 1.5rem !important;
+		margin: 0 0 16px 0 !important;
+		font-size: 1.02rem;
+		line-height: 1.7;
+		color: #1e293b;
+	}
 
-.key-insights-box ul li:last-child {
-    margin-bottom: 0 !important;
-}
+	.key-insights-box ul li:last-child {
+		margin-bottom: 0 !important;
+	}
 
-.key-insights-box ul li::before {
-    content: "•";
-    position: absolute;
-    left: 0.25rem;
-    top: 0;
-    color: #1e293b;
-    font-weight: 700;
-}
+	.key-insights-box ul li::before {
+		content: "•";
+		position: absolute;
+		left: 0.25rem;
+		top: 0;
+		color: #1e293b;
+		font-weight: 700;
+	}
 
-.key-insights-box ul li strong {
-    color: #0f172a !important;
-    font-weight: 700 !important;
-    font-size: inherit !important;
-}
+	.key-insights-box ul li strong {
+		color: #0f172a !important;
+		font-weight: 700 !important;
+		font-size: inherit !important;
+	}
 
-.key-insights-box ul li em {
-    font-style: italic;
-    color: #1e293b;
-}
+	.key-insights-box ul li em {
+		font-style: italic;
+		color: #1e293b;
+	}
 
-@media (max-width: 600px) {
-    .key-insights-box {
-        padding: 22px 20px;
-    }
-    .key-insights-box ul li {
-        font-size: 0.95rem;
-    }
-}
+	@media (max-width: 600px) {
+		.key-insights-box {
+			padding: 22px 20px;
+		}
+		.key-insights-box ul li {
+			font-size: 0.95rem;
+		}
+	}
+
+	/* =========================================
+       AUTHOR / REVIEWER POPUP (hover/tap byline;
+       one shared card, refilled per person + role)
+    ========================================= */
+	.author-popup-card {
+		background: #ffffff;
+		border-radius: 16px;
+		width: 100%;
+		max-width: 380px;
+		max-height: min(560px, 80vh);
+		overflow-y: auto;
+		box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25);
+		position: fixed;
+		top: -9999px;
+		left: -9999px;
+		z-index: 1000;
+		padding: 1.5rem 1.5rem 1.25rem;
+		opacity: 0;
+		visibility: hidden;
+		pointer-events: none;
+		transform: translateY(6px);
+		transition:
+			opacity 0.15s ease,
+			transform 0.15s ease,
+			visibility 0.15s;
+		font-family:
+			system-ui,
+			-apple-system,
+			BlinkMacSystemFont,
+			"Segoe UI",
+			Roboto,
+			sans-serif;
+	}
+	.author-popup-card.is-open {
+		opacity: 1;
+		visibility: visible;
+		pointer-events: auto;
+		transform: translateY(0);
+	}
+	@media (max-width: 640px) {
+		.author-popup-card.author-popup-mobile {
+			left: 0 !important;
+			right: 0;
+			top: auto !important;
+			bottom: 0;
+			width: 100%;
+			max-width: 100%;
+			max-height: 80vh;
+			overflow-y: auto;
+			border-radius: 16px 16px 0 0;
+			transform: translateY(12px);
+		}
+		.author-popup-card.author-popup-mobile.is-open {
+			transform: translateY(0);
+		}
+	}
+	.author-popup-close {
+		position: absolute;
+		top: 0.85rem;
+		right: 0.85rem;
+		width: 32px;
+		height: 32px;
+		border-radius: 50%;
+		border: none;
+		background: #f1f5f9;
+		color: #475569;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		font-size: 0.9rem;
+		transition: all 0.15s ease;
+	}
+	.author-popup-close:hover {
+		background: #0f172a;
+		color: #ffffff;
+	}
+	.author-popup-header {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
+		margin-bottom: 0.9rem;
+	}
+	.author-popup-avatar {
+		width: 64px;
+		height: 64px;
+		border-radius: 50%;
+		object-fit: cover;
+		border: 3px solid #f1f5f9;
+		margin-bottom: 0.6rem;
+	}
+	.author-popup-eyebrow {
+		font-size: 0.7rem;
+		font-weight: 800;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: #2563eb;
+		margin-bottom: 0.25rem;
+	}
+	.author-popup-name {
+		margin: 0;
+		font-size: 1.2rem;
+		font-weight: 800;
+		color: #0f172a;
+	}
+	.author-popup-body {
+		border-top: 1px solid #f1f5f9;
+		padding-top: 0.85rem;
+	}
+	.author-popup-label {
+		display: block;
+		font-size: 0.7rem;
+		font-weight: 800;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: #94a3b8;
+		margin-bottom: 0.4rem;
+	}
+	.author-popup-label-posts {
+		margin-top: 0.9rem;
+		padding-top: 0.85rem;
+		border-top: 1px solid #f1f5f9;
+	}
+	.author-popup-bio {
+		margin: 0;
+		color: #334155;
+		font-size: 0.88rem;
+		line-height: 1.5;
+	}
+	.author-popup-posts {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+		max-height: 230px;
+		overflow-y: auto;
+	}
+	.author-popup-post-link {
+		display: flex;
+		align-items: center;
+		gap: 0.65rem;
+		text-decoration: none;
+		padding: 0.3rem;
+		border-radius: 8px;
+		transition: background 0.15s ease;
+	}
+	.author-popup-post-link:hover {
+		background: #f8fafc;
+	}
+	.author-popup-post-thumb {
+		width: 44px;
+		height: 44px;
+		border-radius: 8px;
+		object-fit: cover;
+		flex-shrink: 0;
+	}
+	.author-popup-post-text {
+		display: flex;
+		flex-direction: column;
+		gap: 0.15rem;
+		min-width: 0;
+	}
+	.author-popup-post-title {
+		font-size: 0.86rem;
+		font-weight: 700;
+		color: #0f172a;
+		line-height: 1.35;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+	.author-popup-post-date {
+		font-size: 0.74rem;
+		color: #94a3b8;
+		font-weight: 600;
+	}
+	.author-popup-also-wrote {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.4rem;
+		margin-top: 1.1rem;
+		padding: 0.7rem 1rem;
+		border-radius: 999px;
+		background: #eff6ff;
+		color: #2563eb;
+		font-weight: 800;
+		font-size: 0.9rem;
+		text-decoration: none;
+		transition: all 0.15s ease;
+	}
+	.author-popup-also-wrote:hover {
+		background: #2563eb;
+		color: #ffffff;
+	}
+	.author-popup-also-wrote i {
+		font-size: 0.75rem;
+	}
 </style>
 
 <script>
