@@ -1199,6 +1199,10 @@ const authorPopupJson = JSON.stringify(
 </script>
 
 <style is:global>
+	main#content br {
+    display: none;
+}
+
 	.hero-bottom-meta-section p {
 		margin-bottom: 17px !important;
 	}
@@ -1207,13 +1211,7 @@ const authorPopupJson = JSON.stringify(
        NEW AUTHOR META BOX
     ========================================= */
 	.author-meta-box {
-		background-color: #1e293b; /* Dark navy slate from image */
-		border: 1px solid #334155;
-		border-radius: 12px;
-		padding: 1.25rem 2rem;
 		display: flex;
-		align-items: center;
-		justify-content: space-between;
 		margin-bottom: 2rem;
 		flex-wrap: wrap;
 		gap: 1.5rem;
@@ -1256,7 +1254,7 @@ const authorPopupJson = JSON.stringify(
 
 	.amb-name a,
 	.amb-name strong {
-		color: #ffffff;
+		color: #0f1626;
 		font-weight: 700;
 		text-decoration: none;
 	}
@@ -1402,17 +1400,15 @@ const authorPopupJson = JSON.stringify(
 		margin-top: 1rem !important;
 	}
 
+	h1.home-hero-title {
+    text-align: left;
+}
+
 	/* =========================================
        MODERN HERO CTA CARD (Right Column)
     ========================================= */
 	.hero-cta-card {
 		position: relative;
-		background: linear-gradient(
-			145deg,
-			rgba(30, 41, 59, 0.8),
-			rgba(15, 23, 42, 0.95)
-		);
-		border: 1px solid #2b4033;
 		border-radius: 24px;
 		padding: 3rem 2rem 2.5rem; /* Extra top padding to make room for gift icon */
 		text-align: center;
@@ -1548,20 +1544,7 @@ const authorPopupJson = JSON.stringify(
 		border-radius: 15px 15px 0px 0px;
 	}
 
-	/* =========================================
-       HOMEPAGE HERO SECTION
-    ========================================= */
-	header.home-hero {
-		background-color: #020617;
-		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 1600 800'%3E%3Crect fill='%23020617' width='1600' height='800'/%3E%3Cg fill-opacity='0.12'%3E%3Ccircle fill='%23fbbf24' cx='1200' cy='200' r='450'/%3E%3Ccircle fill='%2310b981' cx='400' cy='600' r='500'/%3E%3Ccircle fill='%230ea5e9' cx='800' cy='400' r='350'/%3E%3C/g%3E%3C/svg%3E") !important;
-		background-size: cover;
-		background-position: center;
-		background-repeat: no-repeat;
-		color: #fff;
-		position: relative;
-		overflow: hidden;
-		padding: 2rem 1rem 1rem;
-	}
+	
 
 	.home-hero-container {
 		max-width: 1200px;
@@ -1600,7 +1583,7 @@ const authorPopupJson = JSON.stringify(
 
 	.hero-intro-box p,
 	.hero-disclaimer-box p {
-		color: #cbd5e1 !important;
+		color: #475569 !important;
 		line-height: 1.6;
 		margin-bottom: 1rem;
 	}
@@ -1759,7 +1742,7 @@ const authorPopupJson = JSON.stringify(
 	.home-container {
 		max-width: 1200px;
 		margin: 0 auto;
-		padding: 3rem 1rem 2rem;
+		padding: 0rem 1rem 2rem;
 	}
 	p:empty {
 		display: none !important;
@@ -2058,7 +2041,7 @@ const authorPopupJson = JSON.stringify(
 	}
 
 	.hero-intro-box span.cus-teaser {
-		color: #fff !important;
+		color: #475569 !important;
 	}
 
 	.hero-intro-box button#cus-toggle-1 {
@@ -2079,14 +2062,10 @@ const authorPopupJson = JSON.stringify(
 	}
 
 	.disclaimer-cl b {
-		color: #fff !important;
+		color: #0f172a !important;
 	}
 
-	.desktop-dis .disclaimer-cl {
-		background-color: #141e2f;
-		border: 1px solid #2b4033;
-		border-left: 4px solid #1fbd59 !important;
-	}
+	
 
 	.cus-hp-list li {
 		font-size: 0.85rem;
@@ -2253,10 +2232,7 @@ const authorPopupJson = JSON.stringify(
 		border-top: 1px solid #e2e8f0;
 	}
 
-	.cus-banner {
-		max-width: 100% !important;
-		background: linear-gradient(180deg, #08374a, #1a233a) !important;
-	}
+	
 
 	.discovery-container {
 		max-width: 1200px;
@@ -2562,22 +2538,7 @@ const authorPopupJson = JSON.stringify(
 		color: #e2e8f0;
 	}
 
-	/* =========================================
-       NEW SPLIT HERO LAYOUT (Dark Theme)
-    ========================================= */
-	header.new-split-hero {
-		background-color: #050505; /* Deep black background */
-		/* Optional: Add a dark subtle background pattern or radial gradient here */
-		background-image: radial-gradient(
-			circle at right center,
-			rgba(22, 101, 52, 0.15) 0%,
-			transparent 50%
-		);
-		color: #ffffff;
-		padding: 4rem 1rem 2rem;
-		text-align: left; /* Force left alignment */
-	}
-
+	
 	.hero-columns {
 		display: flex;
 		align-items: center;
@@ -2599,8 +2560,13 @@ const authorPopupJson = JSON.stringify(
 	}
 
 	.hero-left {
-		margin-top: -20px;
+		margin-top: 20px;
 	}
+
+	.author-meta-box {
+    padding: 8px;
+    border-radius: 13px;
+}
 
 	/* Target the mascot image */
 	.hero-mascot-img {
@@ -4758,10 +4724,10 @@ const authorPopupJson = JSON.stringify(
 		border: none !important;
 		box-shadow: none !important;
 		padding: 0 0 0 1.5rem !important;
-		margin: 0 0 16px 0 !important;
-		font-size: 1.02rem;
+		margin: 0 0 7px 0 !important;
+		font-size: 15px;
 		line-height: 1.7;
-		color: #1e293b;
+		color: #475569;
 	}
 
 	.key-insights-box ul li:last-child {
