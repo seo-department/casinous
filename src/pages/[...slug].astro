@@ -1,6 +1,6 @@
 ---
-import { Image } from "astro:assets"
 import Layout from "../layouts/Layout.astro"
+import { getReviewer } from "../data/reviewers"
 
 // 1. Fetch data from WordPress (Posts AND Pages)
 export async function getStaticPaths() {
@@ -391,28 +391,21 @@ const linkedinLink = formatSocial(
     "https://linkedin.com/in/",
 )
 
-let reviewerName = "Paul Jacobs"
-if (authorName.toLowerCase().includes("sarah")) {
-    reviewerName = "David Reynolds"
-}
+// 🚨 HERO: only render the share pill when the author has at least one social
+const hasSocials = Boolean(
+    twitterLink || facebookLink || instagramLink || linkedinLink,
+)
 
-const reviewerAvatars: Record<string, string> = {
-    "Paul Jacobs":
-        "https://secure.gravatar.com/avatar/5c4ed09c966f392059e806c5812445eda41c0f95e81217db92bc0865be4f1185?s=32&d=mm&r=g",
-    "David Reynolds":
-        "https://secure.gravatar.com/avatar/907015fdee956f1b4291ed4c4290571d3b2652adbe40b1938629a7d9b65a8f08?s=32&d=mm&r=g",
-    "Paige Jacobs":
-        "https://secure.gravatar.com/avatar/b5b0117907d6dc14bd89e93752ab00d26bb4608b5f3d0f4bff4d5545071120d3?s=32&d=mm&r=g",
-}
-const reviewerAvatar =
-    reviewerAvatars[reviewerName] ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(reviewerName)}&background=f1f5f9&color=1e293b&bold=true`
+// 🚨 FACT-CHECKER: David Reynolds or Paige Jacobs, picked per page from
+// src/data/reviewers.ts (stable per URL, never the page's own author)
+const reviewer = getReviewer(post.uri, authorName)
+const reviewerName = reviewer.name
+const reviewerAvatar = reviewer.avatar
+const reviewerLink = reviewer.link
 
-const reviewerSlug = reviewerName
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "")
-const reviewerLink = `/about-us/${reviewerSlug}/`
+// 🚨 HERO: show the "Fact Checked" reviewer on posts AND pages.
+// Set to `isPost` if you only want it on posts like before.
+const showReviewer = true
 
 const rawDate = post.modified || post.date || new Date().toISOString()
 const formattedDate = new Date(rawDate).toLocaleDateString("en-US", {
@@ -581,8 +574,10 @@ if (wrapperStart !== -1) {
     keywords={focusKeyword}
     author={authorName}
 >
-    <header class={isPost ? "post-hero" : "page-hero"}>
-        <div class={isPost ? "post-hero-container" : "page-hero-container"}>
+    {/* 🚨 NEW HERO — light layout: title, meta description, then one meta row
+         (Updated On / Author / Fact Checked reviewer / compact share pill). */}
+    <header class="cus-hero">
+        <div class="cus-hero-container">
             <nav class="post-breadcrumbs" aria-label="breadcrumb">
                 {
                     yoastBreadcrumbs.length > 0 ? (
@@ -615,13 +610,22 @@ if (wrapperStart !== -1) {
                 }
             </nav>
 
-            <h1
-                class={isPost ? "post-title" : "page-title"}
-                set:html={displayTitle}
-            />
+            <h1 class="cus-hero-title" set:html={displayTitle} />
 
-            <div class="post-meta-bar">
-                <div class="meta-author">
+        
+
+            <div class="cus-hero-meta">
+                {/* Updated on */}
+                <div class="cus-meta-item cus-meta-updated">
+                    <i class="fa-solid fa-calendar-days cus-meta-cal" aria-hidden="true"></i>
+                    <div class="cus-meta-stack">
+                        <span class="cus-meta-eyebrow">Updated On</span>
+                        <span class="cus-meta-strong">{formattedDate}</span>
+                    </div>
+                </div>
+
+                {/* Author */}
+                <div class="cus-meta-item cus-meta-person">
                     <a
                         href={authorLink}
                         class="author-image-link"
@@ -631,78 +635,140 @@ if (wrapperStart !== -1) {
                         <img
                             src={authorAvatar}
                             alt={authorName}
-                            class="meta-avatar"
+                            class="cus-meta-avatar"
+                            width="40"
+                            height="40"
                             referrerpolicy="no-referrer"
                         />
                     </a>
-                    <div>
-                        <span class="meta-name"
-                            >By <a
-                                href={authorLink}
-                                class="author-text-link"
-                                data-open-author-popup="true"
-                                ><strong>{authorName}</strong></a
-                            ></span
+                    <span class="cus-meta-line">
+                        <a
+                            href={authorLink}
+                            class="author-text-link"
+                            data-open-author-popup="true"
                         >
-                        <span class="meta-date">Updated: {formattedDate}</span>
-                    </div>
+                            <strong>{authorName}</strong>
+                        </a>
+                        <span class="cus-meta-role">Casino Writer</span>
+                    </span>
                 </div>
 
-                <div class="meta-share">
-                    {
-                        twitterLink && (
+                {/* Reviewer (Fact Checked) */}
+                {
+                    showReviewer && (
+                        <div class="cus-meta-item cus-meta-person cus-meta-reviewer">
+                            <span class="cus-fact-badge">
+                                <i class="fa-solid fa-check" aria-hidden="true" />
+                                Fact Checked
+                            </span>
                             <a
-                                href={twitterLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="share-btn twitter"
-                                aria-label="Twitter"
+                                href={reviewerLink}
+                                class="author-image-link"
+                                aria-label={`View ${reviewerName}'s profile`}
                             >
-                                <i class="fa-brands fa-twitter" />
+                                <img
+                                    src={reviewerAvatar}
+                                    alt={`Reviewer ${reviewerName}`}
+                                    class="cus-meta-avatar"
+                                    width="40"
+                                    height="40"
+                                    referrerpolicy="no-referrer"
+                                />
                             </a>
-                        )
-                    }
-                    {
-                        facebookLink && (
-                            <a
-                                href={facebookLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="share-btn facebook"
-                                aria-label="Facebook"
+                            <span class="cus-meta-line">
+                                <a href={reviewerLink} class="cus-reviewer-link">
+                                    <strong>{reviewerName}</strong>
+                                </a>
+                                <span class="cus-meta-role">{reviewer.role}</span>
+                            </span>
+                        </div>
+                    )
+                }
+
+                {/* Socials squeezed into a single share button that slides open */}
+                {
+                    hasSocials && (
+                        <div class="cus-share" id="cus-share">
+                            <div
+                                class="cus-share-icons"
+                                id="cus-share-icons"
                             >
-                                <i class="fa-brands fa-facebook-f" />
-                            </a>
-                        )
-                    }
-                    {
-                        instagramLink && (
-                            <a
-                                href={instagramLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="share-btn instagram"
-                                aria-label="Instagram"
+                                {twitterLink && (
+                                    <a
+                                        href={twitterLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="share-btn twitter"
+                                        aria-label="Twitter"
+                                    >
+                                        <i class="fa-brands fa-twitter" />
+                                    </a>
+                                )}
+                                {facebookLink && (
+                                    <a
+                                        href={facebookLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="share-btn facebook"
+                                        aria-label="Facebook"
+                                    >
+                                        <i class="fa-brands fa-facebook-f" />
+                                    </a>
+                                )}
+                                {instagramLink && (
+                                    <a
+                                        href={instagramLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="share-btn instagram"
+                                        aria-label="Instagram"
+                                    >
+                                        <i class="fa-brands fa-instagram" />
+                                    </a>
+                                )}
+                                {linkedinLink && (
+                                    <a
+                                        href={linkedinLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="share-btn linkedin"
+                                        aria-label="LinkedIn"
+                                    >
+                                        <i class="fa-brands fa-linkedin-in" />
+                                    </a>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                class="cus-share-toggle"
+                                id="cus-share-toggle"
+                                aria-expanded="false"
+                                aria-controls="cus-share-icons"
+                                aria-label="Show social links"
                             >
-                                <i class="fa-brands fa-instagram" />
-                            </a>
-                        )
-                    }
-                    {
-                        linkedinLink && (
-                            <a
-                                href={linkedinLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="share-btn linkedin"
-                                aria-label="LinkedIn"
-                            >
-                                <i class="fa-brands fa-linkedin-in" />
-                            </a>
-                        )
-                    }
-                </div>
+                                <i class="fa-solid fa-share-nodes" />
+                            </button>
+                        </div>
+                    )
+                }
             </div>
+
+           <div class="cus-hero-editorial">
+                <p>
+                    <strong>Editorial Statement:</strong> At CasinoUS, we
+                    independently review and select the online casinos featured
+                    on our site. We assess each operator using consistent
+                    criteria covering licensing, security, payments, payouts,
+                    bonuses, games, customer support and responsible gambling.
+                </p>
+                <p>
+                    We may earn commissions when readers use certain affiliate
+                    links. However, commercial relationships do not determine
+                    which casinos we feature or how we evaluate them. We
+                    highlight both strengths and limitations so that US players
+                    can make more informed decisions.
+                </p>
+            </div> 
         </div>
     </header>
     <main class={isPost ? "post-wrapper" : "page-wrapper"}>
@@ -721,47 +787,6 @@ if (wrapperStart !== -1) {
                                 class="featured-image"
                                 referrerpolicy="no-referrer"
                             />
-                        </div>
-                    )
-                }
-
-                {
-                    isPost && (
-                        <div
-                            class="cus-author-profiles"
-                            style="margin-bottom: 2rem; display: flex; gap: 1.5rem; align-items: center; justify-content: flex-start; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;"
-                        >
-                            <div
-                                class="cus-author-item"
-                                style="display: flex; gap: 1rem; align-items: center;"
-                            >
-                                <a
-                                    href={reviewerLink}
-                                    aria-label={`View ${reviewerName}'s profile`}
-                                >
-                                    <Image
-                                        src={reviewerAvatar}
-                                        alt={`Reviewer ${reviewerName}`}
-                                        width={50}
-                                        height={50}
-                                        class="meta-avatar"
-                                    />
-                                </a>
-                                <div>
-                                    <span style="display: block; font-size: 0.9rem; color: #475569;">
-                                        Reviewed By{" "}
-                                        <a
-                                            href={reviewerLink}
-                                            style="color: #0f172a; text-decoration: none;"
-                                        >
-                                            <strong>{reviewerName}</strong>
-                                        </a>
-                                    </span>
-                                    <span style="display: block; font-size: 0.8rem; color: #64748b;">
-                                        Casino Expert
-                                    </span>
-                                </div>
-                            </div>
                         </div>
                     )
                 }
@@ -1214,6 +1239,43 @@ if (wrapperStart !== -1) {
             btn.innerText = "Show less"
         }
     }
+
+    // 🚨 HERO SHARE PILL: click the share button to slide the social icons
+    // open (hover/focus also opens it on desktop via CSS). Click outside or
+    // press Escape to close.
+    ;(function () {
+        function initHeroShare() {
+            const wrap = document.getElementById("cus-share")
+            const toggle = document.getElementById("cus-share-toggle")
+            if (!wrap || !toggle || toggle.dataset.shareBound) return
+            toggle.dataset.shareBound = "true"
+
+            const setOpen = open => {
+                wrap.classList.toggle("is-open", open)
+                toggle.setAttribute("aria-expanded", open ? "true" : "false")
+            }
+
+            toggle.addEventListener("click", e => {
+                e.stopPropagation()
+                setOpen(!wrap.classList.contains("is-open"))
+            })
+
+            document.addEventListener("click", e => {
+                if (!wrap.contains(e.target)) setOpen(false)
+            })
+
+            document.addEventListener("keydown", e => {
+                if (e.key === "Escape") setOpen(false)
+            })
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", initHeroShare)
+        } else {
+            initHeroShare()
+        }
+        document.addEventListener("astro:page-load", initHeroShare)
+    })()
 
     // 🚨 SIDEBAR TOC: highlight the section currently in view
     ;(function () {
@@ -1817,157 +1879,251 @@ if (wrapperStart !== -1) {
     }
 
     /* =========================================
-       POST HERO SECTION
+       🚨 NEW HERO (light, matches crazyvegas reference)
     ========================================= */
-    .post-hero {
-        background-color: #0f172a;
-        color: #ffffff;
-        padding: 4rem 1rem 3rem;
-        position: relative;
-        overflow: hidden;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath fill-rule='evenodd' d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 86c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm28-65c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm23-11c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm-6 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm29 21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM32 34c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zm60-35c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zM6 10c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zm90 60c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zm-40 20c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zm-20-40c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zM10 50c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zm80 40c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zm-40-20c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zm-20-40c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2z'/%3E%3C/g%3E%3C/svg%3E");
+    .cus-hero {
+        background: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 2rem 1rem 0;
     }
-    .post-hero::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        pointer-events: none;
-    }
-    .post-hero-container {
-        max-width: 800px;
-        margin: 0 auto;
-        position: relative;
-        z-index: 2;
-    }
-    .post-title {
-        font-size: 2.8rem;
-        font-weight: 900;
-        line-height: 1.2;
-        margin: 0 0 2rem 0;
-        letter-spacing: -0.5px;
-        color: #ffffff;
-    }
-
-    /* =========================================
-       PAGE HERO SECTION (Specific to Pages)
-    ========================================= */
-    .page-hero {
-        background-color: #1a233a;
-        color: #ffffff;
-        padding: 3rem 1rem;
-        border-bottom: 1px solid #3a4459;
-    }
-    .page-hero-container {
+    .cus-hero-container {
         max-width: 1200px;
         margin: 0 auto;
     }
-    .page-title {
-        font-size: 2.5rem;
-        font-weight: 900;
-        line-height: 1.2;
-        margin: 0;
-        letter-spacing: -0.5px;
-        color: #ffffff;
-    }
 
-    /* Common Breadcrumbs */
+    /* Breadcrumbs (light background) */
     .post-breadcrumbs {
         display: flex;
         align-items: center;
         gap: 0.5rem;
         font-size: 0.85rem;
-        color: #94a3b8;
-        margin-bottom: 1.5rem;
+        color: #64748b;
+        margin-bottom: 1rem;
         font-weight: 500;
-        letter-spacing: 0.5px;
         white-space: nowrap;
+        overflow: hidden;
     }
     .post-breadcrumbs a {
-        color: #60a5fa;
+        color: #2563eb;
         text-decoration: none;
         transition: color 0.2s ease;
     }
     .post-breadcrumbs a:hover {
-        color: #93c5fd;
+        color: #1d4ed8;
+        text-decoration: underline;
     }
     .post-breadcrumbs .separator {
-        color: #475569;
+        color: #94a3b8;
     }
     .post-breadcrumbs .current {
-        color: #e2e8f0;
+        color: #0f172a;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 300px;
+        max-width: 360px;
     }
 
-    /* Post Meta Bar */
-    .post-meta-bar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-top: 1px solid #1e293b;
-        padding-top: 1.5rem;
-        flex-wrap: wrap;
-        gap: 1.5rem;
+    .cus-hero-title {
+        font-size: 2.4rem;
+        font-weight: 800;
+        line-height: 1.2;
+        letter-spacing: -0.5px;
+        color: #0f172a;
+        margin: 0 0 0.9rem 0;
     }
-    .meta-author {
+
+    .cus-hero-desc {
+        font-size: 0.98rem;
+        line-height: 1.6;
+        color: #334155;
+        margin: 0 0 1.25rem 0;
+        max-width: 900px;
+    }
+
+    /* Meta row: Updated / Author / Reviewer / Share */
+    .cus-hero-meta {
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 2.75rem;
+        flex-wrap: wrap;
+        border-top: 1px solid #e2e8f0;
+        padding: 1.6rem 0 1.25rem;
+    }
+    .cus-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        min-width: 0;
+    }
+
+    .cus-meta-cal {
+        color: #dc2626;
+        font-size: 1rem;
+    }
+    .cus-meta-stack {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.25;
+    }
+    .cus-meta-eyebrow {
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #94a3b8;
+    }
+    .cus-meta-strong {
+        font-size: 0.92rem;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    .cus-meta-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        display: block;
+        background: #f1f5f9;
     }
     .author-image-link {
         display: block;
-        transition: transform 0.2s ease;
+        flex-shrink: 0;
         cursor: pointer;
+        border-radius: 50%;
+        transition: transform 0.2s ease;
     }
     .author-image-link:hover {
         transform: scale(1.05);
     }
-    .meta-avatar {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        border: 2px solid #334155;
-        object-fit: cover;
+
+    .cus-meta-line {
+        display: flex;
+        align-items: baseline;
+        gap: 0.35rem;
+        flex-wrap: wrap;
+        font-size: 0.95rem;
     }
-    .meta-name {
-        display: block;
-        font-size: 1rem;
-        color: #cbd5e1;
-    }
-    .author-text-link {
-        color: #ffffff;
+    .author-text-link,
+    .cus-reviewer-link {
+        color: #0f172a;
         text-decoration: none;
-        transition: color 0.2s ease;
         cursor: pointer;
+        transition: color 0.2s ease;
     }
-    .author-text-link:hover {
-        color: #60a5fa;
-        text-decoration: underline;
+    .author-text-link:hover,
+    .cus-reviewer-link:hover {
+        color: #2563eb;
     }
-    .meta-date {
-        display: block;
-        font-size: 0.85rem;
-        color: #94a3b8;
-        margin-top: 0.2rem;
+    .cus-meta-role {
+        font-size: 0.82rem;
+        color: #64748b;
     }
 
-    /* Share Buttons */
-    .meta-share {
-        display: flex;
-        gap: 0.75rem;
+    /* "Fact Checked" label floats above the reviewer */
+    .cus-meta-reviewer {
+        position: relative;
     }
+    .cus-fact-badge {
+        position: absolute;
+        top: -1.35rem;
+        left: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.66rem;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: #15803d;
+        white-space: nowrap;
+    }
+    .cus-fact-badge i {
+        font-size: 0.7rem;
+    }
+
+    /* Share pill: socials squeezed behind one button */
+    .cus-share {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 3px;
+        border: 1px solid #e2e8f0;
+        border-radius: 999px;
+        background: #ffffff;
+        transition: box-shadow 0.2s ease;
+    }
+    .cus-share-icons {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        max-width: 0;
+        opacity: 0;
+        overflow: hidden;
+        transition:
+            max-width 0.25s ease,
+            opacity 0.2s ease,
+            padding 0.25s ease;
+    }
+    .cus-share.is-open,
+    .cus-share:focus-within {
+        box-shadow: 0 4px 12px -4px rgba(15, 23, 42, 0.15);
+    }
+    .cus-share.is-open .cus-share-icons,
+    .cus-share:focus-within .cus-share-icons {
+        max-width: 200px;
+        opacity: 1;
+        padding-left: 0.2rem;
+    }
+    @media (hover: hover) {
+        .cus-share:hover .cus-share-icons {
+            max-width: 200px;
+            opacity: 1;
+            padding-left: 0.2rem;
+        }
+        .cus-share:hover {
+            box-shadow: 0 4px 12px -4px rgba(15, 23, 42, 0.15);
+        }
+    }
+    .cus-share-toggle {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        border: none;
+        background: #f1f5f9;
+        color: #334155;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+        transition:
+            background 0.2s ease,
+            color 0.2s ease;
+    }
+    .cus-share-toggle:hover,
+    .cus-share.is-open .cus-share-toggle {
+        background: #0f172a;
+        color: #ffffff;
+    }
+    .cus-share-toggle:focus-visible,
+    .share-btn:focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 2px;
+    }
+
+    /* Compact social icons inside the pill */
     .share-btn {
-        width: 36px;
-        height: 36px;
+        width: 30px;
+        height: 30px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
+        flex-shrink: 0;
         color: #ffffff;
+        font-size: 0.8rem;
         text-decoration: none;
         transition:
             transform 0.2s ease,
@@ -1993,8 +2149,63 @@ if (wrapperStart !== -1) {
         background-color: #0077b5;
     }
     .share-btn:hover {
-        transform: translateY(-2px);
+        transform: translateY(-1px);
         filter: brightness(1.1);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .cus-share-icons,
+        .share-btn,
+        .author-image-link {
+            transition: none;
+        }
+    }
+
+    @media (max-width: 900px) {
+        .cus-hero-title {
+            font-size: 2rem;
+        }
+        .cus-hero-meta {
+            gap: 1.75rem;
+        }
+        .post-breadcrumbs .current {
+            max-width: 180px;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .cus-hero {
+            padding-top: 1.5rem;
+        }
+        .cus-hero-title {
+            font-size: 1.65rem;
+        }
+        .cus-hero-desc {
+            font-size: 0.92rem;
+        }
+        .cus-hero-meta {
+            gap: 1rem 1.25rem;
+            padding-top: 1.25rem;
+        }
+        /* Updated + share share the first line; people stack below */
+        .cus-meta-updated {
+            order: 1;
+        }
+        .cus-share {
+            order: 2;
+        }
+        .cus-meta-person {
+            order: 3;
+            flex-basis: 100%;
+        }
+        .cus-meta-reviewer {
+            flex-wrap: wrap;
+        }
+        .cus-fact-badge {
+            position: static;
+            flex-basis: 100%;
+            margin-bottom: -0.35rem;
+        }
     }
 
     /* =========================================
@@ -2002,7 +2213,7 @@ if (wrapperStart !== -1) {
     ========================================= */
     .post-wrapper {
         background-color: #f8fafc;
-        padding: 0 1rem 5rem;
+        padding: 2rem 1rem 5rem;
     }
     .page-wrapper {
         background-color: #f8fafc;
@@ -2026,7 +2237,6 @@ if (wrapperStart !== -1) {
         border-radius: 12px;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
         border: 1px solid #e2e8f0;
-        transform: translateY(-2rem);
         padding: 2.5rem;
         min-width: 0;
     }
@@ -2213,10 +2423,12 @@ if (wrapperStart !== -1) {
         margin-bottom: 1.25rem;
         font-weight: 500;
         letter-spacing: -0.5px;
-        font-size: 2.2rem;
+        font-size: 25px;
 
         scroll-margin-top: 2rem;
     }
+
+
 
     .wp-content h3 {
         color: #0f172a;
@@ -2224,7 +2436,7 @@ if (wrapperStart !== -1) {
         margin-bottom: 1.25rem;
         font-weight: 500;
         letter-spacing: -0.5px;
-        font-size: 1.6rem;
+        font-size: 18px;
     }
     .wp-content ul {
         margin-bottom: 1.75rem;
@@ -2458,20 +2670,12 @@ if (wrapperStart !== -1) {
 
     /* Mobile Responsiveness */
     @media (max-width: 900px) {
-        .post-title,
-        .page-title {
-            font-size: 2.2rem;
-        }
         .post-container,
         .page-container {
             padding: 1.5rem;
         }
         .featured-image-wrapper {
             margin: -1.5rem -1.5rem 1.5rem -1.5rem;
-        }
-
-        .post-breadcrumbs .current {
-            max-width: 150px;
         }
     }
 

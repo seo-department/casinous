@@ -798,8 +798,13 @@ const canonicalURL = canonical || Astro.url.href
         font-size: 14px !important;
     }
 
-     .wp-content ul li{
-        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+    .wp-content ul li {
+        font-family:
+            "Inter",
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            sans-serif !important;
     }
 
     .cus-rating {
@@ -1202,7 +1207,12 @@ const canonicalURL = canonical || Astro.url.href
         margin: 0;
         padding: 0;
         box-sizing: border-box;
-        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+        font-family:
+            "Inter",
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            sans-serif !important;
         background-color: var(--bg-main);
         color: var(--text-main);
         min-height: 100vh;
@@ -3855,8 +3865,6 @@ const canonicalURL = canonical || Astro.url.href
         color: #fff;
     }
     .page-hero {
-        background-color: #1a233a;
-        color: #fff;
         padding: 3rem 1rem;
         border-bottom: 1px solid #3a4459;
     }
@@ -3929,6 +3937,35 @@ const canonicalURL = canonical || Astro.url.href
         object-fit: cover;
     }
 
+    .cus-editorial-statement {
+    display: none;
+}
+
+        /* Editorial statement under the hero author row */
+    .cus-hero-editorial {
+        border-top: 1px solid #e2e8f0;
+        padding: 1rem 0 1.25rem;
+    }
+    .cus-hero-editorial p {
+        margin: 0 0 0.5rem 0;
+        font-size: 0.8rem;
+        font-style: italic;
+        line-height: 1.6;
+        color: #64748b;
+        max-width: 100%;
+    }
+    .cus-hero-editorial p:last-child {
+        margin-bottom: 0;
+    }
+    .cus-hero-editorial strong {
+        color: #0f172a;
+        font-weight: 700 !important;
+        font-style: italic;
+    }
+    .cus-hero-meta {
+        padding-bottom: 1rem;
+    }
+
     /* --- Fix for the overflowing 624px callout tables --- */
     table[width="624"] {
         width: 100% !important;
@@ -3950,7 +3987,7 @@ const canonicalURL = canonical || Astro.url.href
         color: #cbd5e1;
     }
     .author-text-link {
-        color: #fff;
+        color: #0b1120;
         text-decoration: none;
         transition: color 0.2s ease;
     }
@@ -4061,16 +4098,21 @@ const canonicalURL = canonical || Astro.url.href
         margin-bottom: 1.25rem;
         font-weight: 500;
         letter-spacing: -0.5px;
-        font-size: 2.2rem;
+        font-size: 25px;
         scroll-margin-top: 2rem;
     }
+
+    .custom-toc {
+        display: none !important;
+    }
+
     .wp-content h3 {
         color: #0f172a;
         margin-top: 3rem;
         margin-bottom: 1.25rem;
         font-weight: 500;
         letter-spacing: -0.5px;
-        font-size: 1.6rem;
+        font-size: 18px;
     }
     .wp-content ul {
         margin-bottom: 1.75rem;
@@ -4295,6 +4337,20 @@ const canonicalURL = canonical || Astro.url.href
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
             white-space: nowrap;
+        }
+        strong.cus-bonus-title {
+            font-size: 17px !important;
+        }
+
+        .wp-content h2 {
+            font-size: 25px !important;
+        }
+
+        .wp-content h3 {
+            font-size: 20px !important;
+        }
+        .mega-column a {
+            color: #fff !important;
         }
     }
 
@@ -6813,15 +6869,7 @@ const canonicalURL = canonical || Astro.url.href
             text-align: center !important;
         }
     }
-    .page-hero {
-        background-color: #1a233a;
-        color: #fff;
-        padding: 3rem 1rem;
-        border-bottom: 1px solid #3a4459;
-        position: relative;
-        overflow: hidden;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Ccircle cx='2' cy='2' r='2' fill='%23ffffff' fill-opacity='0.05'/%3E%3C/svg%3E");
-    }
+   
     header.page-hero {
         border-bottom: 3px solid #60a5fa;
     }
@@ -6837,8 +6885,8 @@ const canonicalURL = canonical || Astro.url.href
         line-height: 1.1;
         margin: 1rem 0 2.5rem 0;
         letter-spacing: -1px;
-        color: #fff;
-        text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        color: #0b1120;
+
     }
     .page-hero .post-breadcrumbs {
         display: inline-flex;
@@ -6848,7 +6896,7 @@ const canonicalURL = canonical || Astro.url.href
         font-weight: 600;
         letter-spacing: 0.5px;
         background: rgba(255, 255, 255, 0.05);
-        padding: 0.5rem 1.25rem;
+        padding: 5px 5px;
         border-radius: 50px;
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
@@ -10415,8 +10463,6 @@ const canonicalURL = canonical || Astro.url.href
         line-height: 1.5;
     }
 
-
-
     /* --- Typography & Spacing --- */
     .cus-banner p {
         margin-top: 0;
@@ -10450,8 +10496,6 @@ const canonicalURL = canonical || Astro.url.href
     section.full-width-discovery-section {
         border-top: 3px solid #e5e5e5;
     }
-
-
 
     .blog-post-content h3 {
         font-weight: 400;
@@ -10957,8 +11001,8 @@ const canonicalURL = canonical || Astro.url.href
     }
 
     .cus-banner {
-    background: #fff !important;
-}
+        background: #fff !important;
+    }
 
     a#cus-toggle-1 {
         color: #ffffff !important;
@@ -11773,7 +11817,8 @@ const canonicalURL = canonical || Astro.url.href
             font-size: 0.8rem;
         }
         .page-container {
-    max-width: 100% !important;}
+            max-width: 100% !important;
+        }
     }
 
     /* ===================== 3-COLUMN METHOD/TIME/MIN TABLE ===================== */

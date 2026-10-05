@@ -1,5 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro"
+import { getReviewer, REVIEWERS } from "../data/reviewers"
 
 // 1. Fetch BOTH the /online-casinos/ content AND the 8 recent posts in a single GraphQL query
 const wpUrl = "https://wordpress-1621926-6409582.cloudwaysapps.com/graphql"
@@ -206,15 +207,12 @@ const authorLinkedIn = formatSocial(
 	"https://linkedin.com/in/",
 )
 
-// Reviewer Data
-const reviewerName = "Kylie Johnston"
-const reviewerAvatar =
-	"https://secure.gravatar.com/avatar/6a14bc8cd1f9dccc295508e407cc155adc20c6da88d2ca69ae89d86b917750a9?s=150&d=mm&r=g"
-const reviewerSlug = reviewerName
-	.toLowerCase()
-	.replace(/[^a-z0-9]+/g, "-")
-	.replace(/(^-|-$)+/g, "")
-const reviewerLink = `/about-us/${reviewerSlug}/`
+// 🚨 FACT-CHECKER: David Reynolds or Paige Jacobs, picked from the shared
+// list in src/data/reviewers.ts (stable per URL, never the page's own author)
+const reviewer = getReviewer("/online-casinos/", authorName)
+const reviewerName = reviewer.name
+const reviewerAvatar = reviewer.avatar
+const reviewerLink = reviewer.link
 
 const rawDate = page?.modified || page?.date || new Date().toISOString()
 const formattedDate = new Date(rawDate).toLocaleDateString("en-US", {
@@ -298,7 +296,7 @@ const breakingStories = recentPosts.slice(0, 3)
 const blogPosts = recentPosts.slice(3, 7)
 
 // 🚨 AUTHOR / REVIEWER POPUP — hover card for BOTH bylines in the hero
-// meta box: the real page author, and the (currently hardcoded) reviewer.
+// meta box: the real page author, and the fact-checker (David or Paige).
 // One shared card, refilled per-person and per-role (Author vs Reviewer)
 // from JSON built at build time, reusing data we already fetched (users
 // for bios, the 30 posts for avatars/backfill + "latest posts by").
@@ -314,11 +312,11 @@ const truncateBio = (bio: string) =>
 const stripHtmlForPopup = (html: string) =>
 	html.replace(/<\/?[^>]+(>|$)/g, "").trim()
 
-// Manual avatar overrides for people whose byline avatar here is a
-// hand-picked Gravatar rather than their WP avatar.
-const AUTHOR_AVATAR_OVERRIDES: Record<string, string> = {
-	[reviewerName]: reviewerAvatar,
-}
+// Manual avatar overrides: every fact-checker uses the hand-picked
+// Gravatar from src/data/reviewers.ts rather than their WP avatar.
+const AUTHOR_AVATAR_OVERRIDES: Record<string, string> = Object.fromEntries(
+	REVIEWERS.map(r => [r.name, r.avatar]),
+)
 
 const authorPopupMap = new Map<
 	string,
@@ -376,14 +374,15 @@ const registerAuthorForPopup = (
 	registerAuthorForPopup(name, u.avatar?.url, u.description)
 })
 
-// Make sure the reviewer exists even if she isn't in the top 10 users
-registerAuthorForPopup(reviewerName, reviewerAvatar, undefined)
+// Make sure every fact-checker exists even if they aren't in the top 10 users
+REVIEWERS.forEach(r => registerAuthorForPopup(r.name, r.avatar, undefined))
 
 // Backfill with any post byline the `users` query missed
 recentPosts.forEach((p: any) => {
 	const a = p.author?.node
 	if (!a) return
-	const name = a.firstName && a.lastName ? `${a.firstName} ${a.lastName}` : a.name
+	const name =
+		a.firstName && a.lastName ? `${a.firstName} ${a.lastName}` : a.name
 	registerAuthorForPopup(name, a.avatar?.url, undefined)
 })
 
@@ -393,7 +392,9 @@ if (authorObj?.description) {
 	const entry = authorPopupMap.get(authorName)
 	if (entry) {
 		entry.bio = truncateBio(
-			stripHtmlForPopup(authorObj.description.replaceAll(wpDomain, liveDomain)),
+			stripHtmlForPopup(
+				authorObj.description.replaceAll(wpDomain, liveDomain),
+			),
 		)
 	}
 }
@@ -408,30 +409,33 @@ recentPosts.forEach((p: any) => {
 			: a.name
 		: null
 	if (!name) return
-	if (!postsByAuthorNameForPopup.has(name)) postsByAuthorNameForPopup.set(name, [])
+	if (!postsByAuthorNameForPopup.has(name))
+		postsByAuthorNameForPopup.set(name, [])
 	postsByAuthorNameForPopup.get(name)!.push(p)
 })
 
 authorPopupMap.forEach((entry, name) => {
-	entry.posts = (postsByAuthorNameForPopup.get(name) || []).slice(0, 5).map((p: any) => {
-		let img = p.featuredImage?.node?.sourceUrl || ""
-		if (img) {
-			try {
-				img = new URL(img).pathname
-			} catch (e) {}
-		}
-		const relUri = (p.uri || "").replace(/https?:\/\/[^\/]+/g, "")
-		return {
-			title: p.title,
-			link: `/${relUri.replace(/^\/|\/$/g, "")}/`,
-			image: img,
-			date: new Date(p.date).toLocaleDateString("en-US", {
-				year: "numeric",
-				month: "short",
-				day: "numeric",
-			}),
-		}
-	})
+	entry.posts = (postsByAuthorNameForPopup.get(name) || [])
+		.slice(0, 5)
+		.map((p: any) => {
+			let img = p.featuredImage?.node?.sourceUrl || ""
+			if (img) {
+				try {
+					img = new URL(img).pathname
+				} catch (e) {}
+			}
+			const relUri = (p.uri || "").replace(/https?:\/\/[^\/]+/g, "")
+			return {
+				title: p.title,
+				link: `/${relUri.replace(/^\/|\/$/g, "")}/`,
+				image: img,
+				date: new Date(p.date).toLocaleDateString("en-US", {
+					year: "numeric",
+					month: "short",
+					day: "numeric",
+				}),
+			}
+		})
 })
 
 const authorPopupJson = JSON.stringify(
@@ -507,7 +511,7 @@ const authorPopupJson = JSON.stringify(
 										></strong
 									></span
 								>
-								<span class="amb-role">Casino Expert</span>
+								<span class="amb-role">{reviewer.role}</span>
 							</div>
 						</div>
 
@@ -559,26 +563,28 @@ const authorPopupJson = JSON.stringify(
 						>
 							<p class="hero-lead-text">
 								<span class="cus-teaser">
-									Looking for an online casino that accepts US
-									players? CasinoUS reviews international and
-									offshore casino sites available to American
-									players, comparing licensing, security,
-									bonuses, banking options, payout times, game
+									Can you please update the introduction
+									section: "Looking for the best online
+									casinos for US players? CasinoUS reviews
+									international and offshore casino sites that
+									accept players from eligible US locations.
+									We compare licensing, security, bonuses,
+									banking options, payout times, game
 									selection and responsible gambling tools.
-									Our reviews focus on the details that matter
-									before you create an account, including
-									minimum deposits, withdrawal conditions, KYC
-									requirements and state restrictions.
+									Our reviews also cover minimum deposits,
+									withdrawal conditions, KYC requirements and
+									state restrictions.
 								</span>
 							</p>
 
 							<p>
-								<i>Important</i>: The casinos featured on this page are
-								not the same as state-regulated US online
-								casinos. They operate under international
-								licences and availability can vary by state.
-								Always check the applicable laws and the
-								casino's current terms before registering.
+								<i>Important</i>: TThe casinos featured here are
+								not state-regulated US online casinos. They
+								operate under international licences, and
+								availability can vary by state. Before choosing
+								an online casino, check your local laws and the
+								casino's current terms before registering or
+								depositing.
 							</p>
 
 							<div class="table-responsive"></div>
@@ -871,9 +877,11 @@ const authorPopupJson = JSON.stringify(
 		)
 	}
 
-	{/* 🚨 AUTHOR / REVIEWER POPUP — one shared card, filled per-person and
+	{
+		/* 🚨 AUTHOR / REVIEWER POPUP — one shared card, filled per-person and
 	     per-role (Author vs Reviewer) on hover/tap from the JSON payload
-	     below. */}
+	     below. */
+	}
 	<div
 		class="author-popup-card"
 		id="author-popup-card"
@@ -886,7 +894,7 @@ const authorPopupJson = JSON.stringify(
 			id="author-popup-close"
 			aria-label="Close"
 		>
-			<i class="fa-solid fa-xmark" />
+			<i class="fa-solid fa-xmark"></i>
 		</button>
 
 		<div class="author-popup-header">
@@ -900,23 +908,19 @@ const authorPopupJson = JSON.stringify(
 			<span class="author-popup-eyebrow" id="author-popup-eyebrow"
 				>Author</span
 			>
-			<h3 class="author-popup-name" id="author-popup-name" />
+			<h3 class="author-popup-name" id="author-popup-name"></h3>
 		</div>
 
 		<div class="author-popup-body">
-			<span
-				class="author-popup-label"
-				id="author-popup-about-label"
-			>
+			<span class="author-popup-label" id="author-popup-about-label">
 				About Author
 			</span>
-			<p class="author-popup-bio" id="author-popup-bio" />
+			<p class="author-popup-bio" id="author-popup-bio"></p>
 
 			<span
 				class="author-popup-label author-popup-label-posts"
-				id="author-popup-posts-label"
-			/>
-			<ul class="author-popup-posts" id="author-popup-posts" />
+				id="author-popup-posts-label"></span>
+			<ul class="author-popup-posts" id="author-popup-posts"></ul>
 		</div>
 
 		<a
@@ -925,7 +929,7 @@ const authorPopupJson = JSON.stringify(
 			id="author-popup-also-wrote"
 		>
 			<span id="author-popup-cta-text">Also Wrote!</span>
-			<i class="fa-solid fa-chevron-right" />
+			<i class="fa-solid fa-chevron-right"></i>
 		</a>
 	</div>
 	<script
@@ -1033,11 +1037,14 @@ const authorPopupJson = JSON.stringify(
 
 		function scheduleHide(delay) {
 			cancelHide()
-			hideTimer = setTimeout(() => {
-				card.classList.remove("is-open")
-				card.setAttribute("aria-hidden", "true")
-				currentKey = null
-			}, delay === undefined ? 220 : delay)
+			hideTimer = setTimeout(
+				() => {
+					card.classList.remove("is-open")
+					card.setAttribute("aria-hidden", "true")
+					currentKey = null
+				},
+				delay === undefined ? 220 : delay,
+			)
 		}
 
 		function fillCard(entry, role) {
@@ -1060,7 +1067,7 @@ const authorPopupJson = JSON.stringify(
 			if (entry.posts && entry.posts.length > 0) {
 				postsLabelEl.textContent = `Latest Posts By: ${entry.name}`
 				postsLabelEl.style.display = ""
-				entry.posts.forEach((post) => {
+				entry.posts.forEach(post => {
 					const li = document.createElement("li")
 					const a = document.createElement("a")
 					a.href = post.link
@@ -1145,7 +1152,7 @@ const authorPopupJson = JSON.stringify(
 			card.setAttribute("aria-hidden", "false")
 		}
 
-		triggers.forEach((el) => {
+		triggers.forEach(el => {
 			if (el.dataset.authorPopupBound) return
 			el.dataset.authorPopupBound = "true"
 
@@ -1154,7 +1161,7 @@ const authorPopupJson = JSON.stringify(
 			el.addEventListener("focus", () => showCard(el))
 			el.addEventListener("blur", () => scheduleHide(120))
 
-			el.addEventListener("click", (e) => {
+			el.addEventListener("click", e => {
 				e.preventDefault()
 				const key = `${el.dataset.authorKey}::${el.dataset.authorRole || "author"}`
 				if (card.classList.contains("is-open") && currentKey === key) {
@@ -1176,17 +1183,19 @@ const authorPopupJson = JSON.stringify(
 			closeBtn.addEventListener("click", () => scheduleHide(0))
 		}
 
-		document.addEventListener("click", (e) => {
+		document.addEventListener("click", e => {
 			if (!card.classList.contains("is-open")) return
 			if (e.target.closest("[data-open-author-popup]")) return
 			if (!card.contains(e.target)) scheduleHide(0)
 		})
 
-		document.addEventListener("keydown", (e) => {
+		document.addEventListener("keydown", e => {
 			if (e.key === "Escape") scheduleHide(0)
 		})
 
-		window.addEventListener("scroll", () => scheduleHide(0), { passive: true })
+		window.addEventListener("scroll", () => scheduleHide(0), {
+			passive: true,
+		})
 		window.addEventListener("resize", () => scheduleHide(0))
 	}
 
@@ -1200,8 +1209,8 @@ const authorPopupJson = JSON.stringify(
 
 <style is:global>
 	main#content br {
-    display: none;
-}
+		display: none;
+	}
 
 	.hero-bottom-meta-section p {
 		margin-bottom: 17px !important;
@@ -1401,8 +1410,8 @@ const authorPopupJson = JSON.stringify(
 	}
 
 	h1.home-hero-title {
-    text-align: left;
-}
+		text-align: left;
+	}
 
 	/* =========================================
        MODERN HERO CTA CARD (Right Column)
@@ -1543,8 +1552,6 @@ const authorPopupJson = JSON.stringify(
 		border-top: 1px solid #385443;
 		border-radius: 15px 15px 0px 0px;
 	}
-
-	
 
 	.home-hero-container {
 		max-width: 1200px;
@@ -2065,8 +2072,6 @@ const authorPopupJson = JSON.stringify(
 		color: #0f172a !important;
 	}
 
-	
-
 	.cus-hp-list li {
 		font-size: 0.85rem;
 		color: #334155;
@@ -2231,8 +2236,6 @@ const authorPopupJson = JSON.stringify(
 		padding: 1rem 1rem;
 		border-top: 1px solid #e2e8f0;
 	}
-
-	
 
 	.discovery-container {
 		max-width: 1200px;
@@ -2538,7 +2541,6 @@ const authorPopupJson = JSON.stringify(
 		color: #e2e8f0;
 	}
 
-	
 	.hero-columns {
 		display: flex;
 		align-items: center;
@@ -2564,9 +2566,9 @@ const authorPopupJson = JSON.stringify(
 	}
 
 	.author-meta-box {
-    padding: 8px;
-    border-radius: 13px;
-}
+		padding: 8px;
+		border-radius: 13px;
+	}
 
 	/* Target the mascot image */
 	.hero-mascot-img {
