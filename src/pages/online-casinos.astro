@@ -3,7 +3,7 @@ import Layout from "../layouts/Layout.astro"
 import { getReviewer, REVIEWERS } from "../data/reviewers"
 
 // 1. Fetch BOTH the /online-casinos/ content AND the 8 recent posts in a single GraphQL query
-const wpUrl = "https://wordpress-1621926-6409582.cloudwaysapps.com/graphql"
+const wpUrl = "https://cms.casinous.com/graphql"
 
 const response = await fetch(wpUrl, {
 	method: "POST",
@@ -86,7 +86,7 @@ const yoastTitle = (page?.seo?.title || page?.title || "Casino US").replaceAll(
 const yoastDesc = (page?.seo?.metaDesc || "").replaceAll("[year]", currentYear)
 
 // 🚨 FIX: Updated to match your new Cloudways App URL
-const wpDomain = "https://wordpress-1621926-6409582.cloudwaysapps.com"
+const wpDomain = "https://cms.casinous.com"
 
 // Extract and clean the Schema so it uses the live domain
 const liveDomain = "https://www.casinous.com"

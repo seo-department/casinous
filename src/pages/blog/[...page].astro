@@ -4,7 +4,7 @@ import Layout from "../../layouts/Layout.astro";
 // 1. Tell Astro to generate paginated routes using getStaticPaths
 export async function getStaticPaths({ paginate }) {
     // 🚨 DROPPED TO 40: 100 posts with srcSet images is too heavy and causes Cloudways to timeout!
-    const wpUrl = "https://wordpress-1621926-6409582.cloudwaysapps.com/graphql";
+    const wpUrl = "https://cms.casinous.com/graphql";
 
     const response = await fetch(wpUrl, {
         method: "POST",
@@ -62,7 +62,7 @@ export async function getStaticPaths({ paginate }) {
 const { page } = Astro.props;
 
 // --- HELPER FUNCTIONS ---
-const wpDomain = "https://wordpress-1621926-6409582.cloudwaysapps.com";
+const wpDomain = "https://cms.casinous.com";
 
 const createAuthorSlug = (name: string | undefined) => {
     if (!name) return "editorial-team";

@@ -3,7 +3,7 @@ import Layout from '../../../layouts/Layout.astro';
 
 // 1. Fetch ALL posts and group them by Author, then use Astro's paginate()
 export async function getStaticPaths({ paginate }: { paginate: any }) {
-    const wpUrl = 'https://wordpress-1621926-6409582.cloudwaysapps.com/graphql'; 
+    const wpUrl = 'https://cms.casinous.com/graphql'; 
     let allPosts: any[] = [];
     let hasNextPage = true;
     let endCursor = null;

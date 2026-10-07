@@ -1,6 +1,6 @@
 export const prerender = true;
 
-const wpDomain = 'https://wordpress-1621926-6409582.cloudwaysapps.com';
+const wpDomain = 'https://cms.casinous.com';
 const astroDomain = 'https://www.casinous.com';
 
 // Shared helper: fetch a WP sitemap by name and clean it up

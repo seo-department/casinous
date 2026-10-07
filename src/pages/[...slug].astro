@@ -6,7 +6,7 @@ import { getReviewer } from "../data/reviewers"
 export async function getStaticPaths() {
     // 🚨 1. SINGLE SOURCE OF TRUTH FOR THE DOMAIN
     const APP_ID = "6409582"
-    const wpDomain = `https://wordpress-1621926-${APP_ID}.cloudwaysapps.com`
+    const wpDomain = `https://cms.casinous.com`
     const wpUrl = `${wpDomain}/graphql`
 
     let allNodes: any[] = []
@@ -270,7 +270,7 @@ let yoastSchema = post.seo?.schema?.raw || undefined
 if (yoastSchema) {
     yoastSchema = yoastSchema
         .replaceAll(
-            "https://wordpress-1621926-6409582.cloudwaysapps.com",
+            "https://cms.casinous.com",
             "https://www.casinous.com",
         )
         .replaceAll("/uncategorized/", "/blog/")
@@ -281,7 +281,7 @@ let canonicalUrl = post.seo?.canonical || undefined
 if (canonicalUrl) {
     canonicalUrl = canonicalUrl
         .replace(
-            "https://wordpress-1621926-6409582.cloudwaysapps.com",
+            "https://cms.casinous.com",
             "https://www.casinous.com",
         )
         .replace("/uncategorized/", "/blog/")
@@ -326,7 +326,7 @@ const nofollow = post.seo?.metaRobotsNofollow || "follow"
 const robotsTag = `${noindex}, ${nofollow}`
 
 // 5. Author Data Extraction
-const wpDomain = "https://wordpress-1621926-6409582.cloudwaysapps.com"
+const wpDomain = "https://cms.casinous.com"
 const authorNode = post.author?.node
 const authorName = authorNode
     ? authorNode.firstName && authorNode.lastName

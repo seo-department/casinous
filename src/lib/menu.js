@@ -1,7 +1,7 @@
 // ---- Config -----------------------------------------------------------
 const WP_GRAPHQL_URL =
     import.meta.env.WP_GRAPHQL_URL ||
-    "https://wordpress-1621926-6409582.cloudwaysapps.com/graphql"
+    "https://cms.casinous.com/graphql"
 const MENU_LOCATION = "PRIMARY"
 const DEFAULT_ICON_COLOR = "#cbd5e1"
 

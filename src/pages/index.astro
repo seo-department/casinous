@@ -2,7 +2,7 @@
 import Layout from "../layouts/Layout.astro"
 
 // 1. Fetch Homepage SEO, 30 Posts, Users, AND Categories in a single GraphQL query
-const wpUrl = "https://wordpress-1621926-6409582.cloudwaysapps.com/graphql"
+const wpUrl = "https://cms.casinous.com/graphql"
 
 const response = await fetch(wpUrl, {
     method: "POST",
@@ -82,7 +82,7 @@ const currentYear = new Date().getFullYear().toString()
 const yoastTitle = "Casino US | Independent Online Casino Reviews, News & Guides"
 const yoastDesc = "Casino US is your trusted source for Online Casinos in the USA, for 10+ years. Honest Casino reviews, expert analysis, and guides to help you play smarter."
 
-const wpDomain = "https://wordpress-1621926-6409582.cloudwaysapps.com"
+const wpDomain = "https://cms.casinous.com"
 let yoastSchema = page?.seo?.schema?.raw || undefined
 if (yoastSchema) {
     yoastSchema = yoastSchema.replaceAll(wpDomain, "https://www.casinous.com")
@@ -269,7 +269,7 @@ const manualGuides = [
     {
         title: "Best Online Casinos USA 2026",
         uri: "/online-casinos/",
-        image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2025/05/Best-online-casinos-for-US-players.webp",
+        image: "https://cms.casinous.com/wp-content/uploads/2025/05/Best-online-casinos-for-US-players.webp",
         author: "Paige Williams",
         date: "2026-06-15",
         popularity: 90,
@@ -277,7 +277,7 @@ const manualGuides = [
     {
         title: "Fastest Payout Casinos Online USA 2026",
         uri: "/fastest-payout-casinos/",
-        image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2025/03/BetUS-Casino-Reviews.jpg",
+        image: "https://cms.casinous.com/wp-content/uploads/2025/03/BetUS-Casino-Reviews.jpg",
         author: "Alex Harper",
         date: "2026-03-20",
         popularity: 70,
@@ -285,7 +285,7 @@ const manualGuides = [
     {
         title: "Best Payout Online Casinos USA",
         uri: "/best-payout-casinos/",
-        image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2025/04/CUS-paying-online-casinos-1.png",
+        image: "https://cms.casinous.com/wp-content/uploads/2025/04/CUS-paying-online-casinos-1.png",
         author: "Alex Harper",
         date: "2025-04-10",
         popularity: 95,
@@ -293,7 +293,7 @@ const manualGuides = [
     {
         title: "Best Casino Bonuses in the USA",
         uri: "/casino-bonuses/",
-        image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2026/06/sun-palace-casino-bonuses.png",
+        image: "https://cms.casinous.com/wp-content/uploads/2026/06/sun-palace-casino-bonuses.png",
         author: "Paige Williams",
         date: "2026-06-01",
         popularity: 99,
@@ -301,7 +301,7 @@ const manualGuides = [
     {
         title: "Best Real Money Online Slots USA 2026",
         uri: "/online-slots/",
-        image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2025/04/CasinoUS-Online-Slots.png",
+        image: "https://cms.casinous.com/wp-content/uploads/2025/04/CasinoUS-Online-Slots.png",
         author: "Lara Johns",
         date: "2025-04-05",
         popularity: 60,
@@ -309,7 +309,7 @@ const manualGuides = [
     {
         title: "Top Online Gambling Sites in the USA",
         uri: "/online-gambling/",
-        image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2025/03/stage-1.png",
+        image: "https://cms.casinous.com/wp-content/uploads/2025/03/stage-1.png",
         author: "Alex Harper",
         date: "2025-03-12",
         popularity: 85,
@@ -317,7 +317,7 @@ const manualGuides = [
     {
         title: "Best No Deposit Bonus USA",
         uri: "/no-deposit-bonus/",
-        image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2025/03/no-deposit-promo.png",
+        image: "https://cms.casinous.com/wp-content/uploads/2025/03/no-deposit-promo.png",
         author: "Paige Williams",
         date: "2025-03-01",
         popularity: 40,
@@ -325,7 +325,7 @@ const manualGuides = [
     {
         title: "Honest & Trusted Online Casino Reviews",
         uri: "/casino-reviews/",
-        image: "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/uploads/2025/03/Club-World-Casino-Reviews.jpg",
+        image: "https://cms.casinous.com/wp-content/uploads/2025/03/Club-World-Casino-Reviews.jpg",
         author: "Lara Johns",
         date: "2025-03-01",
         popularity: 50,

@@ -1,12 +1,12 @@
 import { writeFileSync } from 'node:fs';
 
-const endpoint = 'https://wordpress-1621926-6409582.cloudwaysapps.com/wp-json/cvc/v1/redirects';
+const endpoint = 'https://cms.casinous.com/wp-json/cvc/v1/redirects';
 
 const base = {
   rewrites: [
     {
       source: '/wp-content/:path*',
-      destination: 'https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/:path*',
+      destination: 'https://cms.casinous.com/wp-content/:path*',
     },
   ],
 };

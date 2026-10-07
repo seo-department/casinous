@@ -11,7 +11,7 @@
   "rewrites": [
     {
       "source": "/wp-content/:path*",
-      "destination": "https://wordpress-1621926-6409582.cloudwaysapps.com/wp-content/:path*"
+      "destination": "https://cms.casinous.com/wp-content/:path*"
     }
   ],
   "redirects": [
