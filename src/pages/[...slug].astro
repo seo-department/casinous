@@ -90,7 +90,7 @@ export async function getStaticPaths() {
                         pages(first: 70, after: $after) {
                             pageInfo { hasNextPage endCursor }
                             nodes {
-                                uri title content date modified
+                                uri title content date modified cusSidebar
                                 featuredImage { node { sourceUrl altText } }
                                 author { node { name firstName lastName description uri url avatar { url } seo { social { facebook twitter instagram linkedIn } } } }
                                 seo { 
