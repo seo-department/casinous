@@ -209,6 +209,70 @@ const authorLinkedIn = formatSocial(
 	"https://linkedin.com/in/",
 )
 
+// 🚨 SHARE THIS PAGE: real share URLs for the hero share pill.
+// Always shares the live www URL of this page with its title.
+const decodeBasicEntities = (s: string) =>
+	s
+		.replace(/<\/?[^>]+(>|$)/g, "")
+		.replace(/&amp;/g, "&")
+		.replace(/&#0?38;/g, "&")
+		.replace(/&quot;/g, '"')
+		.replace(/&#0?39;|&#8217;|&rsquo;/g, "’")
+		.replace(/&#8211;|&ndash;/g, "–")
+		.replace(/&#8212;|&mdash;/g, "—")
+		.replace(/&nbsp;/g, " ")
+		.trim()
+
+const sharePageUrl = pageUrl
+const shareTitle = decodeBasicEntities(yoastTitle)
+const encUrl = encodeURIComponent(sharePageUrl)
+const encTitle = encodeURIComponent(shareTitle)
+
+const shareLinks = [
+	{
+		key: "x",
+		label: "Share on X",
+		icon: "fa-brands fa-x-twitter",
+		href: `https://twitter.com/intent/tweet?url=${encUrl}&text=${encTitle}`,
+	},
+	{
+		key: "facebook",
+		label: "Share on Facebook",
+		icon: "fa-brands fa-facebook-f",
+		href: `https://www.facebook.com/sharer/sharer.php?u=${encUrl}`,
+	},
+	{
+		key: "linkedin",
+		label: "Share on LinkedIn",
+		icon: "fa-brands fa-linkedin-in",
+		href: `https://www.linkedin.com/sharing/share-offsite/?url=${encUrl}`,
+	},
+	{
+		key: "whatsapp",
+		label: "Share on WhatsApp",
+		icon: "fa-brands fa-whatsapp",
+		href: `https://api.whatsapp.com/send?text=${encTitle}%20${encUrl}`,
+	},
+	{
+		key: "telegram",
+		label: "Share on Telegram",
+		icon: "fa-brands fa-telegram",
+		href: `https://t.me/share/url?url=${encUrl}&text=${encTitle}`,
+	},
+	{
+		key: "reddit",
+		label: "Share on Reddit",
+		icon: "fa-brands fa-reddit-alien",
+		href: `https://www.reddit.com/submit?url=${encUrl}&title=${encTitle}`,
+	},
+	{
+		key: "email",
+		label: "Share by email",
+		icon: "fa-solid fa-envelope",
+		href: `mailto:?subject=${encTitle}&body=${encodeURIComponent(`${shareTitle}\n\n${sharePageUrl}`)}`,
+	},
+]
+
 // 🚨 FACT-CHECKER: David Reynolds or Paige Jacobs, picked from the shared
 // list in src/data/reviewers.ts (stable per URL, never the page's own author)
 const reviewer = getReviewer("/online-casinos/", authorName)
@@ -529,6 +593,7 @@ const authorPopupJson = JSON.stringify(
 										target="_blank"
 										rel="noopener noreferrer"
 										class="amb-social twitter"
+										aria-label="Twitter"
 									>
 										<i class="fa-brands fa-twitter" />
 									</a>
@@ -541,6 +606,7 @@ const authorPopupJson = JSON.stringify(
 										target="_blank"
 										rel="noopener noreferrer"
 										class="amb-social facebook"
+										aria-label="Facebook"
 									>
 										<i class="fa-brands fa-facebook-f" />
 									</a>
@@ -553,11 +619,71 @@ const authorPopupJson = JSON.stringify(
 										target="_blank"
 										rel="noopener noreferrer"
 										class="amb-social instagram"
+										aria-label="Instagram"
 									>
 										<i class="fa-brands fa-instagram" />
 									</a>
 								)
 							}
+
+							<!-- Share this page: slides open on hover/tap; native share sheet on phones -->
+							<div
+								class="cus-share"
+								id="cus-share"
+								data-share-url={sharePageUrl}
+								data-share-title={shareTitle}
+							>
+								<div class="cus-share-icons" id="cus-share-icons">
+									{
+										shareLinks.map(s => (
+											<a
+												href={s.href}
+												target={
+													s.key === "email"
+														? undefined
+														: "_blank"
+												}
+												rel="nofollow noopener noreferrer"
+												class={`share-btn ${s.key}`}
+												aria-label={s.label}
+												title={s.label}
+												data-share-popup={
+													s.key === "email"
+														? undefined
+														: "true"
+												}
+											>
+												<i class={s.icon} />
+											</a>
+										))
+									}
+									<button
+										type="button"
+										class="share-btn copy"
+										id="cus-share-copy"
+										aria-label="Copy link"
+										title="Copy link"
+									>
+										<i class="fa-solid fa-link"></i>
+									</button>
+								</div>
+								<button
+									type="button"
+									class="cus-share-toggle"
+									id="cus-share-toggle"
+									aria-expanded="false"
+									aria-controls="cus-share-icons"
+									aria-label="Share this page"
+									title="Share this page"
+								>
+									<i class="fa-solid fa-share-nodes"></i>
+								</button>
+								<span
+									class="cus-share-toast"
+									id="cus-share-toast"
+									role="status"
+									aria-live="polite"></span>
+							</div>
 						</div>
 					</div>
 
@@ -647,11 +773,11 @@ const authorPopupJson = JSON.stringify(
 	</header>
 
 	<main class="home-wrapper" id="content">
-	<div class="home-content-with-sidebar">
-		<article class="home-container wp-content" set:html={fixedContent} />
-		<PageSidebar tocItems={tocItems} cusSidebar={page?.cusSidebar} />
-	</div>
-</main>
+		<div class="home-content-with-sidebar">
+			<article class="home-container wp-content" set:html={fixedContent} />
+			<PageSidebar tocItems={tocItems} cusSidebar={page?.cusSidebar} />
+		</div>
+	</main>
 
 	{
 		recentPosts.length >= 4 && (
@@ -991,6 +1117,107 @@ const authorPopupJson = JSON.stringify(
 		}
 	}
 
+	// 🚨 SHARE PILL: hover/focus opens on desktop (CSS); click toggles.
+	// On touch devices the button opens the native share sheet when available.
+	// Social links open in a small popup window; Copy Link copies the URL.
+	function initHeroShare() {
+		const wrap = document.getElementById("cus-share")
+		const toggle = document.getElementById("cus-share-toggle")
+		if (!wrap || !toggle || toggle.dataset.shareBound) return
+		toggle.dataset.shareBound = "true"
+
+		const url = wrap.dataset.shareUrl || location.href
+		const title = wrap.dataset.shareTitle || document.title
+		const toast = document.getElementById("cus-share-toast")
+		const copyBtn = document.getElementById("cus-share-copy")
+		const isTouch = window.matchMedia("(hover: none)").matches
+		let toastTimer
+
+		const setOpen = open => {
+			wrap.classList.toggle("is-open", open)
+			toggle.setAttribute("aria-expanded", open ? "true" : "false")
+		}
+
+		const showToast = msg => {
+			if (!toast) return
+			toast.textContent = msg
+			toast.classList.add("is-visible")
+			clearTimeout(toastTimer)
+			toastTimer = setTimeout(
+				() => toast.classList.remove("is-visible"),
+				1800,
+			)
+		}
+
+		toggle.addEventListener("click", async e => {
+			e.stopPropagation()
+			// Phones/tablets: use the native share sheet (any installed app)
+			if (isTouch && navigator.share) {
+				try {
+					await navigator.share({ title, url })
+					return
+				} catch (err) {
+					if (err && err.name === "AbortError") return
+					// otherwise fall through and show the icons
+				}
+			}
+			setOpen(!wrap.classList.contains("is-open"))
+		})
+
+		// Open social share links in a small centered popup (new tab fallback)
+		wrap.querySelectorAll("[data-share-popup]").forEach(a => {
+			a.addEventListener("click", e => {
+				const w = 600
+				const h = 560
+				const left = window.screenX + (window.outerWidth - w) / 2
+				const top = window.screenY + (window.outerHeight - h) / 2
+				const popup = window.open(
+					a.href,
+					"share",
+					`width=${w},height=${h},left=${left},top=${top}`,
+				)
+				if (popup) {
+					popup.opener = null
+					e.preventDefault()
+				}
+			})
+		})
+
+		if (copyBtn) {
+			copyBtn.addEventListener("click", async e => {
+				e.stopPropagation()
+				try {
+					await navigator.clipboard.writeText(url)
+				} catch (err) {
+					// Fallback for older browsers / non-HTTPS
+					const ta = document.createElement("textarea")
+					ta.value = url
+					ta.style.position = "fixed"
+					ta.style.opacity = "0"
+					document.body.appendChild(ta)
+					ta.select()
+					document.execCommand("copy")
+					ta.remove()
+				}
+				copyBtn.classList.add("is-copied")
+				copyBtn.innerHTML = '<i class="fa-solid fa-check"></i>'
+				showToast("Link copied")
+				setTimeout(() => {
+					copyBtn.classList.remove("is-copied")
+					copyBtn.innerHTML = '<i class="fa-solid fa-link"></i>'
+				}, 1800)
+			})
+		}
+
+		document.addEventListener("click", e => {
+			if (!wrap.contains(e.target)) setOpen(false)
+		})
+
+		document.addEventListener("keydown", e => {
+			if (e.key === "Escape") setOpen(false)
+		})
+	}
+
 	// 🚨 AUTHOR / REVIEWER POPUP: shows on hover (desktop), tap (touch/click)
 	// and keyboard focus. One shared card, repositioned + refilled per
 	// trigger, with copy that swaps between "Author"/"Reviewer" based on
@@ -1196,12 +1423,17 @@ const authorPopupJson = JSON.stringify(
 		window.addEventListener("resize", () => scheduleHide(0))
 	}
 
-	if (document.readyState === "loading") {
-		document.addEventListener("DOMContentLoaded", initAuthorPopup)
-	} else {
+	function initHeroWidgets() {
+		initHeroShare()
 		initAuthorPopup()
 	}
-	document.addEventListener("astro:page-load", initAuthorPopup)
+
+	if (document.readyState === "loading") {
+		document.addEventListener("DOMContentLoaded", initHeroWidgets)
+	} else {
+		initHeroWidgets()
+	}
+	document.addEventListener("astro:page-load", initHeroWidgets)
 </script>
 
 <style is:global>
@@ -1283,6 +1515,7 @@ const authorPopupJson = JSON.stringify(
 
 	.amb-right {
 		display: flex;
+		align-items: center;
 		gap: 0.75rem;
 		margin-left: auto;
 	}
@@ -1324,6 +1557,177 @@ const authorPopupJson = JSON.stringify(
 		);
 	}
 
+	/* =========================================
+       SHARE THIS PAGE PILL (author box)
+       Icons open as an overlay so the box never re-wraps (no flicker).
+    ========================================= */
+	.cus-share {
+		position: relative;
+		display: flex;
+		align-items: center;
+		padding: 3px;
+		border: 1px solid #e2e8f0;
+		border-radius: 999px;
+		background: #ffffff;
+		transition: box-shadow 0.2s ease;
+		z-index: 5;
+	}
+	.cus-share-icons {
+		position: absolute;
+		top: 50%;
+		right: calc(100% - 2px);
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 3px 8px 3px 4px;
+		background: #ffffff;
+		border: 1px solid #e2e8f0;
+		border-right: none;
+		border-radius: 999px 0 0 999px;
+		box-shadow: -6px 4px 14px -6px rgba(15, 23, 42, 0.18);
+		max-width: 0;
+		overflow: hidden;
+		opacity: 0;
+		visibility: hidden;
+		transform: translateY(-50%);
+		transition:
+			max-width 0.25s ease,
+			opacity 0.2s ease,
+			visibility 0s linear 0.25s;
+	}
+	.cus-share.is-open .cus-share-icons,
+	.cus-share:focus-within .cus-share-icons {
+		max-width: 360px;
+		opacity: 1;
+		visibility: visible;
+		transition:
+			max-width 0.25s ease,
+			opacity 0.2s ease,
+			visibility 0s;
+	}
+	.cus-share.is-open,
+	.cus-share:focus-within {
+		box-shadow: 0 4px 12px -4px rgba(15, 23, 42, 0.15);
+	}
+	@media (hover: hover) {
+		.cus-share:hover .cus-share-icons {
+			max-width: 360px;
+			opacity: 1;
+			visibility: visible;
+			transition:
+				max-width 0.25s ease,
+				opacity 0.2s ease,
+				visibility 0s;
+		}
+		.cus-share:hover {
+			box-shadow: 0 4px 12px -4px rgba(15, 23, 42, 0.15);
+		}
+	}
+	.cus-share-toggle {
+		width: 34px;
+		height: 34px;
+		border-radius: 50%;
+		border: none;
+		background: #f1f5f9;
+		color: #334155;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		font-size: 0.85rem;
+		flex-shrink: 0;
+		transition:
+			background 0.2s ease,
+			color 0.2s ease;
+	}
+	.cus-share-toggle:hover,
+	.cus-share.is-open .cus-share-toggle {
+		background: #0f172a;
+		color: #ffffff;
+	}
+	.cus-share-toggle:focus-visible,
+	.share-btn:focus-visible {
+		outline: 2px solid #2563eb;
+		outline-offset: 2px;
+	}
+	.share-btn {
+		width: 30px;
+		height: 30px;
+		border-radius: 50%;
+		border: none;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+		color: #ffffff !important;
+		font-size: 0.8rem;
+		text-decoration: none !important;
+		cursor: pointer;
+		font-family: inherit;
+		transition: filter 0.2s ease;
+	}
+	.share-btn:hover {
+		filter: brightness(1.15);
+	}
+	.share-btn.x {
+		background-color: #000000;
+	}
+	.share-btn.facebook {
+		background-color: #1877f2;
+	}
+	.share-btn.linkedin {
+		background-color: #0a66c2;
+	}
+	.share-btn.whatsapp {
+		background-color: #25d366;
+	}
+	.share-btn.telegram {
+		background-color: #229ed9;
+	}
+	.share-btn.reddit {
+		background-color: #ff4500;
+	}
+	.share-btn.email {
+		background-color: #64748b;
+	}
+	.share-btn.copy {
+		background-color: #0f172a;
+	}
+	.share-btn.copy.is-copied {
+		background-color: #16a34a;
+	}
+	.cus-share-toast {
+		position: absolute;
+		right: 0;
+		top: calc(100% + 8px);
+		background: #0f172a;
+		color: #ffffff;
+		font-size: 0.75rem;
+		font-weight: 700;
+		padding: 0.35rem 0.7rem;
+		border-radius: 6px;
+		white-space: nowrap;
+		opacity: 0;
+		transform: translateY(-4px);
+		pointer-events: none;
+		transition:
+			opacity 0.2s ease,
+			transform 0.2s ease;
+	}
+	.cus-share-toast.is-visible {
+		opacity: 1;
+		transform: translateY(0);
+	}
+	.cus-share-toast:empty {
+		display: none;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.cus-share-icons,
+		.share-btn {
+			transition: none;
+		}
+	}
+
 	/* Mobile Responsive Author Box */
 	@media (max-width: 900px) {
 		.author-meta-box {
@@ -1338,6 +1742,20 @@ const authorPopupJson = JSON.stringify(
 			margin-left: 0;
 			width: 100%;
 			justify-content: flex-start;
+		}
+		/* Button sits on the left here, so open the icons to the RIGHT */
+		.cus-share-icons {
+			right: auto;
+			left: calc(100% - 2px);
+			padding: 3px 4px 3px 8px;
+			border-right: 1px solid #e2e8f0;
+			border-left: none;
+			border-radius: 0 999px 999px 0;
+			box-shadow: 6px 4px 14px -6px rgba(15, 23, 42, 0.18);
+		}
+		.cus-share-toast {
+			right: auto;
+			left: 0;
 		}
 	}
 
