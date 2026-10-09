@@ -1,6 +1,7 @@
 ---
 import Layout from "../layouts/Layout.astro"
 import { getReviewer } from "../data/reviewers"
+import SidebarLinks from "../components/SidebarLinks.astro"
 
 // 1. Fetch data from WordPress (Posts AND Pages)
 export async function getStaticPaths() {
@@ -26,7 +27,7 @@ export async function getStaticPaths() {
                         posts(first: 70, after: $after) {
                             pageInfo { hasNextPage endCursor }
                             nodes {
-                                uri title content date modified
+                                uri title content date modified cusSidebar
                                 featuredImage { node { sourceUrl altText } }
                                 author { node { name firstName lastName description uri url avatar { url } seo { social { facebook twitter instagram linkedIn } } } }
                                 seo { 
@@ -269,10 +270,7 @@ const yoastDesc = (post.seo?.metaDesc || "").replaceAll("[year]", currentYear)
 let yoastSchema = post.seo?.schema?.raw || undefined
 if (yoastSchema) {
     yoastSchema = yoastSchema
-        .replaceAll(
-            "https://cms.casinous.com",
-            "https://www.casinous.com",
-        )
+        .replaceAll("https://cms.casinous.com", "https://www.casinous.com")
         .replaceAll("/uncategorized/", "/blog/")
 }
 
@@ -280,10 +278,7 @@ if (yoastSchema) {
 let canonicalUrl = post.seo?.canonical || undefined
 if (canonicalUrl) {
     canonicalUrl = canonicalUrl
-        .replace(
-            "https://cms.casinous.com",
-            "https://www.casinous.com",
-        )
+        .replace("https://cms.casinous.com", "https://www.casinous.com")
         .replace("/uncategorized/", "/blog/")
 }
 const focusKeyword = post.seo?.focuskw || undefined
@@ -474,6 +469,63 @@ const missionPoints = [
     "Transparent editorial standards applied to every review, good or bad",
 ]
 
+// 🚨 SIDEBAR LINKS: interlinking box set per page in the WP editor.
+// Hidden unless at least one link is added.
+type SidebarItem = {
+    type: "heading" | "link"
+    text: string
+    url?: string
+    external?: boolean
+}
+
+const toSidebarUrl = (raw: string) => {
+    const url = (raw || "").trim()
+    if (!url) return ""
+    // Own domains (live or cms) become relative so they stay on the live site
+    const rel = url.replace(/^https?:\/\/(?:cms\.|www\.)?casinous\.com/i, "")
+    return rel !== url ? rel || "/" : url
+}
+
+let sidebarLinks: {
+    title: string
+    position: string
+    items: SidebarItem[]
+} | null = null
+try {
+    const parsed = post.cusSidebar ? JSON.parse(post.cusSidebar) : null
+    if (parsed && Array.isArray(parsed.items)) {
+        const items: SidebarItem[] = parsed.items
+            .map((it: any): SidebarItem => {
+                const type = it.type === "heading" ? "heading" : "link"
+                const url = type === "link" ? toSidebarUrl(it.url) : undefined
+                return {
+                    type,
+                    text: String(it.text || "").trim(),
+                    url,
+                    external: !!url && /^https?:\/\//i.test(url),
+                }
+            })
+            .filter(
+                (it: SidebarItem) =>
+                    it.text && (it.type === "heading" || it.url),
+            )
+
+        if (items.some(it => it.type === "link")) {
+            sidebarLinks = {
+                title: String(parsed.title || "").trim(),
+                position: ["top", "after_mission", "after_toc"].includes(
+                    parsed.position,
+                )
+                    ? parsed.position
+                    : "after_toc",
+                items,
+            }
+        }
+    }
+} catch (e) {
+    console.warn("[sidebar-links] could not parse cusSidebar for", post.uri)
+}
+
 // --- 7. FINAL CONTENT REPLACEMENTS ---
 let contentWithToc = contentWithIds
 if (tocHTML && !contentWithIds.includes("[casino_toc]")) {
@@ -574,8 +626,10 @@ if (wrapperStart !== -1) {
     keywords={focusKeyword}
     author={authorName}
 >
-    {/* 🚨 NEW HERO — light layout: title, meta description, then one meta row
-         (Updated On / Author / Fact Checked reviewer / compact share pill). */}
+    {
+        /* 🚨 NEW HERO — light layout: title, meta description, then one meta row
+         (Updated On / Author / Fact Checked reviewer / compact share pill). */
+    }
     <header class="cus-hero">
         <div class="cus-hero-container">
             <nav class="post-breadcrumbs" aria-label="breadcrumb">
@@ -612,12 +666,12 @@ if (wrapperStart !== -1) {
 
             <h1 class="cus-hero-title" set:html={displayTitle} />
 
-        
-
             <div class="cus-hero-meta">
                 {/* Updated on */}
                 <div class="cus-meta-item cus-meta-updated">
-                    <i class="fa-solid fa-calendar-days cus-meta-cal" aria-hidden="true"></i>
+                    <i
+                        class="fa-solid fa-calendar-days cus-meta-cal"
+                        aria-hidden="true"></i>
                     <div class="cus-meta-stack">
                         <span class="cus-meta-eyebrow">Updated On</span>
                         <span class="cus-meta-strong">{formattedDate}</span>
@@ -658,7 +712,10 @@ if (wrapperStart !== -1) {
                     showReviewer && (
                         <div class="cus-meta-item cus-meta-person cus-meta-reviewer">
                             <span class="cus-fact-badge">
-                                <i class="fa-solid fa-check" aria-hidden="true" />
+                                <i
+                                    class="fa-solid fa-check"
+                                    aria-hidden="true"
+                                />
                                 Fact Checked
                             </span>
                             <a
@@ -676,23 +733,27 @@ if (wrapperStart !== -1) {
                                 />
                             </a>
                             <span class="cus-meta-line">
-                                <a href={reviewerLink} class="cus-reviewer-link">
+                                <a
+                                    href={reviewerLink}
+                                    class="cus-reviewer-link"
+                                >
                                     <strong>{reviewerName}</strong>
                                 </a>
-                                <span class="cus-meta-role">{reviewer.role}</span>
+                                <span class="cus-meta-role">
+                                    {reviewer.role}
+                                </span>
                             </span>
                         </div>
                     )
                 }
 
-                {/* Socials squeezed into a single share button that slides open */}
+                {
+                    /* Socials squeezed into a single share button that slides open */
+                }
                 {
                     hasSocials && (
                         <div class="cus-share" id="cus-share">
-                            <div
-                                class="cus-share-icons"
-                                id="cus-share-icons"
-                            >
+                            <div class="cus-share-icons" id="cus-share-icons">
                                 {twitterLink && (
                                     <a
                                         href={twitterLink}
@@ -753,13 +814,13 @@ if (wrapperStart !== -1) {
                 }
             </div>
 
-           <div class="cus-hero-editorial">
+            <div class="cus-hero-editorial">
                 <p>
-                    <strong>Editorial Statement:</strong> At CasinoUS, we
-                    independently review and select the online casinos featured
-                    on our site. We assess each operator using consistent
-                    criteria covering licensing, security, payments, payouts,
-                    bonuses, games, customer support and responsible gambling.
+                    <strong>Editorial Statement:</strong> At CasinoUS, we independently
+                    review and select the online casinos featured on our site. We
+                    assess each operator using consistent criteria covering licensing,
+                    security, payments, payouts, bonuses, games, customer support
+                    and responsible gambling.
                 </p>
                 <p>
                     We may earn commissions when readers use certain affiliate
@@ -768,7 +829,7 @@ if (wrapperStart !== -1) {
                     highlight both strengths and limitations so that US players
                     can make more informed decisions.
                 </p>
-            </div> 
+            </div>
         </div>
     </header>
     <main class={isPost ? "post-wrapper" : "page-wrapper"}>
@@ -799,6 +860,15 @@ if (wrapperStart !== -1) {
                 aria-label="Page navigation and trust info"
             >
                 <div class="sidebar-sticky-wrap">
+                    {
+                        sidebarLinks?.position === "top" && (
+                            <SidebarLinks
+                                title={sidebarLinks.title}
+                                items={sidebarLinks.items}
+                            />
+                        )
+                    }
+
                     <div class="sidebar-mission-card">
                         <div class="sidebar-mission-badge">
                             <i class="fa-solid fa-shield-halved"></i>
@@ -827,6 +897,15 @@ if (wrapperStart !== -1) {
                     </div>
 
                     {
+                        sidebarLinks?.position === "after_mission" && (
+                            <SidebarLinks
+                                title={sidebarLinks.title}
+                                items={sidebarLinks.items}
+                            />
+                        )
+                    }
+
+                    {
                         tocItems.length > 0 && (
                             <div class="sidebar-toc-card">
                                 <div class="sidebar-toc-heading">
@@ -847,6 +926,15 @@ if (wrapperStart !== -1) {
                                     ))}
                                 </ul>
                             </div>
+                        )
+                    }
+
+                    {
+                        sidebarLinks?.position === "after_toc" && (
+                            <SidebarLinks
+                                title={sidebarLinks.title}
+                                items={sidebarLinks.items}
+                            />
                         )
                     }
                 </div>
@@ -1118,9 +1206,11 @@ if (wrapperStart !== -1) {
         </div>
     </section>
 
-    {/* 🚨 AUTHOR POPUP — built dynamically per-page from real WP author data
+    {
+        /* 🚨 AUTHOR POPUP — built dynamically per-page from real WP author data
          and the author's own latest posts (no hardcoding, works for every
-         author on every post/page automatically). */}
+         author on every post/page automatically). */
+    }
     <div
         class="author-popup-card"
         id="author-popup-card"
@@ -1134,7 +1224,7 @@ if (wrapperStart !== -1) {
             id="author-popup-close"
             aria-label="Close"
         >
-            <i class="fa-solid fa-xmark" />
+            <i class="fa-solid fa-xmark"></i>
         </button>
 
         <div class="author-popup-header">
@@ -1194,7 +1284,7 @@ if (wrapperStart !== -1) {
 
         <a href={authorLink} class="author-popup-also-wrote">
             Also Wrote!
-            <i class="fa-solid fa-chevron-right" />
+            <i class="fa-solid fa-chevron-right"></i>
         </a>
     </div>
 </Layout>
@@ -1355,10 +1445,13 @@ if (wrapperStart !== -1) {
 
             function scheduleHide(delay) {
                 cancelHide()
-                hideTimer = setTimeout(() => {
-                    card.classList.remove("is-open")
-                    card.setAttribute("aria-hidden", "true")
-                }, delay === undefined ? 220 : delay)
+                hideTimer = setTimeout(
+                    () => {
+                        card.classList.remove("is-open")
+                        card.setAttribute("aria-hidden", "true")
+                    },
+                    delay === undefined ? 220 : delay,
+                )
             }
 
             function positionCard(trigger) {
@@ -1600,7 +1693,6 @@ if (wrapperStart !== -1) {
         color: #334155;
         font-size: 14px;
         line-height: 1.75;
-
     }
     @media (max-width: 640px) {
         .site-author-card {
@@ -2427,8 +2519,6 @@ if (wrapperStart !== -1) {
 
         scroll-margin-top: 2rem;
     }
-
-
 
     .wp-content h3 {
         color: #0f172a;

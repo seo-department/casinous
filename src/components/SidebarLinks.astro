@@ -1,0 +1,120 @@
+---
+// Interlinking box for the post/page sidebar.
+// Data comes from the "Sidebar Links" box in the WordPress editor (cusSidebar).
+interface Item {
+    type: "heading" | "link"
+    text: string
+    url?: string
+    external?: boolean
+}
+
+interface Props {
+    title?: string
+    items: Item[]
+}
+
+const { title, items } = Astro.props
+---
+
+<div class="sidebar-links-card">
+    {
+        title && (
+            <div class="sidebar-links-heading">
+                <span class="sidebar-links-flag" />
+                {title}
+            </div>
+        )
+    }
+    <ul class="sidebar-links-list">
+        {
+            items.map(item =>
+                item.type === "heading" ? (
+                    <li class="sidebar-links-sub">{item.text}</li>
+                ) : (
+                    <li>
+                        <a
+                            href={item.url}
+                            class="sidebar-links-link"
+                            {...(item.external
+                                ? { target: "_blank", rel: "noopener" }
+                                : {})}
+                        >
+                            {item.text}
+                        </a>
+                    </li>
+                ),
+            )
+        }
+    </ul>
+</div>
+
+<style>
+    .sidebar-links-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+
+    .sidebar-links-heading {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin: 0 1.25rem;
+        padding: 1.1rem 0 0.9rem;
+        border-bottom: 1px solid #0f172a;
+        font-size: 0.8rem;
+        font-weight: 800;
+        font-style: italic;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #0f172a;
+    }
+    .sidebar-links-flag {
+        width: 18px;
+        height: 8px;
+        background: #dc2626;
+        border-radius: 2px;
+        flex-shrink: 0;
+    }
+
+    .sidebar-links-list {
+        list-style: none;
+        margin: 0;
+        padding: 0.4rem 1.25rem 1.1rem;
+        max-height: 420px;
+        overflow-y: auto;
+    }
+
+    .sidebar-links-sub {
+        font-size: 0.92rem;
+        font-weight: 800;
+        color: #0f172a;
+        padding: 0.85rem 0 0.35rem;
+    }
+
+    .sidebar-links-link {
+        display: block;
+        padding: 0.4rem 0;
+        font-size: 0.86rem;
+        font-weight: 500;
+        line-height: 1.4;
+        color: #2563eb;
+        text-decoration: none;
+        transition:
+            color 0.2s ease,
+            padding-left 0.2s ease;
+    }
+    .sidebar-links-link:hover {
+        color: #1d4ed8;
+        padding-left: 4px;
+        text-decoration: underline;
+    }
+
+    @media (max-width: 900px) {
+        .sidebar-links-list {
+            max-height: none;
+        }
+    }
+</style>
