@@ -1,6 +1,7 @@
 ---
 import Layout from "../layouts/Layout.astro"
 import { getReviewer, REVIEWERS } from "../data/reviewers"
+import PageSidebar from "../components/PageSidebar.astro"
 
 // 1. Fetch BOTH the /online-casinos/ content AND the 8 recent posts in a single GraphQL query
 const wpUrl = "https://cms.casinous.com/graphql"
@@ -17,6 +18,7 @@ const response = await fetch(wpUrl, {
                         content
                         date
                         modified
+						cusSidebar
                         seo {
                             title metaDesc focuskw canonical metaRobotsNoindex metaRobotsNofollow schema { raw }
                         }
@@ -243,24 +245,28 @@ let fixedContent = rawContent
 // --- Auto Table of Contents Generation ---
 let tocListItems = ""
 let h2Counter = 0
+const tocItems: { text: string; slug: string }[] = []
 
-// Parse H2s to inject IDs and build TOC items
+// Parse H2s to inject IDs and build TOC items (in-content + sidebar)
 let contentWithIds = fixedContent.replace(
 	/<h2([^>]*)>(.*?)<\/h2>/gi,
 	(match, attrs, content) => {
-		h2Counter++
-		// Clean tags from content to create a readable slug
 		const cleanText = content.replace(/<[^>]*>?/gm, "").trim()
+		if (!cleanText) return match
+		h2Counter++
+
 		const slug = cleanText
 			.toLowerCase()
 			.replace(/[^a-z0-9]+/g, "-")
 			.replace(/(^-|-$)+/g, "")
 
-		// Inject ID if it doesn't already exist
-		const newAttrs = attrs.includes("id=")
-			? attrs
-			: ` id="${slug}" ${attrs}`
-		tocListItems += `<li><a href="#${slug}">${cleanText}</a></li>`
+		// Use the heading's existing id if it has one, so links always match
+		const idMatch = attrs.match(/\sid=["']([^"']+)["']/)
+		const id = idMatch ? idMatch[1] : slug
+		const newAttrs = idMatch ? attrs : ` id="${slug}" ${attrs}`
+
+		tocListItems += `<li><a href="#${id}">${cleanText}</a></li>`
+		tocItems.push({ text: cleanText, slug: id })
 
 		return `<h2${newAttrs}>${content}</h2>`
 	},
@@ -563,27 +569,16 @@ const authorPopupJson = JSON.stringify(
 						>
 							<p class="hero-lead-text">
 								<span class="cus-teaser">
-									Looking for the best online
-									casinos for US players? CasinoUS reviews
-									international and offshore casino sites that
-									accept players from eligible US locations.
-									We compare licensing, security, bonuses,
-									banking options, payout times, game
-									selection and responsible gambling tools.
-									Our reviews also cover minimum deposits,
-									withdrawal conditions, KYC requirements and
-									state restrictions.
+									Finding the best online casinos for US players can be challenging. CasinoUS helps you compare international and offshore casinos that accept players from eligible US locations, with a focus on payment methods, withdrawal terms, game selection and bonus conditions.
 								</span>
 							</p>
 
 							<p>
-								<i>Important</i>: The casinos featured here are
-								not state-regulated US online casinos. They
-								operate under international licences, and
-								availability can vary by state. Before choosing
-								an online casino, check your local laws and the
-								casino's current terms before registering or
-								depositing.
+								Before depositing, check each casino’s licensing information, verification requirements and withdrawal rules. Availability varies by state, so always confirm local laws and the operator’s eligibility terms.
+							</p>
+
+							<p>
+								<i>Important</i>: The casinos featured here are international or offshore operators, not necessarily state-regulated US online casinos. Check the legal requirements in your state before registering or depositing.
 							</p>
 
 							<div class="table-responsive"></div>
@@ -652,8 +647,11 @@ const authorPopupJson = JSON.stringify(
 	</header>
 
 	<main class="home-wrapper" id="content">
+	<div class="home-content-with-sidebar">
 		<article class="home-container wp-content" set:html={fixedContent} />
-	</main>
+		<PageSidebar tocItems={tocItems} cusSidebar={page?.cusSidebar} />
+	</div>
+</main>
 
 	{
 		recentPosts.length >= 4 && (
@@ -3328,6 +3326,65 @@ const authorPopupJson = JSON.stringify(
 			transform 0.3s ease,
 			visibility 0.3s ease;
 		z-index: 100; /* Keeps it above your casino cards */
+	}
+
+
+		/* =========================================
+       CONTENT + STICKY SIDEBAR (online-casinos)
+    ========================================= */
+	html {
+		scroll-behavior: smooth;
+	}
+
+	.home-content-with-sidebar {
+		max-width: 1200px;
+		margin: 0 auto;
+		padding: 2rem 1rem 0;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 320px;
+		gap: 2rem;
+		align-items: start;
+	}
+
+	.home-content-with-sidebar .home-container {
+		max-width: none;
+		margin: 0;
+		padding: 0 0 2rem;
+		min-width: 0;
+	}
+
+	.home-container h2[id] {
+		scroll-margin-top: 2rem;
+	}
+
+	/* Content column is narrower now: 3 casino cards per row instead of 4 */
+	.home-content-with-sidebar .cus-hp-cards-wrapper {
+		grid-template-columns: repeat(3, 1fr);
+	}
+
+	/* Desktop uses the sticky sidebar TOC, so hide the in-content dropdown */
+	@media (min-width: 901px) {
+		.home-container .toc-wrapper.cus-toc {
+			display: none;
+		}
+	}
+
+	@media (max-width: 1024px) {
+		.home-content-with-sidebar .cus-hp-cards-wrapper {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+
+	@media (max-width: 900px) {
+		.home-content-with-sidebar {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	@media (max-width: 600px) {
+		.home-content-with-sidebar .cus-hp-cards-wrapper {
+			grid-template-columns: 1fr;
+		}
 	}
 
 	/* The little triangle pointing up to the icon */

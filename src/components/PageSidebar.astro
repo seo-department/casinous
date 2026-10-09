@@ -1,0 +1,351 @@
+---
+// Sticky page sidebar: Mission Statement, Table of Contents and the
+// WP-managed "Sidebar Links" box (cusSidebar). Same look as [...slug].astro.
+import SidebarLinks from "./SidebarLinks.astro"
+
+interface TocItem {
+    text: string
+    slug: string
+}
+
+interface Props {
+    tocItems?: TocItem[]
+    /** Raw `cusSidebar` JSON string from WPGraphQL (null/undefined = no box) */
+    cusSidebar?: string | null
+    missionPoints?: string[]
+}
+
+const {
+    tocItems = [],
+    cusSidebar,
+    missionPoints = [
+        "Reviews written by testers with hands-on US casino experience",
+        "Data-driven ratings on bonuses, payouts, and game libraries",
+        "Transparent editorial standards applied to every review, good or bad",
+    ],
+} = Astro.props
+
+type SidebarItem = {
+    type: "heading" | "link"
+    text: string
+    url?: string
+    external?: boolean
+}
+
+const toSidebarUrl = (raw: string) => {
+    const url = (raw || "").trim()
+    if (!url) return ""
+    // Own domains (live or cms) become relative so they stay on the live site
+    const rel = url.replace(/^https?:\/\/(?:cms\.|www\.)?casinous\.com/i, "")
+    return rel !== url ? rel || "/" : url
+}
+
+let sidebarLinks: {
+    title: string
+    position: string
+    items: SidebarItem[]
+} | null = null
+
+try {
+    const parsed = cusSidebar ? JSON.parse(cusSidebar) : null
+    if (parsed && Array.isArray(parsed.items)) {
+        const items: SidebarItem[] = parsed.items
+            .map((it: any): SidebarItem => {
+                const type = it.type === "heading" ? "heading" : "link"
+                const url = type === "link" ? toSidebarUrl(it.url) : undefined
+                return {
+                    type,
+                    text: String(it.text || "").trim(),
+                    url,
+                    external: !!url && /^https?:\/\//i.test(url),
+                }
+            })
+            .filter(
+                (it: SidebarItem) =>
+                    it.text && (it.type === "heading" || it.url),
+            )
+
+        if (items.some(it => it.type === "link")) {
+            sidebarLinks = {
+                title: String(parsed.title || "").trim(),
+                position: ["top", "after_mission", "after_toc"].includes(
+                    parsed.position,
+                )
+                    ? parsed.position
+                    : "after_toc",
+                items,
+            }
+        }
+    }
+} catch (e) {
+    console.warn("[page-sidebar] could not parse cusSidebar")
+}
+---
+
+<aside class="page-sidebar" aria-label="Page navigation and trust info">
+    <div class="page-sidebar-sticky">
+        {
+            sidebarLinks?.position === "top" && (
+                <SidebarLinks
+                    title={sidebarLinks.title}
+                    items={sidebarLinks.items}
+                />
+            )
+        }
+
+        <div class="ps-card ps-mission">
+            <div class="ps-mission-badge">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>Mission Statement</span>
+            </div>
+            <h3 class="ps-mission-heading">
+                Casino US is your independent guide to legal online casinos in
+                America
+            </h3>
+            <ul class="ps-mission-list">
+                {
+                    missionPoints.map(point => (
+                        <li>
+                            <i class="fa-solid fa-check" />
+                            <span>{point}</span>
+                        </li>
+                    ))
+                }
+            </ul>
+            <a href="/how-we-rate-online-casinos/" class="ps-mission-btn">
+                How We Rate Casinos
+            </a>
+        </div>
+
+        {
+            sidebarLinks?.position === "after_mission" && (
+                <SidebarLinks
+                    title={sidebarLinks.title}
+                    items={sidebarLinks.items}
+                />
+            )
+        }
+
+        {
+            tocItems.length > 0 && (
+                <div class="ps-card ps-toc">
+                    <div class="ps-toc-heading">
+                        <span class="ps-toc-bar" />
+                        Table of Contents
+                    </div>
+                    <ul class="ps-toc-list">
+                        {tocItems.map(item => (
+                            <li>
+                                <a
+                                    href={`#${item.slug}`}
+                                    class="ps-toc-link"
+                                    data-toc-target={item.slug}
+                                >
+                                    {item.text}
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )
+        }
+
+        {
+            sidebarLinks?.position === "after_toc" && (
+                <SidebarLinks
+                    title={sidebarLinks.title}
+                    items={sidebarLinks.items}
+                />
+            )
+        }
+    </div>
+</aside>
+
+<script>
+    // Highlight the TOC entry for the section currently in view
+    function initPageSidebarToc() {
+        const links = Array.from(
+            document.querySelectorAll<HTMLAnchorElement>(
+                ".ps-toc-link[data-toc-target]",
+            ),
+        )
+        if (!links.length) return
+
+        const headings = links
+            .map(link => document.getElementById(link.dataset.tocTarget || ""))
+            .filter((el): el is HTMLElement => !!el)
+        if (!headings.length) return
+
+        const setActive = (id: string) => {
+            links.forEach(link =>
+                link.classList.toggle("active", link.dataset.tocTarget === id),
+            )
+        }
+
+        const observer = new IntersectionObserver(
+            entries => {
+                const visible = entries
+                    .filter(entry => entry.isIntersecting)
+                    .sort(
+                        (a, b) =>
+                            a.boundingClientRect.top - b.boundingClientRect.top,
+                    )
+                if (visible.length > 0) setActive(visible[0].target.id)
+            },
+            { rootMargin: "-15% 0px -70% 0px", threshold: 0 },
+        )
+
+        headings.forEach(h => observer.observe(h))
+    }
+
+    initPageSidebarToc()
+    document.addEventListener("astro:page-load", initPageSidebarToc)
+</script>
+
+<style>
+    .page-sidebar {
+        min-width: 0;
+    }
+
+    .page-sidebar-sticky {
+        position: sticky;
+        top: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .ps-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+
+    /* Mission Statement */
+    .ps-mission-badge {
+        background: #0f172a;
+        color: #ffffff;
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 0.85rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .ps-mission-badge i {
+        color: #60a5fa;
+    }
+    .ps-mission-heading {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.4;
+        margin: 1.25rem 1.25rem 1rem;
+        letter-spacing: -0.2px;
+    }
+    .ps-mission-list {
+        list-style: none;
+        margin: 0;
+        padding: 0 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+    .ps-mission-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.6rem;
+        font-size: 0.9rem;
+        color: #475569;
+        line-height: 1.5;
+    }
+    .ps-mission-list i {
+        color: #16a34a;
+        margin-top: 0.2rem;
+        flex-shrink: 0;
+    }
+    .ps-mission-btn {
+        display: block;
+        margin: 1.25rem;
+        padding: 0.75rem 1rem;
+        text-align: center;
+        border: 1.5px solid #2563eb;
+        color: #2563eb;
+        font-weight: 700;
+        font-size: 0.9rem;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    .ps-mission-btn:hover {
+        background: #2563eb;
+        color: #ffffff;
+    }
+
+    /* Table of Contents */
+    .ps-toc-heading {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.8rem;
+        font-weight: 800;
+        font-style: italic;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #0f172a;
+        padding: 1.1rem 1.25rem 0.9rem;
+    }
+    .ps-toc-bar {
+        width: 18px;
+        height: 4px;
+        background: #2563eb;
+        border-radius: 2px;
+        flex-shrink: 0;
+    }
+    .ps-toc-list {
+        list-style: none;
+        margin: 0;
+        padding: 0 1.25rem 1.25rem;
+        max-height: 420px;
+        overflow-y: auto;
+    }
+    .ps-toc-list li {
+        border-top: 1px solid #f1f5f9;
+    }
+    .ps-toc-list li:first-child {
+        border-top: none;
+    }
+    .ps-toc-link {
+        display: block;
+        padding: 0.6rem 0;
+        font-size: 0.88rem;
+        color: #475569;
+        text-decoration: none;
+        font-weight: 600;
+        line-height: 1.4;
+        transition:
+            color 0.2s ease,
+            padding-left 0.2s ease;
+    }
+    .ps-toc-link:hover {
+        color: #2563eb;
+        padding-left: 4px;
+    }
+    .ps-toc-link.active {
+        color: #2563eb;
+        font-weight: 800;
+    }
+
+    @media (max-width: 900px) {
+        .page-sidebar-sticky {
+            position: static;
+        }
+        .ps-toc-list {
+            max-height: none;
+        }
+    }
+</style>
