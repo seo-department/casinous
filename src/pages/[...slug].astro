@@ -411,10 +411,75 @@ const linkedinLink = formatSocial(
     "https://linkedin.com/in/",
 )
 
-// 🚨 HERO: only render the share pill when the author has at least one social
-const hasSocials = Boolean(
-    twitterLink || facebookLink || instagramLink || linkedinLink,
-)
+// Page title with [year] filled in (used by the hero, breadcrumbs and share links)
+const displayTitle = (post.title || "").replaceAll("[year]", currentYear)
+
+// 🚨 SHARE THIS PAGE: real share URLs for the hero share pill.
+// Always uses the live www URL (canonical if Yoast has one).
+const LIVE_SITE = "https://www.casinous.com"
+const sharePageUrl =
+    canonicalUrl && canonicalUrl.startsWith(LIVE_SITE)
+        ? canonicalUrl
+        : new URL(Astro.url.pathname, LIVE_SITE).href
+
+const decodeBasicEntities = (s: string) =>
+    s
+        .replace(/&amp;/g, "&")
+        .replace(/&#0?38;/g, "&")
+        .replace(/&quot;/g, '"')
+        .replace(/&#0?39;|&#8217;|&rsquo;/g, "’")
+        .replace(/&#8211;|&ndash;/g, "–")
+        .replace(/&#8212;|&mdash;/g, "—")
+        .replace(/&nbsp;/g, " ")
+
+const shareTitle = decodeBasicEntities(stripHtmlTags(displayTitle))
+const encUrl = encodeURIComponent(sharePageUrl)
+const encTitle = encodeURIComponent(shareTitle)
+
+const shareLinks = [
+    {
+        key: "x",
+        label: "Share on X",
+        icon: "fa-brands fa-x-twitter",
+        href: `https://twitter.com/intent/tweet?url=${encUrl}&text=${encTitle}`,
+    },
+    {
+        key: "facebook",
+        label: "Share on Facebook",
+        icon: "fa-brands fa-facebook-f",
+        href: `https://www.facebook.com/sharer/sharer.php?u=${encUrl}`,
+    },
+    {
+        key: "linkedin",
+        label: "Share on LinkedIn",
+        icon: "fa-brands fa-linkedin-in",
+        href: `https://www.linkedin.com/sharing/share-offsite/?url=${encUrl}`,
+    },
+    {
+        key: "whatsapp",
+        label: "Share on WhatsApp",
+        icon: "fa-brands fa-whatsapp",
+        href: `https://api.whatsapp.com/send?text=${encTitle}%20${encUrl}`,
+    },
+    {
+        key: "telegram",
+        label: "Share on Telegram",
+        icon: "fa-brands fa-telegram",
+        href: `https://t.me/share/url?url=${encUrl}&text=${encTitle}`,
+    },
+    {
+        key: "reddit",
+        label: "Share on Reddit",
+        icon: "fa-brands fa-reddit-alien",
+        href: `https://www.reddit.com/submit?url=${encUrl}&title=${encTitle}`,
+    },
+    {
+        key: "email",
+        label: "Share by email",
+        icon: "fa-solid fa-envelope",
+        href: `mailto:?subject=${encTitle}&body=${encodeURIComponent(`${shareTitle}\n\n${sharePageUrl}`)}`,
+    },
+]
 
 // 🚨 FACT-CHECKER: David Reynolds or Paige Jacobs, picked per page from
 // src/data/reviewers.ts (stable per URL, never the page's own author)
@@ -484,8 +549,6 @@ if (tocItems.length > 0) {
         <ul class="toc-list" style="display: none;">${listItems}</ul>
     </div>`
 }
-
-const displayTitle = (post.title || "").replaceAll("[year]", currentYear)
 
 // 🚨 SIDEBAR: Mission statement copy for the sticky sidebar (posts & pages)
 const missionPoints = [
@@ -771,71 +834,60 @@ if (wrapperStart !== -1) {
                     )
                 }
 
-                {
-                    /* Socials squeezed into a single share button that slides open */
-                }
-                {
-                    hasSocials && (
-                        <div class="cus-share" id="cus-share">
-                            <div class="cus-share-icons" id="cus-share-icons">
-                                {twitterLink && (
-                                    <a
-                                        href={twitterLink}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        class="share-btn twitter"
-                                        aria-label="Twitter"
-                                    >
-                                        <i class="fa-brands fa-twitter" />
-                                    </a>
-                                )}
-                                {facebookLink && (
-                                    <a
-                                        href={facebookLink}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        class="share-btn facebook"
-                                        aria-label="Facebook"
-                                    >
-                                        <i class="fa-brands fa-facebook-f" />
-                                    </a>
-                                )}
-                                {instagramLink && (
-                                    <a
-                                        href={instagramLink}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        class="share-btn instagram"
-                                        aria-label="Instagram"
-                                    >
-                                        <i class="fa-brands fa-instagram" />
-                                    </a>
-                                )}
-                                {linkedinLink && (
-                                    <a
-                                        href={linkedinLink}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        class="share-btn linkedin"
-                                        aria-label="LinkedIn"
-                                    >
-                                        <i class="fa-brands fa-linkedin-in" />
-                                    </a>
-                                )}
-                            </div>
-                            <button
-                                type="button"
-                                class="cus-share-toggle"
-                                id="cus-share-toggle"
-                                aria-expanded="false"
-                                aria-controls="cus-share-icons"
-                                aria-label="Show social links"
-                            >
-                                <i class="fa-solid fa-share-nodes" />
-                            </button>
-                        </div>
-                    )
-                }
+                {/* Share this page: slides open on hover/tap; native share sheet on phones */}
+                <div
+                    class="cus-share"
+                    id="cus-share"
+                    data-share-url={sharePageUrl}
+                    data-share-title={shareTitle}
+                >
+                    <div class="cus-share-icons" id="cus-share-icons">
+                        {
+                            shareLinks.map(s => (
+                                <a
+                                    href={s.href}
+                                    target={
+                                        s.key === "email" ? undefined : "_blank"
+                                    }
+                                    rel="nofollow noopener noreferrer"
+                                    class={`share-btn ${s.key}`}
+                                    aria-label={s.label}
+                                    title={s.label}
+                                    data-share-popup={
+                                        s.key === "email" ? undefined : "true"
+                                    }
+                                >
+                                    <i class={s.icon} />
+                                </a>
+                            ))
+                        }
+                        <button
+                            type="button"
+                            class="share-btn copy"
+                            id="cus-share-copy"
+                            aria-label="Copy link"
+                            title="Copy link"
+                        >
+                            <i class="fa-solid fa-link"></i>
+                        </button>
+                    </div>
+                    <button
+                        type="button"
+                        class="cus-share-toggle"
+                        id="cus-share-toggle"
+                        aria-expanded="false"
+                        aria-controls="cus-share-icons"
+                        aria-label="Share this page"
+                        title="Share this page"
+                    >
+                        <i class="fa-solid fa-share-nodes"></i>
+                    </button>
+                    <span
+                        class="cus-share-toast"
+                        id="cus-share-toast"
+                        role="status"
+                        aria-live="polite"></span>
+                </div>
             </div>
 
             <div class="cus-hero-editorial">
@@ -1361,9 +1413,9 @@ if (wrapperStart !== -1) {
         }
     }
 
-    // 🚨 HERO SHARE PILL: click the share button to slide the social icons
-    // open (hover/focus also opens it on desktop via CSS). Click outside or
-    // press Escape to close.
+    // 🚨 HERO SHARE PILL: hover/focus opens on desktop (CSS); click toggles.
+    // On touch devices the button opens the native share sheet when available.
+    // Social links open in a small popup window; Copy Link copies the URL.
     ;(function () {
         function initHeroShare() {
             const wrap = document.getElementById("cus-share")
@@ -1371,15 +1423,87 @@ if (wrapperStart !== -1) {
             if (!wrap || !toggle || toggle.dataset.shareBound) return
             toggle.dataset.shareBound = "true"
 
+            const url = wrap.dataset.shareUrl || location.href
+            const title = wrap.dataset.shareTitle || document.title
+            const toast = document.getElementById("cus-share-toast")
+            const copyBtn = document.getElementById("cus-share-copy")
+            const isTouch = window.matchMedia("(hover: none)").matches
+
             const setOpen = open => {
                 wrap.classList.toggle("is-open", open)
                 toggle.setAttribute("aria-expanded", open ? "true" : "false")
             }
 
-            toggle.addEventListener("click", e => {
+            const showToast = msg => {
+                if (!toast) return
+                toast.textContent = msg
+                toast.classList.add("is-visible")
+                clearTimeout(toast._t)
+                toast._t = setTimeout(
+                    () => toast.classList.remove("is-visible"),
+                    1800,
+                )
+            }
+
+            toggle.addEventListener("click", async e => {
                 e.stopPropagation()
+                // Phones/tablets: use the native share sheet (any installed app)
+                if (isTouch && navigator.share) {
+                    try {
+                        await navigator.share({ title, url })
+                        return
+                    } catch (err) {
+                        if (err && err.name === "AbortError") return
+                        // otherwise fall through and show the icons
+                    }
+                }
                 setOpen(!wrap.classList.contains("is-open"))
             })
+
+            // Open social share links in a small centered popup (new tab fallback)
+            wrap.querySelectorAll("[data-share-popup]").forEach(a => {
+                a.addEventListener("click", e => {
+                    const w = 600
+                    const h = 560
+                    const left = window.screenX + (window.outerWidth - w) / 2
+                    const top = window.screenY + (window.outerHeight - h) / 2
+                    const popup = window.open(
+                        a.href,
+                        "share",
+                        `width=${w},height=${h},left=${left},top=${top}`,
+                    )
+                    if (popup) {
+                        popup.opener = null
+                        e.preventDefault()
+                    }
+                })
+            })
+
+            if (copyBtn) {
+                copyBtn.addEventListener("click", async e => {
+                    e.stopPropagation()
+                    try {
+                        await navigator.clipboard.writeText(url)
+                    } catch (err) {
+                        // Fallback for older browsers / non-HTTPS
+                        const ta = document.createElement("textarea")
+                        ta.value = url
+                        ta.style.position = "fixed"
+                        ta.style.opacity = "0"
+                        document.body.appendChild(ta)
+                        ta.select()
+                        document.execCommand("copy")
+                        ta.remove()
+                    }
+                    copyBtn.classList.add("is-copied")
+                    copyBtn.innerHTML = '<i class="fa-solid fa-check"></i>'
+                    showToast("Link copied")
+                    setTimeout(() => {
+                        copyBtn.classList.remove("is-copied")
+                        copyBtn.innerHTML = '<i class="fa-solid fa-link"></i>'
+                    }, 1800)
+                })
+            }
 
             document.addEventListener("click", e => {
                 if (!wrap.contains(e.target)) setOpen(false)
@@ -2166,6 +2290,7 @@ if (wrapperStart !== -1) {
 
     /* Share pill: socials squeezed behind one button */
     .cus-share {
+        position: relative;
         margin-left: auto;
         display: flex;
         align-items: center;
@@ -2194,13 +2319,13 @@ if (wrapperStart !== -1) {
     }
     .cus-share.is-open .cus-share-icons,
     .cus-share:focus-within .cus-share-icons {
-        max-width: 200px;
+        max-width: 360px;
         opacity: 1;
         padding-left: 0.2rem;
     }
     @media (hover: hover) {
         .cus-share:hover .cus-share-icons {
-            max-width: 200px;
+            max-width: 360px;
             opacity: 1;
             padding-left: 0.2rem;
         }
@@ -2252,24 +2377,65 @@ if (wrapperStart !== -1) {
             transform 0.2s ease,
             filter 0.2s ease;
     }
-    .share-btn.twitter {
-        background-color: #1da1f2;
+    .share-btn {
+        border: none;
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .share-btn.x {
+        background-color: #000000;
     }
     .share-btn.facebook {
         background-color: #1877f2;
     }
-    .share-btn.instagram {
-        background: linear-gradient(
-            45deg,
-            #f09433 0%,
-            #e6683c 25%,
-            #dc2743 50%,
-            #cc2366 75%,
-            #bc1888 100%
-        );
-    }
     .share-btn.linkedin {
-        background-color: #0077b5;
+        background-color: #0a66c2;
+    }
+    .share-btn.whatsapp {
+        background-color: #25d366;
+    }
+    .share-btn.telegram {
+        background-color: #229ed9;
+    }
+    .share-btn.reddit {
+        background-color: #ff4500;
+    }
+    .share-btn.email {
+        background-color: #64748b;
+    }
+    .share-btn.copy {
+        background-color: #0f172a;
+    }
+    .share-btn.copy.is-copied {
+        background-color: #16a34a;
+    }
+
+    /* "Link copied" confirmation */
+    .cus-share-toast {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 8px);
+        background: #0f172a;
+        color: #ffffff;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.35rem 0.7rem;
+        border-radius: 6px;
+        white-space: nowrap;
+        opacity: 0;
+        transform: translateY(-4px);
+        pointer-events: none;
+        z-index: 5;
+        transition:
+            opacity 0.2s ease,
+            transform 0.2s ease;
+    }
+    .cus-share-toast.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    .cus-share-toast:empty {
+        display: none;
     }
     .share-btn:hover {
         transform: translateY(-1px);

@@ -88,6 +88,58 @@ if (yoastSchema) {
     yoastSchema = yoastSchema.replaceAll(wpDomain, "https://www.casinous.com")
 }
 
+// 🚨 SHARE THIS PAGE: real share URLs for the homepage share pill.
+// Shares the live homepage URL with the homepage title.
+const sharePageUrl = "https://www.casinous.com/"
+const shareTitle = yoastTitle
+const encUrl = encodeURIComponent(sharePageUrl)
+const encTitle = encodeURIComponent(shareTitle)
+
+const shareLinks = [
+    {
+        key: "x",
+        label: "Share on X",
+        icon: "fa-brands fa-x-twitter",
+        href: `https://twitter.com/intent/tweet?url=${encUrl}&text=${encTitle}`,
+    },
+    {
+        key: "facebook",
+        label: "Share on Facebook",
+        icon: "fa-brands fa-facebook-f",
+        href: `https://www.facebook.com/sharer/sharer.php?u=${encUrl}`,
+    },
+    {
+        key: "linkedin",
+        label: "Share on LinkedIn",
+        icon: "fa-brands fa-linkedin-in",
+        href: `https://www.linkedin.com/sharing/share-offsite/?url=${encUrl}`,
+    },
+    {
+        key: "whatsapp",
+        label: "Share on WhatsApp",
+        icon: "fa-brands fa-whatsapp",
+        href: `https://api.whatsapp.com/send?text=${encTitle}%20${encUrl}`,
+    },
+    {
+        key: "telegram",
+        label: "Share on Telegram",
+        icon: "fa-brands fa-telegram",
+        href: `https://t.me/share/url?url=${encUrl}&text=${encTitle}`,
+    },
+    {
+        key: "reddit",
+        label: "Share on Reddit",
+        icon: "fa-brands fa-reddit-alien",
+        href: `https://www.reddit.com/submit?url=${encUrl}&title=${encTitle}`,
+    },
+    {
+        key: "email",
+        label: "Share by email",
+        icon: "fa-solid fa-envelope",
+        href: `mailto:?subject=${encTitle}&body=${encodeURIComponent(`${shareTitle}\n\n${sharePageUrl}`)}`,
+    },
+]
+
 // --- 3. HELPER FUNCTIONS ---
 
 const getCategoryUrl = (slug: string | undefined) => {
@@ -611,6 +663,7 @@ const authorPopupJson = JSON.stringify(
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         class="amb-social facebook"
+                                        aria-label="Casino US on Facebook"
                                     >
                                         <i class="fa-brands fa-facebook-f" />
                                     </a>
@@ -619,9 +672,71 @@ const authorPopupJson = JSON.stringify(
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         class="amb-social instagram"
+                                        aria-label="Casino US on Instagram"
                                     >
                                         <i class="fa-brands fa-instagram" />
                                     </a>
+
+                                    {/* Share this page: slides open on hover/tap; native share sheet on phones */}
+                                    <div
+                                        class="cus-share"
+                                        id="cus-share"
+                                        data-share-url={sharePageUrl}
+                                        data-share-title={shareTitle}
+                                    >
+                                        <div
+                                            class="cus-share-icons"
+                                            id="cus-share-icons"
+                                        >
+                                            {shareLinks.map(s => (
+                                                <a
+                                                    href={s.href}
+                                                    target={
+                                                        s.key === "email"
+                                                            ? undefined
+                                                            : "_blank"
+                                                    }
+                                                    rel="nofollow noopener noreferrer"
+                                                    class={`share-btn ${s.key}`}
+                                                    aria-label={s.label}
+                                                    title={s.label}
+                                                    data-share-popup={
+                                                        s.key === "email"
+                                                            ? undefined
+                                                            : "true"
+                                                    }
+                                                >
+                                                    <i class={s.icon} />
+                                                </a>
+                                            ))}
+                                            <button
+                                                type="button"
+                                                class="share-btn copy"
+                                                id="cus-share-copy"
+                                                aria-label="Copy link"
+                                                title="Copy link"
+                                            >
+                                                <i class="fa-solid fa-link" />
+                                            </button>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            class="cus-share-toggle"
+                                            id="cus-share-toggle"
+                                            aria-expanded="false"
+                                            aria-controls="cus-share-icons"
+                                            aria-label="Share this page"
+                                            title="Share this page"
+                                        >
+                                            <i class="fa-solid fa-share-nodes" />
+                                        </button>
+                                        <span
+                                            class="cus-share-toast"
+                                            id="cus-share-toast"
+                                            role="status"
+                                            aria-live="polite"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
@@ -725,15 +840,21 @@ const authorPopupJson = JSON.stringify(
                                         set:html={post.title}
                                     />
                                 </h3>
-                                <a
-                                    href={getCategoryUrl(
-                                        post.categories?.nodes[0]?.slug,
-                                    )}
-                                    class="category small-meta hover-red inline-block mt-1"
-                                >
-                                    {post.categories?.nodes[0]?.name ||
-                                        "Trending"}
-                                </a>
+                                <div class="meta small-meta card-meta mt-1">
+                                    <a
+                                        href={getCategoryUrl(
+                                            post.categories?.nodes[0]?.slug,
+                                        )}
+                                        class="category hover-red"
+                                    >
+                                        {post.categories?.nodes[0]?.name ||
+                                            "Trending"}
+                                    </a>
+                                    <span>•</span>
+                                    <time datetime={post.date}>
+                                        {formatShortDate(post.date)}
+                                    </time>
+                                </div>
                             </article>
                         ))
                     }
@@ -781,14 +902,20 @@ const authorPopupJson = JSON.stringify(
                                 set:html={post.title}
                             />
                         </h3>
-                        <a
-                            href={getCategoryUrl(
-                                post.categories?.nodes[0]?.slug,
-                            )}
-                            class="category small-meta hover-red mt-1"
-                        >
-                            {post.categories?.nodes[0]?.name || "Feature"}
-                        </a>
+                        <div class="meta small-meta card-meta mt-1">
+                            <a
+                                href={getCategoryUrl(
+                                    post.categories?.nodes[0]?.slug,
+                                )}
+                                class="category hover-red"
+                            >
+                                {post.categories?.nodes[0]?.name || "Feature"}
+                            </a>
+                            <span>•</span>
+                            <time datetime={post.date}>
+                                {formatShortDate(post.date)}
+                            </time>
+                        </div>
                     </article>
                 ))
             }
@@ -913,14 +1040,20 @@ const authorPopupJson = JSON.stringify(
                                     set:html={post.title}
                                 />
                             </h3>
-                            <a
-                                href={getCategoryUrl(
-                                    post.categories?.nodes[0]?.slug,
-                                )}
-                                class="category small-meta hover-red mt-1"
-                            >
-                                {post.categories?.nodes[0]?.name || "Report"}
-                            </a>
+                            <div class="meta small-meta card-meta mt-1">
+                                <a
+                                    href={getCategoryUrl(
+                                        post.categories?.nodes[0]?.slug,
+                                    )}
+                                    class="category hover-red"
+                                >
+                                    {post.categories?.nodes[0]?.name || "Report"}
+                                </a>
+                                <span>•</span>
+                                <time datetime={post.date}>
+                                    {formatShortDate(post.date)}
+                                </time>
+                            </div>
                         </article>
                     ))
                 }
@@ -1269,6 +1402,104 @@ const authorPopupJson = JSON.stringify(
         })
     }
 
+    // 🚨 SHARE PILL: hover/focus opens on desktop (CSS); click toggles.
+    // On touch devices the button opens the native share sheet when available.
+    // Social links open in a small popup window; Copy Link copies the URL.
+    function initHeroShare() {
+        const wrap = document.getElementById("cus-share")
+        const toggle = document.getElementById("cus-share-toggle")
+        if (!wrap || !toggle || toggle.dataset.shareBound) return
+        toggle.dataset.shareBound = "true"
+
+        const url = wrap.dataset.shareUrl || location.href
+        const title = wrap.dataset.shareTitle || document.title
+        const toast = document.getElementById("cus-share-toast")
+        const copyBtn = document.getElementById("cus-share-copy")
+        const isTouch = window.matchMedia("(hover: none)").matches
+        let toastTimer: ReturnType<typeof setTimeout> | undefined
+
+        const setOpen = (open: boolean) => {
+            wrap.classList.toggle("is-open", open)
+            toggle.setAttribute("aria-expanded", open ? "true" : "false")
+        }
+
+        const showToast = (msg: string) => {
+            if (!toast) return
+            toast.textContent = msg
+            toast.classList.add("is-visible")
+            clearTimeout(toastTimer)
+            toastTimer = setTimeout(() => toast.classList.remove("is-visible"), 1800)
+        }
+
+        toggle.addEventListener("click", async (e) => {
+            e.stopPropagation()
+            // Phones/tablets: use the native share sheet (any installed app)
+            if (isTouch && navigator.share) {
+                try {
+                    await navigator.share({ title, url })
+                    return
+                } catch (err: any) {
+                    if (err && err.name === "AbortError") return
+                    // otherwise fall through and show the icons
+                }
+            }
+            setOpen(!wrap.classList.contains("is-open"))
+        })
+
+        // Open social share links in a small centered popup (new tab fallback)
+        wrap.querySelectorAll<HTMLAnchorElement>("[data-share-popup]").forEach((a) => {
+            a.addEventListener("click", (e) => {
+                const w = 600
+                const h = 560
+                const left = window.screenX + (window.outerWidth - w) / 2
+                const top = window.screenY + (window.outerHeight - h) / 2
+                const popup = window.open(
+                    a.href,
+                    "share",
+                    `width=${w},height=${h},left=${left},top=${top}`,
+                )
+                if (popup) {
+                    popup.opener = null
+                    e.preventDefault()
+                }
+            })
+        })
+
+        if (copyBtn) {
+            copyBtn.addEventListener("click", async (e) => {
+                e.stopPropagation()
+                try {
+                    await navigator.clipboard.writeText(url)
+                } catch (err) {
+                    // Fallback for older browsers / non-HTTPS
+                    const ta = document.createElement("textarea")
+                    ta.value = url
+                    ta.style.position = "fixed"
+                    ta.style.opacity = "0"
+                    document.body.appendChild(ta)
+                    ta.select()
+                    document.execCommand("copy")
+                    ta.remove()
+                }
+                copyBtn.classList.add("is-copied")
+                copyBtn.innerHTML = '<i class="fa-solid fa-check"></i>'
+                showToast("Link copied")
+                setTimeout(() => {
+                    copyBtn.classList.remove("is-copied")
+                    copyBtn.innerHTML = '<i class="fa-solid fa-link"></i>'
+                }, 1800)
+            })
+        }
+
+        document.addEventListener("click", (e) => {
+            if (!wrap.contains(e.target as Node)) setOpen(false)
+        })
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") setOpen(false)
+        })
+    }
+
     // 🚨 AUTHOR POPUP: one shared card, repositioned + refilled per-trigger.
     // Shows on hover (desktop), tap (touch/click), and keyboard focus.
     // `dataset.authorPopupBound` guards against double-binding across
@@ -1456,9 +1687,11 @@ const authorPopupJson = JSON.stringify(
     // Run on first load and again after Astro view transitions (if enabled).
     initFaqTabs()
     initGuidesSection()
+    initHeroShare()
     initAuthorPopup()
     document.addEventListener("astro:page-load", initFaqTabs)
     document.addEventListener("astro:page-load", initGuidesSection)
+    document.addEventListener("astro:page-load", initHeroShare)
     document.addEventListener("astro:page-load", initAuthorPopup)
 </script>
 
@@ -1654,6 +1887,7 @@ const authorPopupJson = JSON.stringify(
 
     .amb-right {
         display: flex;
+        align-items: center;
         gap: 0.75rem;
         margin-left: auto;
     }
@@ -1695,6 +1929,199 @@ const authorPopupJson = JSON.stringify(
         );
     }
 
+    /* =========================================
+       SHARE THIS PAGE PILL (inside the dark author box)
+    ========================================= */
+    .cus-share {
+        position: relative;
+        display: flex;
+        align-items: center;
+        padding: 3px;
+        border: 1px solid #334155;
+        border-radius: 999px;
+        background: #0f172a;
+        transition: box-shadow 0.2s ease;
+        z-index: 5;
+    }
+    /* Icons open as an overlay to the LEFT of the button, so the pill's own
+       width never changes. (Growing in place made the author box re-wrap,
+       which moved the button out from under the cursor = the "vibration".) */
+    .cus-share-icons {
+        position: absolute;
+        top: 50%;
+        right: calc(100% - 2px);
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 3px 8px 3px 4px;
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-right: none;
+        border-radius: 999px 0 0 999px;
+        box-shadow: -6px 4px 14px -6px rgba(0, 0, 0, 0.45);
+        max-width: 0;
+        overflow: hidden;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-50%);
+        transition:
+            max-width 0.25s ease,
+            opacity 0.2s ease,
+            visibility 0s linear 0.25s;
+    }
+    .cus-share.is-open .cus-share-icons,
+    .cus-share:focus-within .cus-share-icons {
+        max-width: 360px;
+        opacity: 1;
+        visibility: visible;
+        transition:
+            max-width 0.25s ease,
+            opacity 0.2s ease,
+            visibility 0s;
+    }
+    .cus-share.is-open,
+    .cus-share:focus-within {
+        box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.45);
+    }
+    @media (hover: hover) {
+        .cus-share:hover .cus-share-icons {
+            max-width: 360px;
+            opacity: 1;
+            visibility: visible;
+            transition:
+                max-width 0.25s ease,
+                opacity 0.2s ease,
+                visibility 0s;
+        }
+        .cus-share:hover {
+            box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.45);
+        }
+    }
+    /* Narrow screens: the box stacks and the button sits on the left,
+       so open the icons to the RIGHT instead (keeps them on screen) */
+    @media (max-width: 900px) {
+        .cus-share-icons {
+            right: auto;
+            left: calc(100% - 2px);
+            padding: 3px 4px 3px 8px;
+            border-right: 1px solid #334155;
+            border-left: none;
+            border-radius: 0 999px 999px 0;
+            box-shadow: 6px 4px 14px -6px rgba(0, 0, 0, 0.45);
+        }
+    }
+    .cus-share-toggle {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        border: none !important;
+        background: #334155 !important;
+        color: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+        transition:
+            background 0.2s ease,
+            color 0.2s ease;
+    }
+    .cus-share-toggle:hover,
+    .cus-share.is-open .cus-share-toggle {
+        background: #dc2626 !important;
+        color: #ffffff;
+    }
+    .cus-share-toggle:focus-visible,
+    .share-btn:focus-visible {
+        outline: 2px solid #60a5fa;
+        outline-offset: 2px;
+    }
+
+    .share-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: #ffffff !important;
+        font-size: 0.8rem;
+        text-decoration: none;
+        cursor: pointer;
+        font-family: inherit;
+        transition:
+            transform 0.2s ease,
+            filter 0.2s ease;
+    }
+    .share-btn:hover {
+        filter: brightness(1.15);
+    }
+    .share-btn.x {
+        background-color: #000000;
+    }
+    .share-btn.facebook {
+        background-color: #1877f2;
+    }
+    .share-btn.linkedin {
+        background-color: #0a66c2;
+    }
+    .share-btn.whatsapp {
+        background-color: #25d366;
+    }
+    .share-btn.telegram {
+        background-color: #229ed9;
+    }
+    .share-btn.reddit {
+        background-color: #ff4500;
+    }
+    .share-btn.email {
+        background-color: #64748b;
+    }
+    .share-btn.copy {
+        background-color: #475569 !important;
+    }
+    .share-btn.copy.is-copied {
+        background-color: #16a34a !important;
+    }
+
+    /* "Link copied" confirmation */
+    .cus-share-toast {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 8px);
+        background: #f8fafc;
+        color: #0f172a;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.35rem 0.7rem;
+        border-radius: 6px;
+        white-space: nowrap;
+        opacity: 0;
+        transform: translateY(-4px);
+        pointer-events: none;
+        z-index: 5;
+        transition:
+            opacity 0.2s ease,
+            transform 0.2s ease;
+    }
+    .cus-share-toast.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    .cus-share-toast:empty {
+        display: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .cus-share-icons,
+        .share-btn {
+            transition: none;
+        }
+    }
+
     .site-author-bio {
         color: #4b5563;
         font-size: 14px;
@@ -1716,6 +2143,7 @@ const authorPopupJson = JSON.stringify(
             margin-left: 0;
             width: 100%;
             justify-content: flex-start;
+            flex-wrap: wrap;
         }
     }
 
@@ -2236,6 +2664,15 @@ const authorPopupJson = JSON.stringify(
     .small-meta {
         font-size: 0.65rem;
         margin-bottom: 0.25rem;
+    }
+    .card-meta {
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-bottom: 0;
+    }
+    .card-meta time {
+        color: #6b7280;
     }
 
     /* GRID CARDS */
