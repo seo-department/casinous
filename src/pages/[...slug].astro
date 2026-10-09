@@ -2,6 +2,8 @@
 import Layout from "../layouts/Layout.astro"
 import { getReviewer } from "../data/reviewers"
 import SidebarLinks from "../components/SidebarLinks.astro"
+import OtherAuthors from "../components/OtherAuthors.astro"
+import { getTeamAuthors, type TeamAuthor } from "../lib/authors"
 
 // 1. Fetch data from WordPress (Posts AND Pages)
 export async function getStaticPaths() {
@@ -187,6 +189,10 @@ export async function getStaticPaths() {
         )
     }
 
+    // 🚨 OTHER AUTHORS: team authors for the carousel on /about-us/<name>/
+    // pages. Loaded once here (outside the map) so it runs a single time.
+    const teamAuthors = await getTeamAuthors()
+
     return validNodes.map((node: any) => {
         const cleanSlug = sanitizeSlug(node.uri)
 
@@ -219,6 +225,14 @@ export async function getStaticPaths() {
                 return { title: p.title, link, image: img, date }
             })
 
+        // Author profile page = /about-us/<slug>/ where <slug> is a team author
+        const profileSlug =
+            node.contentType === "page"
+                ? (node.uri || "").match(/^\/about-us\/([^/]+)\/?$/)?.[1]
+                : undefined
+        const isAuthorProfile =
+            !!profileSlug && teamAuthors.some(a => a.slug === profileSlug)
+
         return {
             params: { slug: cleanSlug || undefined },
             props: {
@@ -226,6 +240,8 @@ export async function getStaticPaths() {
                 contentType: node.contentType,
                 relatedPosts: related,
                 authorLatestPosts,
+                otherAuthors: isAuthorProfile ? teamAuthors : [],
+                profileSlug: isAuthorProfile ? profileSlug : undefined,
             },
         }
     })
@@ -242,9 +258,18 @@ interface Props {
         image: string
         date: string
     }[]
+    otherAuthors: TeamAuthor[]
+    profileSlug?: string
 }
 
-const { post, contentType, relatedPosts, authorLatestPosts } = Astro.props
+const {
+    post,
+    contentType,
+    relatedPosts,
+    authorLatestPosts,
+    otherAuthors = [],
+    profileSlug,
+} = Astro.props
 const { slug } = Astro.params
 
 // 🚨 SPLIT THE POSTS FOR THE FOOTER LAYOUT
@@ -568,7 +593,6 @@ function findWrapperEndIndex(html: string, openTagIndex: number): number {
     const divOpenRegex = /<div\b/gi
     const divCloseRegex = /<\/div>/gi
     let depth = 0
-    let searchFrom = openTagIndex
     let cursor = openTagIndex
 
     while (cursor < html.length) {
@@ -1205,6 +1229,13 @@ if (wrapperStart !== -1) {
             </div>
         </div>
     </section>
+
+    {/* 🚨 OTHER AUTHORS — only on /about-us/<author>/ pages, current author excluded */}
+    {
+        otherAuthors.length > 0 && (
+            <OtherAuthors authors={otherAuthors} excludeSlug={profileSlug} />
+        )
+    }
 
     {
         /* 🚨 AUTHOR POPUP — built dynamically per-page from real WP author data

@@ -1,0 +1,248 @@
+---
+// "Other Authors" carousel: photo cards with name + role, prev/next arrows.
+// The current author is filtered out via `excludeSlug`.
+import type { TeamAuthor } from "../lib/authors"
+
+interface Props {
+    authors: TeamAuthor[]
+    excludeSlug?: string
+    title?: string
+}
+
+const { authors, excludeSlug, title = "Other Authors" } = Astro.props
+const list = authors.filter(a => a.slug !== excludeSlug)
+---
+
+{
+    list.length > 0 && (
+        <section class="oa-section" aria-label={title}>
+            <div class="oa-container" data-oa-carousel>
+                <div class="oa-header">
+                    <a href="/about-us/" class="oa-title">
+                        {title}
+                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                            <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </a>
+                    <span class="oa-line" aria-hidden="true" />
+                    <div class="oa-nav">
+                        <button type="button" class="oa-btn" data-oa-prev aria-label="Previous authors">
+                            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                                <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </button>
+                        <button type="button" class="oa-btn" data-oa-next aria-label="Next authors">
+                            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                                <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="oa-track" data-oa-track>
+                    {list.map(a => (
+                        <a href={a.link} class="oa-card">
+                            <img
+                                src={a.avatar}
+                                alt={a.name}
+                                loading="lazy"
+                                referrerpolicy="no-referrer"
+                                class="oa-img"
+                            />
+                            <span class="oa-overlay">
+                                <span class="oa-name">{a.name}</span>
+                                <span class="oa-role">{a.role}</span>
+                            </span>
+                        </a>
+                    ))}
+                </div>
+            </div>
+        </section>
+    )
+}
+
+<script>
+    function initOtherAuthors() {
+        document.querySelectorAll<HTMLElement>("[data-oa-carousel]").forEach(root => {
+            if (root.dataset.oaBound) return
+            root.dataset.oaBound = "true"
+
+            const track = root.querySelector<HTMLElement>("[data-oa-track]")
+            const prev = root.querySelector<HTMLButtonElement>("[data-oa-prev]")
+            const next = root.querySelector<HTMLButtonElement>("[data-oa-next]")
+            if (!track || !prev || !next) return
+
+            const step = () => Math.max(track.clientWidth * 0.8, 240)
+
+            const update = () => {
+                const max = track.scrollWidth - track.clientWidth - 2
+                prev.disabled = track.scrollLeft <= 2
+                next.disabled = track.scrollLeft >= max
+                root.classList.toggle("oa-static", max <= 0)
+            }
+
+            prev.addEventListener("click", () =>
+                track.scrollBy({ left: -step(), behavior: "smooth" }),
+            )
+            next.addEventListener("click", () =>
+                track.scrollBy({ left: step(), behavior: "smooth" }),
+            )
+            track.addEventListener("scroll", update, { passive: true })
+            window.addEventListener("resize", update)
+            update()
+        })
+    }
+
+    initOtherAuthors()
+    document.addEventListener("astro:page-load", initOtherAuthors)
+</script>
+
+<style>
+    .oa-section {
+        background: #ffffff;
+        border-top: 1px solid #e2e8f0;
+        padding: 40px 20px 48px;
+    }
+    .oa-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    /* Header row: title › ───── ‹ › */
+    .oa-header {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+    .oa-title {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        flex-shrink: 0;
+        font-size: 1.15rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: #0f172a;
+        text-decoration: none;
+    }
+    .oa-title:hover {
+        color: #2563eb;
+    }
+    .oa-line {
+        flex: 1;
+        height: 1px;
+        background: #e2e8f0;
+    }
+    .oa-nav {
+        display: flex;
+        gap: 0.6rem;
+        flex-shrink: 0;
+    }
+    .oa-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: none;
+        background: #e8eaf3;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition:
+            background 0.2s ease,
+            opacity 0.2s ease;
+    }
+    .oa-btn:hover:not(:disabled) {
+        background: #d5d9ea;
+    }
+    .oa-btn:disabled {
+        opacity: 0.45;
+        cursor: default;
+    }
+    .oa-static .oa-nav {
+        display: none;
+    }
+
+    /* Cards */
+    .oa-track {
+        display: flex;
+        gap: 24px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        scrollbar-width: none;
+        padding-bottom: 4px;
+    }
+    .oa-track::-webkit-scrollbar {
+        display: none;
+    }
+
+    .oa-card {
+        position: relative;
+        flex: 0 0 220px;
+        aspect-ratio: 220 / 350;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #1e293b;
+        scroll-snap-align: start;
+        text-decoration: none;
+    }
+    .oa-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.35s ease;
+    }
+    .oa-card:hover .oa-img {
+        transform: scale(1.04);
+    }
+    .oa-overlay {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 3.5rem 1.4rem 1.6rem;
+        background: linear-gradient(
+            180deg,
+            rgba(0, 0, 0, 0) 0%,
+            rgba(0, 0, 0, 0.75) 55%,
+            rgba(0, 0, 0, 0.9) 100%
+        );
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+    .oa-name {
+        color: #ffffff;
+        font-size: 1.15rem;
+        font-weight: 800;
+        line-height: 1.25;
+        letter-spacing: -0.2px;
+    }
+    .oa-role {
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 0.82rem;
+        font-weight: 500;
+    }
+
+    @media (max-width: 640px) {
+        .oa-section {
+            padding: 32px 16px 40px;
+        }
+        .oa-card {
+            flex-basis: 170px;
+        }
+        .oa-header {
+            gap: 0.75rem;
+        }
+        .oa-btn {
+            width: 36px;
+            height: 36px;
+        }
+    }
+</style>
