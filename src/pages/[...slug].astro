@@ -2678,11 +2678,12 @@ if (wrapperStart !== -1) {
 
     @media (max-width: 900px) {
         .content-with-sidebar {
-            grid-template-columns: 1fr;
-        }
-        .sidebar-sticky-wrap {
-            position: static;
-        }
+        grid-template-columns: minmax(0, 1fr); /* was: 1fr */
+    }
+    .content-with-sidebar > * {
+        min-width: 0;
+    }
+        
         .sidebar-toc-list {
             max-height: none;
         }
@@ -2959,6 +2960,24 @@ if (wrapperStart !== -1) {
             margin: -1.5rem -1.5rem 1.5rem -1.5rem;
         }
     }
+
+
+    @media (max-width: 600px) {
+    .cus-banking-grid,
+    .cus-cc-grid,
+    .cus-advantages-grid,
+    .cus-lw-grid-2col,
+    .cus-ranking-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Tables scroll inside their own box, and long cells wrap */
+    .wp-content table td,
+    .wp-content table th {
+        white-space: normal;
+        min-width: 140px;
+    }
+}
 
     @media (max-width: 600px) {
         .wp-content ol.wp-block-list li {
