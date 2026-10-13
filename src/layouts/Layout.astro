@@ -4017,6 +4017,141 @@ div#cus-banner-1 {
     padding: 11px;
 }
 
+
+
+
+.info-tooltip {
+  --tt-bg: #ffffff;
+  --tt-fg: #0f172a;
+  --tt-muted: #64748b;
+  --tt-accent: #0284c7;
+  --tt-border: #e2e8f0;
+
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+  cursor: pointer; /* also lets iOS treat a tap as hover */
+}
+
+/* Icon */
+.info-tooltip > svg {
+  width: 22px;
+  height: 22px;
+  color: #64748b;
+  border-radius: 50%;
+  transition: color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+/* CSS overrides the SVG's Arial attributes for a crisper "i" */
+.info-tooltip > svg text {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-weight: 700;
+}
+
+.info-tooltip:hover > svg,
+.info-tooltip:focus-within > svg {
+  color: var(--tt-accent);
+  transform: scale(1.08);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--tt-accent) 18%, transparent);
+}
+
+/* Card */
+.info-tooltip__content {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 14px);
+  z-index: 50;
+  width: min(340px, 90vw);
+  padding: 16px 18px;
+  background: var(--tt-bg);
+  color: var(--tt-fg);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  text-align: left;
+  cursor: auto;
+  border: 1px solid var(--tt-border);
+  border-radius: 14px;
+  box-shadow:
+    0 20px 40px -12px rgba(15, 23, 42, 0.18),
+    0 4px 12px rgba(15, 23, 42, 0.06);
+
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, 8px) scale(0.97);
+  transform-origin: bottom center;
+  transition: opacity .2s ease, transform .2s ease, visibility .2s;
+}
+
+/* Invisible bridge so the card stays open while the cursor moves into it */
+.info-tooltip__content::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 16px;
+}
+
+/* Arrow */
+.info-tooltip__content::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  background: var(--tt-bg);
+  border-right: 1px solid var(--tt-border);
+  border-bottom: 1px solid var(--tt-border);
+  transform: translate(-50%, -6px) rotate(45deg);
+}
+
+/* Show on hover, or when the link inside gets keyboard focus */
+.info-tooltip:hover .info-tooltip__content,
+.info-tooltip:focus-within .info-tooltip__content {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0) scale(1);
+}
+
+/* Text */
+.info-tooltip__content p {
+  margin: 0;
+}
+
+.info-tooltip__content p:first-child {
+  font-weight: 500;
+}
+
+.info-tooltip__content p + p {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--tt-border);
+  color: var(--tt-muted);
+  font-size: 0.8125rem;
+}
+
+.info-tooltip__content a {
+  color: var(--tt-accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--tt-accent) 40%, transparent);
+  text-underline-offset: 3px;
+  transition: text-decoration-color .2s;
+}
+
+.info-tooltip__content a:hover {
+  text-decoration-color: var(--tt-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .info-tooltip > svg,
+  .info-tooltip__content {
+    transition: none;
+  }
+}
+
+
+
         /* Editorial statement under the hero author row */
     .cus-hero-editorial {
         border-top: 1px solid #e2e8f0;
