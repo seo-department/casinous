@@ -143,7 +143,7 @@ export async function getStaticPaths() {
     // --- FILTER AND RETURN ---
     const sanitizeSlug = (uri: string) => {
         if (!uri) return ""
-        let clean = uri.replace(/https?:\/+www\.casinous\.com/gi, "")
+        let clean = uri.replace(/https?:\/+(?:www\.|cms\.)?casinous\.com/gi, "")
         clean = clean.replace(
             /https?:\/+wordpress-[a-zA-Z0-9-]+\.cloudwaysapps\.com/gi,
             "",
@@ -313,8 +313,12 @@ const rawBreadcrumbs = post.seo?.breadcrumbs || []
 const yoastBreadcrumbs = rawBreadcrumbs.map((crumb: any, index: number) => {
     let cleanUrl = crumb.url || "/"
 
-    // Strip both the live domain and the Cloudways domain to make links relative
-    cleanUrl = cleanUrl.replace(/https?:\/\/(www\.)?casinous\.com/gi, "")
+    // Strip the live, www and cms domains (plus Cloudways) to make links relative,
+    // so breadcrumbs always stay on the live site
+    cleanUrl = cleanUrl.replace(
+        /https?:\/\/(?:www\.|cms\.)?casinous\.com/gi,
+        "",
+    )
     cleanUrl = cleanUrl.replace(
         /https?:\/+wordpress-[a-zA-Z0-9-]+\.cloudwaysapps\.com/gi,
         "",
