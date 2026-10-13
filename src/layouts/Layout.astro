@@ -4270,15 +4270,7 @@ div#cus-banner-1 {
         transform: translateY(-2rem);
         padding: 8px;
     }
-    .page-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        background-color: #fff;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        border: 1px solid #e2e8f0;
-        padding: 8px;
-    }
+    
     .featured-image-wrapper {
         margin: -2.5rem -2.5rem 2.5rem -2.5rem;
         border-radius: 12px 12px 0 0;
@@ -7047,10 +7039,7 @@ div#cus-banner-1 {
         .post-title {
             font-size: 2.2rem;
         }
-        .page-container,
-        .post-container {
-            padding: 1.5rem;
-        }
+        
         .featured-image-wrapper {
             margin: -1.5rem -1.5rem 1.5rem -1.5rem;
         }
@@ -12031,6 +12020,55 @@ div#cus-banner-1 {
             max-width: 100% !important;
         }
     }
+
+
+    .hero-intro-box {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.hero-intro-box .cus-banner {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.hero-intro-box .hero-right {
+  flex: 0 0 340px;
+  margin-left: auto;
+}
+
+.hero-intro-box .hero-cta-card img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+}
+
+/* The hard <br>s would break lines awkwardly in a narrower column */
+.hero-intro-box .cus-banner br {
+  display: none;
+}
+
+/* Remove the empty trailing paragraph's extra space */
+.hero-intro-box .cus-banner p:empty {
+  display: none;
+}
+
+/* Stack on tablet/mobile */
+@media (max-width: 860px) {
+  .hero-intro-box {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hero-intro-box .hero-right {
+    flex: none;
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+}
 
     /* ===================== 3-COLUMN METHOD/TIME/MIN TABLE ===================== */
     .wp-content table:has(thead tr td:nth-child(3):last-child) {
