@@ -2375,51 +2375,180 @@ if (wrapperStart !== -1) {
     .cus-fact-badge i {
         font-size: 0.7rem;
     }
-
-    /* Share pill: socials squeezed behind one button */
+    /* Share pill: socials squeezed behind one button.
+       The icons open as an OVERLAY to the left of the button, so the
+       pill never changes size and the meta row never re-wraps
+       (growing in place caused the hover "shake"). */
     .cus-share {
         position: relative;
         margin-left: auto;
         display: flex;
         align-items: center;
-        gap: 0.4rem;
         padding: 3px;
         border: 1px solid #e2e8f0;
         border-radius: 999px;
         background: #ffffff;
-        transition: box-shadow 0.2s ease;
+        z-index: 20;
+        flex-shrink: 0;
     }
     .cus-share-icons {
+        position: absolute;
+        top: 50%;
+        right: calc(100% + 6px);
         display: flex;
         align-items: center;
         gap: 0.35rem;
-        max-width: 0;
+        padding: 4px 6px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 999px;
+        box-shadow: 0 8px 20px -8px rgba(15, 23, 42, 0.25);
+        white-space: nowrap;
         opacity: 0;
-        overflow: hidden;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translateY(-50%) translateX(8px);
         transition:
-            max-width 0.25s ease,
             opacity 0.2s ease,
-            padding 0.25s ease;
+            transform 0.2s ease,
+            visibility 0s linear 0.2s;
     }
-    .cus-share.is-open,
-    .cus-share:focus-within {
-        box-shadow: 0 4px 12px -4px rgba(15, 23, 42, 0.15);
+    /* Invisible bridge between the icons and the button, so moving the
+       mouse from the button to the icons doesn't close the overlay */
+    .cus-share-icons::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: -8px;
+        width: 8px;
+        height: 100%;
     }
     .cus-share.is-open .cus-share-icons,
     .cus-share:focus-within .cus-share-icons {
-        max-width: 360px;
         opacity: 1;
-        padding-left: 0.2rem;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translateY(-50%) translateX(0);
+        transition:
+            opacity 0.2s ease,
+            transform 0.2s ease,
+            visibility 0s;
     }
     @media (hover: hover) {
         .cus-share:hover .cus-share-icons {
-            max-width: 360px;
             opacity: 1;
-            padding-left: 0.2rem;
+            visibility: visible;
+            pointer-events: auto;
+            transform: translateY(-50%) translateX(0);
+            transition:
+                opacity 0.2s ease,
+                transform 0.2s ease,
+                visibility 0s;
         }
-        .cus-share:hover {
-            box-shadow: 0 4px 12px -4px rgba(15, 23, 42, 0.15);
-        }
+    }
+    .cus-share-toggle {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        border: none;
+        background: #f1f5f9;
+        color: #334155;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+        transition:
+            background 0.2s ease,
+            color 0.2s ease;
+    }
+    .cus-share-toggle:hover,
+    .cus-share.is-open .cus-share-toggle {
+        background: #0f172a;
+        color: #ffffff;
+    }
+    .cus-share-toggle:focus-visible,
+    .share-btn:focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 2px;
+    }
+
+    /* Compact social icons inside the overlay */
+    .share-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: #ffffff !important;
+        font-size: 0.8rem;
+        font-family: inherit;
+        text-decoration: none !important;
+        cursor: pointer;
+        transition: filter 0.2s ease;
+    }
+    .share-btn.x {
+        background-color: #000000;
+    }
+    .share-btn.facebook {
+        background-color: #1877f2;
+    }
+    .share-btn.linkedin {
+        background-color: #0a66c2;
+    }
+    .share-btn.whatsapp {
+        background-color: #25d366;
+    }
+    .share-btn.telegram {
+        background-color: #229ed9;
+    }
+    .share-btn.reddit {
+        background-color: #ff4500;
+    }
+    .share-btn.email {
+        background-color: #64748b;
+    }
+    .share-btn.copy {
+        background-color: #0f172a;
+    }
+    .share-btn.copy.is-copied {
+        background-color: #16a34a;
+    }
+
+    /* "Link copied" confirmation */
+    .cus-share-toast {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 8px);
+        background: #0f172a;
+        color: #ffffff;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.35rem 0.7rem;
+        border-radius: 6px;
+        white-space: nowrap;
+        opacity: 0;
+        transform: translateY(-4px);
+        pointer-events: none;
+        z-index: 5;
+        transition:
+            opacity 0.2s ease,
+            transform 0.2s ease;
+    }
+    .cus-share-toast.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    .cus-share-toast:empty {
+        display: none;
+    }
+    /* Hover = brighter only. No lift/translate, which also caused jitter. */
+    .share-btn:hover {
+        filter: brightness(1.15);
     }
     .cus-share-toggle {
         width: 34px;
@@ -2596,7 +2725,7 @@ if (wrapperStart !== -1) {
     ========================================= */
     .post-wrapper {
         background-color: #f8fafc;
-        padding: 2rem 1rem 5rem;
+        padding: 1rem 1rem 1rem;
     }
     .page-wrapper {
         background-color: #f8fafc;
@@ -2615,14 +2744,7 @@ if (wrapperStart !== -1) {
         align-items: start;
     }
 
-    .post-container {
-        background-color: #ffffff;
-        border-radius: 12px;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-        border: 1px solid #e2e8f0;
-        padding: 2.5rem;
-        min-width: 0;
-    }
+    
 
     .post-sidebar {
         min-width: 0;
@@ -3118,6 +3240,9 @@ if (wrapperStart !== -1) {
         }
     }
 
+    .cus-hero-title {
+    font-size: 31px !important;}
+
     @media (max-width: 600px) {
         .wp-content ol.wp-block-list li {
             padding: 1.25rem 1.25rem 1.25rem 3.75rem !important;
@@ -3140,8 +3265,8 @@ if (wrapperStart !== -1) {
         }
 
 
-        article.post-container figure {
-    display: none;
+      article.post-container figure {
+    display: none !important;
 }
 
         /* Related Posts Mobile tweaks */
