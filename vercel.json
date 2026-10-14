@@ -1335,6 +1335,31 @@
       "source": "/casino-reviews/planet-7-casino/",
       "destination": "/casino-reviews/planet-7/",
       "permanent": true
+    },
+    {
+      "source": "/new-online-casinos/",
+      "destination": "/online-casinos/new/",
+      "permanent": true
+    },
+    {
+      "source": "/high-roller-casinos/",
+      "destination": "/online-casinos/high-roller/",
+      "permanent": true
+    },
+    {
+      "source": "/best-payout-online-casinos/",
+      "destination": "/online-casinos/best-payout/",
+      "permanent": true
+    },
+    {
+      "source": "/fastest-payout-casinos/",
+      "destination": "/online-casinos/fastest-payout/",
+      "permanent": true
+    },
+    {
+      "source": "/budgeting/",
+      "destination": "/casino-banking/budgeting/",
+      "permanent": true
     }
   ]
 }

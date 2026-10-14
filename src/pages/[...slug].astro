@@ -512,6 +512,12 @@ if (featuredImageUrl) {
     } catch (e) {}
 }
 
+// 🚨 HERO IMAGE: featured image on the right of the hero — posts only.
+// Must come AFTER featuredImageUrl is declared above.
+const showHeroImage = isPost && !!featuredImageUrl
+const heroImageAlt =
+    post.featuredImage?.node?.altText || stripHtmlTags(displayTitle)
+
 // --- 6. AUTO TABLE OF CONTENTS (TOC) GENERATOR ---
 let rawContent = post.content || ""
 
@@ -723,100 +729,75 @@ if (wrapperStart !== -1) {
     }
     <header class="cus-hero">
         <div class="cus-hero-container">
-            <nav class="post-breadcrumbs" aria-label="breadcrumb">
-                {
-                    yoastBreadcrumbs.length > 0 ? (
-                        yoastBreadcrumbs.map((crumb: any) =>
-                            crumb.isLast ? (
-                                <span class="current" set:html={crumb.text} />
+            <div class={showHeroImage ? "cus-hero-grid" : undefined}>
+                <div class="cus-hero-main">
+                    <nav class="post-breadcrumbs" aria-label="breadcrumb">
+                        {
+                            yoastBreadcrumbs.length > 0 ? (
+                                yoastBreadcrumbs.map((crumb: any) =>
+                                    crumb.isLast ? (
+                                        <span
+                                            class="current"
+                                            set:html={crumb.text}
+                                        />
+                                    ) : (
+                                        <>
+                                            <a
+                                                href={crumb.url}
+                                                set:html={crumb.text}
+                                            />
+                                            <span class="separator">›</span>
+                                        </>
+                                    ),
+                                )
                             ) : (
+                                /* Fallback if Yoast breadcrumbs are missing */
                                 <>
-                                    <a href={crumb.url} set:html={crumb.text} />
+                                    <a href="/">Home</a>
                                     <span class="separator">›</span>
+                                    <span
+                                        class="current"
+                                        set:html={
+                                            focusKeyword
+                                                ? focusKeyword
+                                                      .charAt(0)
+                                                      .toUpperCase() +
+                                                  focusKeyword.slice(1)
+                                                : displayTitle
+                                        }
+                                    />
                                 </>
-                            ),
-                        )
-                    ) : (
-                        /* Fallback if Yoast breadcrumbs are missing */
-                        <>
-                            <a href="/">Home</a>
-                            <span class="separator">›</span>
-                            <span
-                                class="current"
-                                set:html={
-                                    focusKeyword
-                                        ? focusKeyword.charAt(0).toUpperCase() +
-                                          focusKeyword.slice(1)
-                                        : displayTitle
-                                }
-                            />
-                        </>
-                    )
-                }
-            </nav>
+                            )
+                        }
+                    </nav>
 
-            <h1 class="cus-hero-title" set:html={displayTitle} />
+                    <h1 class="cus-hero-title" set:html={displayTitle} />
 
-            <div class="cus-hero-meta">
-                {/* Updated on */}
-                <div class="cus-meta-item cus-meta-updated">
-                    <i
-                        class="fa-solid fa-calendar-days cus-meta-cal"
-                        aria-hidden="true"></i>
-                    <div class="cus-meta-stack">
-                        <span class="cus-meta-eyebrow">Updated On</span>
-                        <span class="cus-meta-strong">{formattedDate}</span>
-                    </div>
-                </div>
+                    <div class="cus-hero-meta">
+                        {/* Updated on */}
+                        <div class="cus-meta-item cus-meta-updated">
+                            <i
+                                class="fa-solid fa-calendar-days cus-meta-cal"
+                                aria-hidden="true"></i>
+                            <div class="cus-meta-stack">
+                                <span class="cus-meta-eyebrow">Updated On</span>
+                                <span class="cus-meta-strong">
+                                    {formattedDate}
+                                </span>
+                            </div>
+                        </div>
 
-                {/* Author */}
-                <div class="cus-meta-item cus-meta-person">
-                    <a
-                        href={authorLink}
-                        class="author-image-link"
-                        aria-label={`View ${authorName}'s profile`}
-                        data-open-author-popup="true"
-                    >
-                        <img
-                            src={authorAvatar}
-                            alt={authorName}
-                            class="cus-meta-avatar"
-                            width="40"
-                            height="40"
-                            referrerpolicy="no-referrer"
-                        />
-                    </a>
-                    <span class="cus-meta-line">
-                        <a
-                            href={authorLink}
-                            class="author-text-link"
-                            data-open-author-popup="true"
-                        >
-                            <strong>{authorName}</strong>
-                        </a>
-                        <span class="cus-meta-role">Casino Writer</span>
-                    </span>
-                </div>
-
-                {/* Reviewer (Fact Checked) */}
-                {
-                    showReviewer && (
-                        <div class="cus-meta-item cus-meta-person cus-meta-reviewer">
-                            <span class="cus-fact-badge">
-                                <i
-                                    class="fa-solid fa-check"
-                                    aria-hidden="true"
-                                />
-                                Fact Checked
-                            </span>
+                        {/* Author */}
+                        <div class="cus-meta-item cus-meta-person">
                             <a
-                                href={reviewerLink}
+                                href={authorLink}
                                 class="author-image-link"
-                                aria-label={`View ${reviewerName}'s profile`}
+                                aria-label={`View ${authorName}'s profile`}
+                                data-open-author-popup="true"
                             >
                                 <img
-                                    src={reviewerAvatar}
-                                    alt={`Reviewer ${reviewerName}`}
+                                    src={authorAvatar}
+                                    alt={authorName}
                                     class="cus-meta-avatar"
                                     width="40"
                                     height="40"
@@ -825,74 +806,141 @@ if (wrapperStart !== -1) {
                             </a>
                             <span class="cus-meta-line">
                                 <a
-                                    href={reviewerLink}
-                                    class="cus-reviewer-link"
+                                    href={authorLink}
+                                    class="author-text-link"
+                                    data-open-author-popup="true"
                                 >
-                                    <strong>{reviewerName}</strong>
+                                    <strong>{authorName}</strong>
                                 </a>
-                                <span class="cus-meta-role">
-                                    {reviewer.role}
-                                </span>
+                                <span class="cus-meta-role">Casino Writer</span>
                             </span>
+                        </div>
+
+                        {/* Reviewer (Fact Checked) */}
+                        {
+                            showReviewer && (
+                                <div class="cus-meta-item cus-meta-person cus-meta-reviewer">
+                                    <span class="cus-fact-badge">
+                                        <i
+                                            class="fa-solid fa-check"
+                                            aria-hidden="true"
+                                        />
+                                        Fact Checked
+                                    </span>
+                                    <a
+                                        href={reviewerLink}
+                                        class="author-image-link"
+                                        aria-label={`View ${reviewerName}'s profile`}
+                                    >
+                                        <img
+                                            src={reviewerAvatar}
+                                            alt={`Reviewer ${reviewerName}`}
+                                            class="cus-meta-avatar"
+                                            width="40"
+                                            height="40"
+                                            referrerpolicy="no-referrer"
+                                        />
+                                    </a>
+                                    <span class="cus-meta-line">
+                                        <a
+                                            href={reviewerLink}
+                                            class="cus-reviewer-link"
+                                        >
+                                            <strong>{reviewerName}</strong>
+                                        </a>
+                                        <span class="cus-meta-role">
+                                            {reviewer.role}
+                                        </span>
+                                    </span>
+                                </div>
+                            )
+                        }
+
+                        {
+                            /* Share this page: slides open on hover/tap; native share sheet on phones */
+                        }
+                        <div
+                            class="cus-share"
+                            id="cus-share"
+                            data-share-url={sharePageUrl}
+                            data-share-title={shareTitle}
+                        >
+                            <div class="cus-share-icons" id="cus-share-icons">
+                                {
+                                    shareLinks.map(s => (
+                                        <a
+                                            href={s.href}
+                                            target={
+                                                s.key === "email"
+                                                    ? undefined
+                                                    : "_blank"
+                                            }
+                                            rel="nofollow noopener noreferrer"
+                                            class={`share-btn ${s.key}`}
+                                            aria-label={s.label}
+                                            title={s.label}
+                                            data-share-popup={
+                                                s.key === "email"
+                                                    ? undefined
+                                                    : "true"
+                                            }
+                                        >
+                                            <i class={s.icon} />
+                                        </a>
+                                    ))
+                                }
+                                <button
+                                    type="button"
+                                    class="share-btn copy"
+                                    id="cus-share-copy"
+                                    aria-label="Copy link"
+                                    title="Copy link"
+                                >
+                                    <i class="fa-solid fa-link"></i>
+                                </button>
+                            </div>
+                            <button
+                                type="button"
+                                class="cus-share-toggle"
+                                id="cus-share-toggle"
+                                aria-expanded="false"
+                                aria-controls="cus-share-icons"
+                                aria-label="Share this page"
+                                title="Share this page"
+                            >
+                                <i class="fa-solid fa-share-nodes"></i>
+                            </button>
+                            <span
+                                class="cus-share-toast"
+                                id="cus-share-toast"
+                                role="status"
+                                aria-live="polite"></span>
+                        </div>
+                        {/* ↑ closes .cus-share */}
+                    </div>
+                    {/* ↑ closes .cus-hero-meta */}
+                </div>
+                {/* ↑ closes .cus-hero-main */}
+
+                {/* 🚨 HERO IMAGE: featured image on the right — posts only */}
+                {
+                    showHeroImage && (
+                        <div class="cus-hero-media">
+                            <img
+                                src={featuredImageUrl}
+                                alt={heroImageAlt}
+                                width="1200"
+                                height="630"
+                                loading="eager"
+                                fetchpriority="high"
+                                decoding="async"
+                                referrerpolicy="no-referrer"
+                            />
                         </div>
                     )
                 }
-
-                {/* Share this page: slides open on hover/tap; native share sheet on phones */}
-                <div
-                    class="cus-share"
-                    id="cus-share"
-                    data-share-url={sharePageUrl}
-                    data-share-title={shareTitle}
-                >
-                    <div class="cus-share-icons" id="cus-share-icons">
-                        {
-                            shareLinks.map(s => (
-                                <a
-                                    href={s.href}
-                                    target={
-                                        s.key === "email" ? undefined : "_blank"
-                                    }
-                                    rel="nofollow noopener noreferrer"
-                                    class={`share-btn ${s.key}`}
-                                    aria-label={s.label}
-                                    title={s.label}
-                                    data-share-popup={
-                                        s.key === "email" ? undefined : "true"
-                                    }
-                                >
-                                    <i class={s.icon} />
-                                </a>
-                            ))
-                        }
-                        <button
-                            type="button"
-                            class="share-btn copy"
-                            id="cus-share-copy"
-                            aria-label="Copy link"
-                            title="Copy link"
-                        >
-                            <i class="fa-solid fa-link"></i>
-                        </button>
-                    </div>
-                    <button
-                        type="button"
-                        class="cus-share-toggle"
-                        id="cus-share-toggle"
-                        aria-expanded="false"
-                        aria-controls="cus-share-icons"
-                        aria-label="Share this page"
-                        title="Share this page"
-                    >
-                        <i class="fa-solid fa-share-nodes"></i>
-                    </button>
-                    <span
-                        class="cus-share-toast"
-                        id="cus-share-toast"
-                        role="status"
-                        aria-live="polite"></span>
-                </div>
             </div>
+            {/* ↑ closes the grid wrapper */}
 
             <div class="cus-hero-editorial">
                 <p>
@@ -1286,7 +1334,9 @@ if (wrapperStart !== -1) {
         </div>
     </section>
 
-    {/* 🚨 OTHER AUTHORS — only on /about-us/<author>/ pages, current author excluded */}
+    {
+        /* 🚨 OTHER AUTHORS — only on /about-us/<author>/ pages, current author excluded */
+    }
     {
         otherAuthors.length > 0 && (
             <OtherAuthors authors={otherAuthors} excludeSlug={profileSlug} />
@@ -1715,38 +1765,38 @@ if (wrapperStart !== -1) {
     }
 
     .cus-editorial-toggle {
-    display: none;
-}
-
-@media (max-width: 640px) {
-    .cus-editorial-toggle {
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        width: 18px !important;
-        height: 18px !important;
-        margin-left: 6px !important;
-        padding: 0 !important;
-        border: 1px solid #cbd5e1 !important;
-        border-radius: 50% !important;
-        background: #f1f5f9 !important;
-        color: #2563eb !important;
-        font-size: 0.8rem !important;
-        font-weight: 700 !important;
-        font-style: normal !important;
-        line-height: 1 !important;
-        vertical-align: middle !important;
-        cursor: pointer !important;
+        display: none;
     }
 
-    .cus-editorial-more {
-        display: none !important;
-    }
+    @media (max-width: 640px) {
+        .cus-editorial-toggle {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 18px !important;
+            height: 18px !important;
+            margin-left: 6px !important;
+            padding: 0 !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 50% !important;
+            background: #f1f5f9 !important;
+            color: #2563eb !important;
+            font-size: 0.8rem !important;
+            font-weight: 700 !important;
+            font-style: normal !important;
+            line-height: 1 !important;
+            vertical-align: middle !important;
+            cursor: pointer !important;
+        }
 
-    .cus-hero-editorial.is-open .cus-editorial-more {
-        display: block !important;
+        .cus-editorial-more {
+            display: none !important;
+        }
+
+        .cus-hero-editorial.is-open .cus-editorial-more {
+            display: block !important;
+        }
     }
-}
 
     .cus-affiliate-disclosure {
         margin: -21px 0 0 0;
@@ -2501,10 +2551,10 @@ if (wrapperStart !== -1) {
     }
 
     @media (max-width: 640px) {
-    .cus-hero-title {
-        font-size: 25px !important;
+        .cus-hero-title {
+            font-size: 25px !important;
+        }
     }
-}
 
     @media (max-width: 640px) {
         .cus-hero {
@@ -2574,18 +2624,30 @@ if (wrapperStart !== -1) {
         min-width: 0;
     }
 
-   
-
     .post-sidebar {
         min-width: 0;
     }
 
+    /* Sidebar column fills the full height of the content column */
+    .post-sidebar {
+        align-self: stretch;
+    }
+
     .sidebar-sticky-wrap {
-        position: sticky;
-        top: 1.5rem;
         display: flex;
         flex-direction: column;
         gap: 1.5rem;
+        height: 100%;
+    }
+
+    /* Only the last card sticks, just below the sticky header */
+    @media (min-width: 901px) {
+        .sidebar-sticky-wrap > :last-child {
+            position: sticky;
+            top: calc(var(--cus-mtoc-top, 90px) + 1rem);
+            max-height: calc(100vh - var(--cus-mtoc-top, 90px) - 2rem);
+            overflow-y: auto;
+        }
     }
 
     .sidebar-mission-card,
@@ -2718,12 +2780,12 @@ if (wrapperStart !== -1) {
 
     @media (max-width: 900px) {
         .content-with-sidebar {
-        grid-template-columns: minmax(0, 1fr); /* was: 1fr */
-    }
-    .content-with-sidebar > * {
-        min-width: 0;
-    }
-        
+            grid-template-columns: minmax(0, 1fr); /* was: 1fr */
+        }
+        .content-with-sidebar > * {
+            min-width: 0;
+        }
+
         .sidebar-toc-list {
             max-height: none;
         }
@@ -2995,29 +3057,66 @@ if (wrapperStart !== -1) {
 
     /* Mobile Responsiveness */
     @media (max-width: 900px) {
-        
         .featured-image-wrapper {
             margin: -1.5rem -1.5rem 1.5rem -1.5rem;
         }
     }
 
-
     @media (max-width: 600px) {
-    .cus-banking-grid,
-    .cus-cc-grid,
-    .cus-advantages-grid,
-    .cus-lw-grid-2col,
-    .cus-ranking-grid {
-        grid-template-columns: 1fr;
+        .cus-banking-grid,
+        .cus-cc-grid,
+        .cus-advantages-grid,
+        .cus-lw-grid-2col,
+        .cus-ranking-grid {
+            grid-template-columns: 1fr;
+        }
+
+        /* Tables scroll inside their own box, and long cells wrap */
+        .wp-content table td,
+        .wp-content table th {
+            white-space: normal;
+            min-width: 140px;
+        }
     }
 
-    /* Tables scroll inside their own box, and long cells wrap */
-    .wp-content table td,
-    .wp-content table th {
-        white-space: normal;
-        min-width: 140px;
+    /* =========================================
+       🚨 HERO FEATURED IMAGE (posts only)
+    ========================================= */
+    .cus-hero-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 2.5rem;
+        align-items: center;
     }
-}
+    .cus-hero-main {
+        min-width: 0;
+    }
+    .cus-hero-media {
+        padding: 1.5rem 0;
+    }
+    .cus-hero-media img {
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1200 / 630;
+        object-fit: cover;
+        border-radius: 16px;
+        box-shadow: 0 18px 40px -18px rgba(15, 23, 42, 0.35);
+        background: #f1f5f9;
+    }
+
+    @media (max-width: 900px) {
+        .cus-hero-grid {
+            grid-template-columns: minmax(0, 1fr);
+            gap: 0;
+        }
+        .cus-hero-media {
+            padding: 0 0 1rem;
+        }
+        .cus-hero-media img {
+            border-radius: 12px;
+        }
+    }
 
     @media (max-width: 600px) {
         .wp-content ol.wp-block-list li {
@@ -3061,104 +3160,104 @@ if (wrapperStart !== -1) {
     }
 
     @media (max-width: 640px) {
-    /* Two-column grid: date + share on row 1, author + reviewer on row 2 */
-    .cus-hero-meta {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        align-items: end !important;
-        gap: 0.75rem 1rem !important;
-        padding: 5px 0 !important;
-    }
+        /* Two-column grid: date + share on row 1, author + reviewer on row 2 */
+        .cus-hero-meta {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            align-items: end !important;
+            gap: 0.75rem 1rem !important;
+            padding: 5px 0 !important;
+        }
 
-    /* Row 1: compact date */
-    .cus-meta-updated {
-        grid-column: 1 !important;
-        grid-row: 1 !important;
-        gap: 0.4rem !important;
-        align-self: center !important;
-        order: unset !important;
-    }
-    .cus-meta-cal {
-        font-size: 0.8rem !important;
-    }
-    .cus-meta-eyebrow {
-        display: none !important;
-    }
-    .cus-meta-strong {
-        font-size: 0.78rem !important;
-        font-weight: 700 !important;
-    }
-    .cus-meta-strong::before {
-        content: "Updated " !important;
-        font-weight: 500 !important;
-        color: #64748b !important;
-    }
+        /* Row 1: compact date */
+        .cus-meta-updated {
+            grid-column: 1 !important;
+            grid-row: 1 !important;
+            gap: 0.4rem !important;
+            align-self: center !important;
+            order: unset !important;
+        }
+        .cus-meta-cal {
+            font-size: 0.8rem !important;
+        }
+        .cus-meta-eyebrow {
+            display: none !important;
+        }
+        .cus-meta-strong {
+            font-size: 0.78rem !important;
+            font-weight: 700 !important;
+        }
+        .cus-meta-strong::before {
+            content: "Updated " !important;
+            font-weight: 500 !important;
+            color: #64748b !important;
+        }
 
-    /* Row 1: share button on the right */
-    .cus-share {
-        grid-column: 2 !important;
-        grid-row: 1 !important;
-        justify-self: end !important;
-        align-self: center !important;
-        margin-left: 0 !important;
-        padding: 2px !important;
-        order: unset !important;
-    }
-    .cus-share-toggle {
-        width: 28px !important;
-        height: 28px !important;
-        font-size: 0.75rem !important;
-    }
+        /* Row 1: share button on the right */
+        .cus-share {
+            grid-column: 2 !important;
+            grid-row: 1 !important;
+            justify-self: end !important;
+            align-self: center !important;
+            margin-left: 0 !important;
+            padding: 2px !important;
+            order: unset !important;
+        }
+        .cus-share-toggle {
+            width: 28px !important;
+            height: 28px !important;
+            font-size: 0.75rem !important;
+        }
 
-    /* Row 2: author and reviewer side by side */
-    .cus-meta-person {
-        grid-row: 2 !important;
-        flex-basis: auto !important;
-        gap: 0.5rem !important;
-        min-width: 0 !important;
-        order: unset !important;
-    }
-    .cus-meta-person:not(.cus-meta-reviewer) {
-        grid-column: 1 !important;
-    }
-    .cus-meta-reviewer {
-        grid-column: 2 !important;
-        flex-wrap: wrap !important;
-        row-gap: 0.25rem !important;
-    }
+        /* Row 2: author and reviewer side by side */
+        .cus-meta-person {
+            grid-row: 2 !important;
+            flex-basis: auto !important;
+            gap: 0.5rem !important;
+            min-width: 0 !important;
+            order: unset !important;
+        }
+        .cus-meta-person:not(.cus-meta-reviewer) {
+            grid-column: 1 !important;
+        }
+        .cus-meta-reviewer {
+            grid-column: 2 !important;
+            flex-wrap: wrap !important;
+            row-gap: 0.25rem !important;
+        }
 
-    .cus-meta-avatar {
-        width: 28px !important;
-        height: 28px !important;
-    }
+        .cus-meta-avatar {
+            width: 28px !important;
+            height: 28px !important;
+        }
 
-    .cus-meta-line {
-        display: block !important;
-        min-width: 0 !important;
-        font-size: 0.8rem !important;
-        line-height: 1.2 !important;
-    }
-    .cus-meta-line a {
-        display: block !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-    }
-    .cus-meta-role {
-        display: none !important;
-    }
+        .cus-meta-line {
+            display: block !important;
+            min-width: 0 !important;
+            font-size: 0.8rem !important;
+            line-height: 1.2 !important;
+        }
+        .cus-meta-line a {
+            display: block !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+        .cus-meta-role {
+            display: none !important;
+        }
 
-    /* Small "Fact Checked" label above the reviewer */
-    .cus-fact-badge {
-        position: static !important;
-        flex-basis: 100% !important;
-        font-size: 0.58rem !important;
-        margin: 0 !important;
+        /* Small "Fact Checked" label above the reviewer */
+        .cus-fact-badge {
+            position: static !important;
+            flex-basis: 100% !important;
+            font-size: 0.58rem !important;
+            margin: 0 !important;
+        }
+        .cus-fact-badge i {
+            font-size: 0.6rem !important;
+        }
     }
-    .cus-fact-badge i {
-        font-size: 0.6rem !important;
-    }
-}
 
     article.page-container.cus-page-container {
         margin-left: -5px !important;
