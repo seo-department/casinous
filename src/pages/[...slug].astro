@@ -1714,8 +1714,42 @@ if (wrapperStart !== -1) {
         scroll-behavior: smooth;
     }
 
+    .cus-editorial-toggle {
+    display: none;
+}
+
+@media (max-width: 640px) {
+    .cus-editorial-toggle {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 18px !important;
+        height: 18px !important;
+        margin-left: 6px !important;
+        padding: 0 !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 50% !important;
+        background: #f1f5f9 !important;
+        color: #2563eb !important;
+        font-size: 0.8rem !important;
+        font-weight: 700 !important;
+        font-style: normal !important;
+        line-height: 1 !important;
+        vertical-align: middle !important;
+        cursor: pointer !important;
+    }
+
+    .cus-editorial-more {
+        display: none !important;
+    }
+
+    .cus-hero-editorial.is-open .cus-editorial-more {
+        display: block !important;
+    }
+}
+
     .cus-affiliate-disclosure {
-        margin: 1.5rem 0 0 0;
+        margin: -21px 0 0 0;
     }
     .cus-affiliate-disclosure p {
         font-size: 0.9rem;
@@ -1763,7 +1797,7 @@ if (wrapperStart !== -1) {
     /* ===== Site trust / author card (above footer) ===== */
     .site-trust-section {
         background: #f8fafc;
-        padding: 48px 20px;
+        padding: 2px 2px;
         border-top: 1px solid #e2e8f0;
     }
     .site-trust-container {
@@ -2135,7 +2169,7 @@ if (wrapperStart !== -1) {
     .cus-hero {
         background: #ffffff;
         border-bottom: 1px solid #e2e8f0;
-        padding: 2rem 1rem 0;
+        padding: 2px 3px 0;
     }
     .cus-hero-container {
         max-width: 1200px;
@@ -2175,7 +2209,7 @@ if (wrapperStart !== -1) {
 
     .cus-hero-title {
         font-size: 2.4rem;
-        font-weight: 800;
+        font-weight: 500;
         line-height: 1.2;
         letter-spacing: -0.5px;
         color: #0f172a;
@@ -2467,6 +2501,12 @@ if (wrapperStart !== -1) {
     }
 
     @media (max-width: 640px) {
+    .cus-hero-title {
+        font-size: 25px !important;
+    }
+}
+
+    @media (max-width: 640px) {
         .cus-hero {
             padding-top: 1.5rem;
         }
@@ -2510,7 +2550,7 @@ if (wrapperStart !== -1) {
     }
     .page-wrapper {
         background-color: #f8fafc;
-        padding: 2rem 1rem 5rem;
+        padding: 5px 9px 5px;
     }
 
     /* =========================================
@@ -3019,6 +3059,106 @@ if (wrapperStart !== -1) {
             max-width: 100%;
         }
     }
+
+    @media (max-width: 640px) {
+    /* Two-column grid: date + share on row 1, author + reviewer on row 2 */
+    .cus-hero-meta {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        align-items: end !important;
+        gap: 0.75rem 1rem !important;
+        padding: 5px 0 !important;
+    }
+
+    /* Row 1: compact date */
+    .cus-meta-updated {
+        grid-column: 1 !important;
+        grid-row: 1 !important;
+        gap: 0.4rem !important;
+        align-self: center !important;
+        order: unset !important;
+    }
+    .cus-meta-cal {
+        font-size: 0.8rem !important;
+    }
+    .cus-meta-eyebrow {
+        display: none !important;
+    }
+    .cus-meta-strong {
+        font-size: 0.78rem !important;
+        font-weight: 700 !important;
+    }
+    .cus-meta-strong::before {
+        content: "Updated " !important;
+        font-weight: 500 !important;
+        color: #64748b !important;
+    }
+
+    /* Row 1: share button on the right */
+    .cus-share {
+        grid-column: 2 !important;
+        grid-row: 1 !important;
+        justify-self: end !important;
+        align-self: center !important;
+        margin-left: 0 !important;
+        padding: 2px !important;
+        order: unset !important;
+    }
+    .cus-share-toggle {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 0.75rem !important;
+    }
+
+    /* Row 2: author and reviewer side by side */
+    .cus-meta-person {
+        grid-row: 2 !important;
+        flex-basis: auto !important;
+        gap: 0.5rem !important;
+        min-width: 0 !important;
+        order: unset !important;
+    }
+    .cus-meta-person:not(.cus-meta-reviewer) {
+        grid-column: 1 !important;
+    }
+    .cus-meta-reviewer {
+        grid-column: 2 !important;
+        flex-wrap: wrap !important;
+        row-gap: 0.25rem !important;
+    }
+
+    .cus-meta-avatar {
+        width: 28px !important;
+        height: 28px !important;
+    }
+
+    .cus-meta-line {
+        display: block !important;
+        min-width: 0 !important;
+        font-size: 0.8rem !important;
+        line-height: 1.2 !important;
+    }
+    .cus-meta-line a {
+        display: block !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+    .cus-meta-role {
+        display: none !important;
+    }
+
+    /* Small "Fact Checked" label above the reviewer */
+    .cus-fact-badge {
+        position: static !important;
+        flex-basis: 100% !important;
+        font-size: 0.58rem !important;
+        margin: 0 !important;
+    }
+    .cus-fact-badge i {
+        font-size: 0.6rem !important;
+    }
+}
 
     article.page-container.cus-page-container {
         margin-left: -5px !important;

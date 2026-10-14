@@ -386,7 +386,7 @@ const canonicalURL = canonical || Astro.url.href
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 12px 16px;
+        padding: 8px 2px;
         cursor: pointer;
         user-select: none;
     }
@@ -4258,7 +4258,7 @@ div#cus-banner-1 {
     }
     .page-wrapper {
         background-color: #f8fafc;
-        padding: 2rem 1rem 5rem;
+        padding: 5px 9px 5px;
     }
     .post-container {
         max-width: 1200px;
@@ -13123,6 +13123,31 @@ div#cus-banner-1 {
 
     document.addEventListener("DOMContentLoaded", buildMobileToc)
     document.addEventListener("astro:page-load", buildMobileToc)
+</script>
+
+<script>
+    ;(function () {
+    function initEditorialToggle() {
+        const wrap = document.getElementById("cus-hero-editorial")
+        const btn = wrap?.querySelector(".cus-editorial-toggle")
+        if (!btn || btn.dataset.bound) return
+        btn.dataset.bound = "true"
+
+        btn.addEventListener("click", () => {
+            const open = wrap.classList.toggle("is-open")
+            btn.textContent = open ? "−" : "+"
+            btn.setAttribute("aria-expanded", open ? "true" : "false")
+            btn.setAttribute("aria-label", open ? "Show less" : "Show more")
+        })
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initEditorialToggle)
+    } else {
+        initEditorialToggle()
+    }
+    document.addEventListener("astro:page-load", initEditorialToggle)
+})()
 </script>
 
 <script>
