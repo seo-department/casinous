@@ -4277,6 +4277,10 @@ div#cus-banner-1 {
 
 
 
+
+
+
+
 .post-wrapper {
     padding: 7px !important;
 }
@@ -12303,6 +12307,10 @@ div#cus-banner-1 {
     }
 
     @media (max-width: 600px) {
+
+        .cus-hero-title {
+    font-size: 18px !important;
+}
         .key-insights-box {
             padding: 22px 20px;
         }
@@ -12310,6 +12318,527 @@ div#cus-banner-1 {
             font-size: 0.95rem;
         }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =====================================================================
+   Casinous.com — casino review content styling
+   ===================================================================== */
+
+.wp-content {
+  --cu-navy: #1b2a4a;
+  --cu-navy-2: #26395f;
+  --cu-red: #c8102e;
+  --cu-red-dark: #a00d25;
+  --cu-gold: #e0a526;
+  --cu-green: #1e7f4f;
+  --cu-ink: #1f2733;
+  --cu-muted: #5b6577;
+  --cu-line: #dde2ea;
+  --cu-surface: #f5f7fa;
+  --cu-note-bg: #fff8e6;
+  --cu-note-line: #f1dda8;
+  --cu-radius-lg: 14px;
+  --cu-radius: 8px;
+
+  color: var(--cu-ink);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+}
+
+.wp-content > p:empty { display: none; }
+
+/* ---------- Base typography ---------- */
+.wp-content h2 {
+  color: var(--cu-navy);
+  font-size: clamp(1.4rem, 1.1rem + 1vw, 1.75rem);
+  line-height: 1.25;
+  margin: 2.75rem 0 1rem;
+  padding-bottom: .6rem;
+  background: linear-gradient(var(--cu-red), var(--cu-red)) left bottom / 56px 3px no-repeat;
+  scroll-margin-top: 96px;
+}
+.wp-content h3 {
+  color: var(--cu-navy);
+  font-size: 1.2rem;
+  line-height: 1.35;
+  margin: 1.75rem 0 .6rem;
+}
+.wp-content p { margin: 0 0 1rem; }
+.wp-content p a,
+.wp-content li a {
+  color: var(--cu-red);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.wp-content p a:hover,
+.wp-content li a:hover { color: var(--cu-red-dark); }
+
+.wp-content > ul { padding-left: 1.25rem; margin: 0 0 1.25rem; }
+.wp-content > ul > li { margin-bottom: .4rem; }
+.wp-content > ul > li::marker { color: var(--cu-red); }
+
+/* ---------- Hero: offer card + intro/score ---------- */
+.wp-content > div:first-child { margin-bottom: 2rem; }
+
+/* two-column hero wrapper */
+.wp-content > div:first-child > div > div {
+  display: grid;
+  grid-template-columns: minmax(260px, 300px) 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+/* offer card */
+.wp-content > div:first-child > div > div > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.75rem 1.5rem 1.5rem;
+  background: var(--cu-navy);
+  border-top: 6px solid var(--cu-red);
+  border-radius: var(--cu-radius-lg);
+  color: #fff;
+  text-align: center;
+}
+
+/* logo */
+.wp-content > div:first-child > div > div > div:first-child > div:nth-child(1) img {
+  display: block;
+  width: 88px;
+  height: 88px;
+  margin: 0 auto;
+  padding: 6px;
+  background: #fff;
+  border-radius: 18px;
+  object-fit: contain;
+}
+
+/* flag + tags + bonus headline */
+.wp-content > div:first-child > div > div > div:first-child > div:nth-child(2) {
+  font-size: .8rem;
+  color: rgba(255, 255, 255, .7);
+}
+.wp-content > div:first-child > div > div > div:first-child > div:nth-child(2) img {
+  display: inline-block;
+  width: 20px;
+  height: auto;
+  margin-right: .35rem;
+  vertical-align: -3px;
+  border-radius: 2px;
+}
+.wp-content > div:first-child > div > div > div:first-child > div:nth-child(2) strong {
+  display: block;
+  margin-top: .4rem;
+  color: #fff;
+  font-size: 1.6rem;
+  line-height: 1.15;
+}
+
+/* bonus code */
+.wp-content > div:first-child > div > div > div:first-child > div:nth-child(3) input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: .7rem .5rem;
+  background: rgba(255, 255, 255, .06);
+  border: 2px dashed rgba(255, 255, 255, .45);
+  border-radius: var(--cu-radius);
+  color: var(--cu-gold);
+  font: inherit;
+  font-size: .9rem;
+  font-weight: 700;
+  text-align: center;
+  cursor: text;
+}
+.wp-content > div:first-child > div > div > div:first-child > div:nth-child(3) input:focus-visible {
+  outline: 2px solid var(--cu-gold);
+  outline-offset: 2px;
+}
+
+/* terms */
+.wp-content > div:first-child > div > div > div:first-child > div:nth-child(4) {
+  font-size: .78rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, .65);
+}
+
+/* CTA */
+.wp-content > div:first-child > div > div > div:first-child > div:nth-child(5) a {
+  display: block;
+  padding: .95rem 1rem;
+  background: var(--cu-red);
+  border-radius: var(--cu-radius);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.05rem;
+  text-decoration: none;
+}
+.wp-content > div:first-child > div > div > div:first-child > div:nth-child(5) a:hover {
+  background: var(--cu-red-dark);
+}
+.wp-content > div:first-child > div > div > div:first-child > div:nth-child(5) a:focus-visible {
+  outline: 3px solid var(--cu-gold);
+  outline-offset: 2px;
+}
+
+/* intro copy */
+.wp-content > div:first-child > div > div > div:nth-child(2) > div:first-child p:first-child {
+  font-size: 1.125rem;
+}
+
+/* score panel */
+.wp-content > div:first-child > div > div > div:nth-child(2) > div:nth-child(2) > div {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.5rem;
+  align-items: center;
+  margin-top: 1.25rem;
+  padding: 1.25rem;
+  background: var(--cu-surface);
+  border: 1px solid var(--cu-line);
+  border-radius: var(--cu-radius-lg);
+}
+
+/* total score */
+.wp-content > div:first-child > div > div > div:nth-child(2) > div:nth-child(2) > div > div:first-child {
+  text-align: center;
+}
+.wp-content > div:first-child > div > div > div:nth-child(2) > div:nth-child(2) > div > div:first-child > div {
+  display: grid;
+  place-items: center;
+  width: 92px;
+  height: 92px;
+  margin: 0 auto;
+  background: #fff;
+  border: 6px solid var(--cu-gold);
+  border-radius: 50%;
+  color: var(--cu-navy);
+  font-size: 2.4rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.wp-content > div:first-child > div > div > div:nth-child(2) > div:nth-child(2) > div > div:first-child > p {
+  margin: .5rem 0 0;
+  color: var(--cu-muted);
+  font-size: .85rem;
+  font-weight: 600;
+}
+
+/* category scores: "4Safety Measures" — the digit is styled via ::first-letter */
+.wp-content > div:first-child > div > div > div:nth-child(2) > div:nth-child(2) > div > div:last-child {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .5rem .75rem;
+}
+.wp-content > div:first-child > div > div > div:nth-child(2) > div:nth-child(2) > div > div:last-child > div {
+  padding: .5rem .75rem;
+  background: #fff;
+  border: 1px solid var(--cu-line);
+  border-radius: 6px;
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--cu-ink);
+}
+.wp-content > div:first-child > div > div > div:nth-child(2) > div:nth-child(2) > div > div:last-child > div::first-letter {
+  margin-right: .55rem;
+  padding: .1rem .45rem;
+  background: var(--cu-gold);
+  border-radius: 4px;
+  color: var(--cu-navy);
+  font-weight: 800;
+}
+
+/* ---------- Pros / cons (the two lists right after the hero) ---------- */
+.wp-content > div:first-child + ul,
+.wp-content > div:first-child + ul + ul {
+  display: inline-block;
+  box-sizing: border-box;
+  width: calc(50% - .75rem);
+  vertical-align: top;
+  margin: 0 0 1.5rem;
+  padding: 1.1rem 1.25rem;
+  list-style: none;
+  border: 1px solid var(--cu-line);
+  border-radius: var(--cu-radius-lg);
+  background: #fff;
+}
+.wp-content > div:first-child + ul + ul { margin-left: 1.5rem; }
+
+.wp-content > div:first-child + ul::before,
+.wp-content > div:first-child + ul + ul::before {
+  display: block;
+  margin-bottom: .75rem;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.wp-content > div:first-child + ul::before { content: "Pros"; color: var(--cu-green); }
+.wp-content > div:first-child + ul + ul::before { content: "Cons"; color: var(--cu-red); }
+
+.wp-content > div:first-child + ul > li,
+.wp-content > div:first-child + ul + ul > li {
+  position: relative;
+  margin: 0 0 .5rem;
+  padding-left: 1.75rem;
+  font-size: .95rem;
+  line-height: 1.45;
+}
+.wp-content > div:first-child + ul > li::before,
+.wp-content > div:first-child + ul + ul > li::before {
+  position: absolute;
+  left: 0;
+  top: .1rem;
+  display: grid;
+  place-items: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 50%;
+  color: #fff;
+  font-size: .7rem;
+  font-weight: 800;
+}
+.wp-content > div:first-child + ul > li::before { content: "✓"; background: var(--cu-green); }
+.wp-content > div:first-child + ul + ul > li::before { content: "✕"; background: var(--cu-red); }
+
+/* ---------- Tables ---------- */
+.wp-content figure {
+  margin: 1.5rem 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--cu-line);
+  border-radius: var(--cu-radius);
+}
+.wp-content figure table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .95rem;
+}
+.wp-content figure table:has(thead td:nth-child(4)) { min-width: 640px; }
+.wp-content figure thead td {
+  padding: .8rem 1rem;
+  background: var(--cu-navy);
+  color: #fff;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+}
+.wp-content figure thead td strong { font-weight: inherit; }
+.wp-content figure tbody td {
+  padding: .75rem 1rem;
+  border-top: 1px solid var(--cu-line);
+  vertical-align: top;
+}
+.wp-content figure tbody tr:nth-child(even) { background: var(--cu-surface); }
+.wp-content figure tbody td:first-child {
+  color: var(--cu-navy);
+  font-weight: 600;
+}
+
+/* image figures */
+.wp-content figure:has(> img) {
+  overflow: visible;
+  border: 0;
+}
+.wp-content figure img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--cu-radius-lg);
+}
+
+/* ---------- Tip / note callouts (bold-led paragraph after a table or steps) ---------- */
+.wp-content > :is(figure, ol) + p:has(> strong:first-child) {
+  padding: .9rem 1.1rem;
+  background: var(--cu-note-bg);
+  border: 1px solid var(--cu-note-line);
+  border-left: 4px solid var(--cu-gold);
+  border-radius: var(--cu-radius);
+  font-size: .97rem;
+}
+.wp-content > :is(figure, ol) + p:has(> strong:first-child) strong { color: var(--cu-navy); }
+
+/* ---------- Registration steps ---------- */
+.wp-content > ol {
+  margin: 1.25rem 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: cu-step;
+}
+.wp-content > ol > li {
+  position: relative;
+  padding: .65rem 0 .65rem 3rem;
+  border-bottom: 1px solid var(--cu-line);
+  counter-increment: cu-step;
+}
+.wp-content > ol > li:last-child { border-bottom: 0; }
+.wp-content > ol > li::before {
+  content: counter(cu-step);
+  position: absolute;
+  left: 0;
+  top: .55rem;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--cu-navy);
+  color: #fff;
+  font-size: .9rem;
+  font-weight: 700;
+}
+
+/* ---------- Disclaimer ---------- */
+.wp-content .disclaimer-cl {
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem;
+  background: var(--cu-surface);
+  border-left: 4px solid var(--cu-navy);
+  border-radius: 0 var(--cu-radius) var(--cu-radius) 0;
+  color: var(--cu-muted);
+  font-size: .85rem;
+  line-height: 1.55;
+}
+.wp-content .disclaimer-cl p { margin: 0 0 .5rem; }
+.wp-content .disclaimer-cl p:last-child { margin-bottom: 0; }
+.wp-content .disclaimer-cl b { color: var(--cu-ink); }
+.wp-content .disclaimer-cl a { color: var(--cu-navy); }
+.wp-content .disclaimer-cl .show-more-btn {
+  margin-left: .25rem;
+  color: var(--cu-red);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* ---------- Table of contents ---------- */
+.wp-content .custom-toc {
+  margin: 1.5rem 0 2rem;
+  background: #fff;
+  border: 1px solid var(--cu-line);
+  border-radius: var(--cu-radius-lg);
+  overflow: hidden;
+}
+.wp-content .toc-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 1rem 1.25rem;
+  background: none;
+  border: 0;
+  color: var(--cu-navy);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.wp-content .toc-toggle:focus-visible {
+  outline: 2px solid var(--cu-red);
+  outline-offset: -2px;
+}
+.wp-content .toc-icon { transition: transform .2s ease; }
+.wp-content .custom-toc:has(.toc-list:not([style*="none"])) .toc-icon { transform: rotate(180deg); }
+.wp-content .toc-list {
+  margin: 0;
+  padding: .5rem 1.25rem 1rem;
+  list-style: none;
+  border-top: 1px solid var(--cu-line);
+  columns: 2;
+  column-gap: 2rem;
+}
+.wp-content .toc-list li { break-inside: avoid; }
+.wp-content .toc-list a {
+  display: block;
+  padding: .35rem 0;
+  color: var(--cu-ink);
+  font-size: .95rem;
+  text-decoration: none;
+}
+.wp-content .toc-list a:hover { color: var(--cu-red); }
+
+/* ---------- FAQs ---------- */
+.wp-content [id$="-faqs"] ~ h3 {
+  margin: 0;
+  padding: 1.1rem 0 .4rem;
+  border-top: 1px solid var(--cu-line);
+  font-size: 1.08rem;
+}
+.wp-content [id$="-faqs"] ~ h3 + p {
+  margin-bottom: .25rem;
+  color: var(--cu-muted);
+}
+
+/* ---------- Final verdict lead ---------- */
+.wp-content [id*="final-verdict"] {
+  margin-top: 3rem;
+}
+.wp-content [id*="final-verdict"] + p { font-size: 1.1rem; }
+
+/* ---------- More reviews grid ---------- */
+.wp-content [id^="more-casino-reviews"] + ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: .75rem;
+  padding: 0;
+  list-style: none;
+}
+.wp-content [id^="more-casino-reviews"] + ul li { margin: 0; }
+.wp-content [id^="more-casino-reviews"] + ul a {
+  display: block;
+  height: 100%;
+  box-sizing: border-box;
+  padding: .85rem 1rem;
+  border: 1px solid var(--cu-line);
+  border-radius: var(--cu-radius);
+  color: var(--cu-navy);
+  font-weight: 600;
+  text-decoration: none;
+}
+.wp-content [id^="more-casino-reviews"] + ul a:hover {
+  border-color: var(--cu-red);
+  color: var(--cu-red);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 860px) {
+  .wp-content > div:first-child > div > div { grid-template-columns: 1fr; }
+  .wp-content > div:first-child > div > div > div:first-child {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+    box-sizing: border-box;
+  }
+  .wp-content > div:first-child + ul,
+  .wp-content > div:first-child + ul + ul {
+    width: 100%;
+    margin-left: 0;
+  }
+  .wp-content .toc-list { columns: 1; }
+}
+
+@media (max-width: 560px) {
+  .wp-content > div:first-child > div > div > div:nth-child(2) > div:nth-child(2) > div {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+  .wp-content > div:first-child > div > div > div:nth-child(2) > div:nth-child(2) > div > div:last-child {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wp-content .toc-icon { transition: none; }
+}
+
 </style>
 
 <script>
