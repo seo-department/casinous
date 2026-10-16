@@ -345,9 +345,32 @@ const yoastBreadcrumbs = rawBreadcrumbs.map((crumb: any, index: number) => {
     }
 })
 
-const noindex = post.seo?.metaRobotsNoindex || "index"
-const nofollow = post.seo?.metaRobotsNofollow || "follow"
-const robotsTag = `${noindex}, ${nofollow}`
+// 🚨 ROBOTS: decided HERE, never by Yoast/WordPress.
+// The CMS (cms.casinous.com) can be set to "Discourage search engines"
+// to block the staging site — that setting makes Yoast report "noindex"
+// for every page, so we ignore Yoast completely for the live site.
+//
+// Live pages are always "index, follow" unless:
+//   1. the page path is listed in NOINDEX_PATHS below, or
+//   2. the build is a Vercel PREVIEW deployment (not production),
+//      so preview URLs (*.vercel.app) never get indexed either.
+const NOINDEX_PATHS: string[] = [
+    // Add any live page you want hidden from Google, e.g.:
+    // "/thank-you/",
+    // "/test-page/",
+]
+
+const pagePath = `/${(slug || "").replace(/^\/|\/$/g, "")}/`
+
+// VERCEL_ENV is "production" on the live deploy, "preview" on branch/PR
+// deploys, and undefined locally (local dev counts as indexable).
+const vercelEnv = process.env.VERCEL_ENV
+const isPreviewBuild = !!vercelEnv && vercelEnv !== "production"
+
+const robotsTag =
+    isPreviewBuild || NOINDEX_PATHS.includes(pagePath)
+        ? "noindex, nofollow"
+        : "index, follow"
 
 // 5. Author Data Extraction
 const wpDomain = "https://cms.casinous.com"
@@ -3240,7 +3263,7 @@ if (wrapperStart !== -1) {
         }
     }
 
-    
+
 
     .wp-content p a, .wp-content li a {
     color: #3b6ca8 !important;}
