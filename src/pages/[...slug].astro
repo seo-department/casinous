@@ -829,13 +829,16 @@ if (wrapperStart !== -1) {
     }
 }
 
-// 🚨 BLOG HERO INTRO (posts only): the FIRST real paragraph of the post
-// is shown under the H1 in the hero, and removed from the body so it
-// isn't repeated. Skips empty paragraphs, image-only paragraphs and the
-// injected editorial/affiliate notices. Falls back to the excerpt.
+// 🚨 HERO INTRO (posts AND pages): the FIRST real paragraph of the
+// content is shown in the hero and removed from the body so it isn't
+// repeated. Skips empty paragraphs, image-only paragraphs and the
+// injected editorial/affiliate notices.
+// Pages: only used when that paragraph comes BEFORE any <div> in the
+// content, so pages that open with a widget (casino review cards,
+// toplists, etc.) are left untouched.
 let heroIntroHtml = ""
 let bodyContent = finalContent
-if (isPost) {
+{
     const pRegex = /<p\b[^>]*>([\s\S]*?)<\/p>/gi
     let m: RegExpExecArray | null
     while ((m = pRegex.exec(finalContent)) !== null) {
@@ -845,6 +848,10 @@ if (isPost) {
             .trim()
         if (!text) continue
         if (/^(Editorial Statement|Affiliate Disclosure)/i.test(text)) continue
+
+        // Pages: bail out if the paragraph sits after/inside a block widget
+        if (isPage && /<div\b/i.test(finalContent.slice(0, m.index))) break
+
         heroIntroHtml = inner
             .replace(/<img\b[^>]*>/gi, "")
             .replace(/<br\s*\/?>/gi, " ")
@@ -1017,8 +1024,8 @@ if (isPost) {
                         independently review and select the online casinos
                         featured on our site. We assess each operator using
                         consistent criteria covering licensing, security,
-                        payments, payouts, bonuses, games, customer support
-                        and responsible gambling.
+                        payments, payouts, bonuses, games, customer support and
+                        responsible gambling.
                     </p>
                     <p>
                         We may earn commissions when readers use certain
@@ -1079,7 +1086,8 @@ if (isPost) {
                             <div class="cus-meta-item cus-meta-updated">
                                 <i
                                     class="fa-solid fa-calendar-days cus-meta-cal"
-                                    aria-hidden="true"></i>
+                                    aria-hidden="true"
+                                />
                                 <div class="cus-meta-stack">
                                     <span class="cus-meta-eyebrow">
                                         Updated On
@@ -1195,7 +1203,7 @@ if (isPost) {
                                         aria-label="Copy link"
                                         title="Copy link"
                                     >
-                                        <i class="fa-solid fa-link"></i>
+                                        <i class="fa-solid fa-link" />
                                     </button>
                                 </div>
                                 <button
@@ -1207,15 +1215,24 @@ if (isPost) {
                                     aria-label="Share this page"
                                     title="Share this page"
                                 >
-                                    <i class="fa-solid fa-share-nodes"></i>
+                                    <i class="fa-solid fa-share-nodes" />
                                 </button>
                                 <span
                                     class="cus-share-toast"
                                     id="cus-share-toast"
                                     role="status"
-                                    aria-live="polite"></span>
+                                    aria-live="polite"
+                                />
                             </div>
                         </div>
+
+                        {/* 🚨 First paragraph of the page content, under the authors */}
+                        {heroIntroHtml && (
+                            <p
+                                class="cus-hero-intro"
+                                set:html={heroIntroHtml}
+                            />
+                        )}
                     </div>
 
                     <div class="cus-hero-editorial">
@@ -1248,7 +1265,9 @@ if (isPost) {
                     ? "post-container"
                     : "page-container cus-page-container"}
             >
-                {/* 🚨 SHARE RAIL (posts only): floats beside the article on wide screens */}
+                {
+                    /* 🚨 SHARE RAIL (posts only): floats beside the article on wide screens */
+                }
                 {
                     isPost && (
                         <div
@@ -1303,7 +1322,8 @@ if (isPost) {
                                     class="cus-share-rail__toast"
                                     data-rail-toast
                                     role="status"
-                                    aria-live="polite"></span>
+                                    aria-live="polite"
+                                />
                             </div>
                         </div>
                     )
@@ -1312,7 +1332,7 @@ if (isPost) {
                 <div class="wp-content" set:html={bodyContent} />
             </article>
 
-            <aside
+                        <aside
                 class="post-sidebar"
                 aria-label="Page navigation and trust info"
             >
@@ -1326,74 +1346,77 @@ if (isPost) {
                         )
                     }
 
-                    <div class="sidebar-mission-card">
-                        <div class="sidebar-mission-badge">
-                            <i class="fa-solid fa-shield-halved"></i>
-                            <span>Mission Statement</span>
-                        </div>
-                        <h3 class="sidebar-mission-heading">
-                            Casino US is your independent guide to legal online
-                            casinos in America
-                        </h3>
-                        <ul class="sidebar-mission-list">
-                            {
-                                missionPoints.map(point => (
-                                    <li>
-                                        <i class="fa-solid fa-check" />
-                                        <span>{point}</span>
-                                    </li>
-                                ))
-                            }
-                        </ul>
-                        <a
-                            href="/how-we-rate-online-casinos/"
-                            class="sidebar-mission-btn"
-                        >
-                            How We Rate Casinos
-                        </a>
-                    </div>
-
-                    {
-                        sidebarLinks?.position === "after_mission" && (
-                            <SidebarLinks
-                                title={sidebarLinks.title}
-                                items={sidebarLinks.items}
-                            />
-                        )
-                    }
-
-                    {
-                        tocItems.length > 0 && (
-                            <div class="sidebar-toc-card">
-                                <div class="sidebar-toc-heading">
-                                    <span class="sidebar-toc-bar" />
-                                    Table of Contents
+                    {/* TOC on top, Mission Statement below — this group is the sticky part */}
+                    <div class="sidebar-sticky-group">
+                        {
+                            tocItems.length > 0 && (
+                                <div class="sidebar-toc-card">
+                                    <div class="sidebar-toc-heading">
+                                        <span class="sidebar-toc-bar" />
+                                        Table of Contents
+                                    </div>
+                                    <ul class="sidebar-toc-list">
+                                        {tocItems.map(item => (
+                                            <li>
+                                                <a
+                                                    href={`#${item.slug}`}
+                                                    class="sidebar-toc-link toc-jump-link"
+                                                    data-toc-target={item.slug}
+                                                >
+                                                    {item.text}
+                                                </a>
+                                            </li>
+                                        ))}
+                                    </ul>
                                 </div>
-                                <ul class="sidebar-toc-list">
-                                    {tocItems.map(item => (
-                                        <li>
-                                            <a
-                                                href={`#${item.slug}`}
-                                                class="sidebar-toc-link toc-jump-link"
-                                                data-toc-target={item.slug}
-                                            >
-                                                {item.text}
-                                            </a>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )
-                    }
+                            )
+                        }
 
-                    {
-                        sidebarLinks?.position === "after_toc" && (
-                            <SidebarLinks
-                                title={sidebarLinks.title}
-                                items={sidebarLinks.items}
-                            />
-                        )
-                    }
+                        {
+                            sidebarLinks?.position === "after_toc" && (
+                                <SidebarLinks
+                                    title={sidebarLinks.title}
+                                    items={sidebarLinks.items}
+                                />
+                            )
+                        }
+
+                        <div class="sidebar-mission-card">
+                            <div class="sidebar-mission-badge">
+                                <i class="fa-solid fa-shield-halved"></i>
+                                <span>Mission Statement</span>
+                            </div>
+                            <h3 class="sidebar-mission-heading">
+                                Casino US is your independent guide to legal
+                                online casinos in America
+                            </h3>
+                            <ul class="sidebar-mission-list">
+                                {
+                                    missionPoints.map(point => (
+                                        <li>
+                                            <i class="fa-solid fa-check" />
+                                            <span>{point}</span>
+                                        </li>
+                                    ))
+                                }
+                            </ul>
+                            <a
+                                href="/how-we-rate-online-casinos/"
+                                class="sidebar-mission-btn"
+                            >
+                                How We Rate Casinos
+                            </a>
+                        </div>
+
+                        {
+                            sidebarLinks?.position === "after_mission" && (
+                                <SidebarLinks
+                                    title={sidebarLinks.title}
+                                    items={sidebarLinks.items}
+                                />
+                            )
+                        }
+                    </div>
                 </div>
             </aside>
         </div>
@@ -2191,6 +2214,30 @@ if (isPost) {
 
         .cus-hero-editorial.is-open .cus-editorial-more {
             display: block !important;
+        }
+    }
+
+
+    .cus-hero-intro {
+        margin: 0 0 1.1rem 0 !important;
+        font-size: 15px !important;
+        line-height: 1.7 !important;
+        color: #475569 !important;
+        max-width: 100%;
+    }
+    .cus-hero-intro a {
+        color: #2563eb !important;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        font-weight: 600;
+    }
+    .cus-hero-intro strong {
+        color: #1f2937;
+    }
+    @media (max-width: 640px) {
+        .cus-hero-intro {
+            font-size: 14px !important;
+            margin-top: 0.75rem !important;
         }
     }
 
@@ -3077,11 +3124,16 @@ if (isPost) {
         color: #0b0b0b;
         margin: 0 0 0.85rem 0;
     }
+
+    time.cus-blog-hero__date {
+        font-size: 12px !important;
+    }
+
     .cus-blog-hero__excerpt {
-        font-size: 1.1rem !important;
+        font-size: 15px !important;
         line-height: 1.6;
-        color: #4b5563 !important;
-        margin: 0 0 2.25rem 0 !important;
+        color: #475569 !important;
+        margin: 0 0 21px !important;
     }
 
     .cus-blog-hero__excerpt a {
@@ -3971,4 +4023,18 @@ if (isPost) {
     article.page-container.cus-page-container {
         margin-left: -5px !important;
     }
+
+        /* TOC + Mission Statement travel together as the sticky block */
+    .sidebar-sticky-group {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        scrollbar-width: thin;
+    }
+    /* Keep the TOC compact so the Mission card stays reachable */
+    .sidebar-sticky-group .sidebar-toc-list {
+        max-height: 320px;
+    }
+
+    
 </style>
