@@ -27,7 +27,60 @@ const {
 
 const finalTitle = seoTitle ? seoTitle : title
 const canonicalURL = canonical || Astro.url.href
+
+const trustLogos = [
+    {
+        name: "National Council on Problem Gambling",
+        href: "https://www.ncpgambling.org/",
+        src: "/wp-content/uploads/2026/10/ncpg-logo-cus.svg",
+        width: 110,
+        height: 35,
+    },
+    {
+        name: "Malta Gaming Authority",
+        href: "https://www.mga.org.mt/",
+        src: "/wp-content/uploads/2026/10/mga-logo-cus.svg",
+        width: 129,
+        height: 25,
+    },
+    {
+        name: "BeGambleAware",
+        href: "https://www.gambleaware.org/",
+        src: "/uploads/2026/10/be-gamble-aware-logo-cus.svg",
+        width: 53,
+        height: 25,
+    },
+    {
+        name: "Gaming Laboratories International (GLI)",
+        href: "https://gaminglabs.com/",
+        src: "/wp-content/uploads/2026/10/gli-logo-cus.svg",
+        width: 60,
+        height: 17,
+    },
+    {
+        name: "GamCare",
+        href: "https://www.gamcare.org.uk/",
+        src: "/wp-content/uploads/2026/10/gamcare-logo-cus.svg",
+        width: 84,
+        height: 26,
+    },
+    {
+        name: "eCOGRA",
+        href: "https://ecogra.org/",
+        src: "/wp-content/uploads/2026/10/ecogra-logo-cus.svg",
+        width: 81,
+        height: 24,
+    },
+    {
+        name: "Responsible Gambling Council (18+)",
+        href: "https://responsiblegambling.org/",
+        src: "/wp-content/uploads/2026/10/18-plus-logo-cus.svg",
+        width: 29,
+        height: 27,
+    },
+]
 ---
+
 
 <!doctype html>
 <html lang="en-US">
@@ -303,6 +356,9 @@ const canonicalURL = canonical || Astro.url.href
                 </div>
             </div>
 
+
+
+
             <!-- Disclaimer + Responsible Gambling notices -->
             <div class="cus-footer-notices">
                 <p class="cus-footer-notice">
@@ -320,12 +376,45 @@ const canonicalURL = canonical || Astro.url.href
                     self-exclusion and session time limitations. We encourage
                     all our readers to consider their financial and mental
                     well-being before engaging in any online gambling and to
-                    <a href="/responsible-gambling/">seek support</a> if gambling
+                                        <a href="/responsible-gambling/">seek support</a> if gambling
                     becomes an issue.
                 </p>
             </div>
 
+            <!-- Trust & responsible-gambling logos -->
+            <div class="cus-trust-logos">
+                <ul
+                    class="cus-trust-logos__list"
+                    aria-label="Responsible gambling and industry organisations"
+                >
+                    {
+                        trustLogos.map(logo => (
+                            <li class="cus-trust-logos__item">
+                                <a
+                                    href={logo.href}
+                                    class="cus-trust-logos__link"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title={logo.name}
+                                >
+                                    <img
+                                        src={logo.src}
+                                        alt={`${logo.name} logo`}
+                                        width={logo.width}
+                                        height={logo.height}
+                                        loading="lazy"
+                                        decoding="async"
+                                        class="cus-trust-logos__img"
+                                    />
+                                </a>
+                            </li>
+                        ))
+                    }
+                </ul>
+            </div>
+
             <div class="footer-bottom">
+
                 <p>
                     &copy; {new Date().getFullYear()} Casino US. All rights reserved.
                 </p>
@@ -950,6 +1039,56 @@ const canonicalURL = canonical || Astro.url.href
     }
     .footer-dark .cus-footer-notice a:hover {
         color: #93c5fd;
+    }
+
+        /* ---- Footer: trust & responsible-gambling logos ---- */
+    .cus-trust-logos {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1.5rem 2rem;
+    }
+    .cus-trust-logos__list {
+        list-style: none;
+        margin: 0;
+        padding: 1.75rem 0 0;
+        border-top: 1px solid #1e293b;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 1.25rem 2.25rem;
+    }
+    .cus-trust-logos__item {
+        display: flex;
+        align-items: center;
+    }
+    .cus-trust-logos__link {
+        display: inline-flex;
+        align-items: center;
+        line-height: 0;
+    }
+    .footer-dark img.cus-trust-logos__img {
+        display: block;
+        width: auto !important;
+        height: 26px !important;
+        max-width: 130px !important;
+        object-fit: contain;
+        /* Every logo white, so mixed colours sit evenly on the dark footer */
+        filter: brightness(0) invert(1);
+        opacity: 0.6;
+        transition: opacity 0.2s ease;
+    }
+    .cus-trust-logos__link:hover .cus-trust-logos__img,
+    .cus-trust-logos__link:focus-visible .cus-trust-logos__img {
+        opacity: 1;
+    }
+    @media (max-width: 600px) {
+        .cus-trust-logos__list {
+            gap: 1rem 1.5rem;
+        }
+        .footer-dark img.cus-trust-logos__img {
+            height: 22px !important;
+        }
     }
 
     ol li {

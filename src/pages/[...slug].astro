@@ -29,7 +29,8 @@ export async function getStaticPaths() {
                         posts(first: 70, after: $after) {
                             pageInfo { hasNextPage endCursor }
                             nodes {
-                                uri title content date modified cusSidebar
+                                uri title content excerpt date modified cusSidebar
+                                categories(first: 1) { nodes { name uri } }
                                 featuredImage { node { sourceUrl altText } }
                                 author { node { name firstName lastName description uri url avatar { url } seo { social { facebook twitter instagram linkedIn } } } }
                                 seo { 
@@ -441,7 +442,7 @@ const linkedinLink = formatSocial(
 // Page title with [year] filled in (used by the hero, breadcrumbs and share links)
 const displayTitle = (post.title || "").replaceAll("[year]", currentYear)
 
-// 🚨 SHARE THIS PAGE: real share URLs for the hero share pill.
+// 🚨 SHARE THIS PAGE: real share URLs (pages: hero pill, posts: share rail).
 // Always uses the live www URL (canonical if Yoast has one).
 const LIVE_SITE = "https://www.casinous.com"
 const sharePageUrl =
@@ -463,6 +464,7 @@ const shareTitle = decodeBasicEntities(stripHtmlTags(displayTitle))
 const encUrl = encodeURIComponent(sharePageUrl)
 const encTitle = encodeURIComponent(shareTitle)
 
+// Pages: the compact hero share pill
 const shareLinks = [
     {
         key: "x",
@@ -535,11 +537,103 @@ if (featuredImageUrl) {
     } catch (e) {}
 }
 
-// 🚨 HERO IMAGE: featured image on the right of the hero — posts only.
+// 🚨 HERO IMAGE: featured image on the right of the blog hero — posts only.
 // Must come AFTER featuredImageUrl is declared above.
 const showHeroImage = isPost && !!featuredImageUrl
 const heroImageAlt =
     post.featuredImage?.node?.altText || stripHtmlTags(displayTitle)
+
+// 🚨 BLOG HERO (posts only): excerpt, category pill and date
+const blogExcerpt = (() => {
+    const raw =
+        decodeBasicEntities(stripHtmlTags(post.excerpt || ""))
+            .replace(/\[\s*(…|\.\.\.)\s*\]/g, "")
+            .replace(/\s+/g, " ")
+            .trim() || yoastDesc
+    if (raw.length <= 170) return raw
+    return (
+        raw
+            .slice(0, 170)
+            .replace(/\s+\S*$/, "")
+            .replace(/[\s,.;:–—-]+$/, "") + "..."
+    )
+})()
+
+const blogCatNode = post.categories?.nodes?.[0]
+const blogCatIsGeneric =
+    !blogCatNode || /uncategori[sz]ed/i.test(blogCatNode.name || "")
+const blogCatName = blogCatIsGeneric
+    ? "Blog"
+    : decodeBasicEntities(blogCatNode.name)
+const blogCatLink = blogCatIsGeneric
+    ? "/blog/"
+    : (blogCatNode.uri || "/blog/")
+          .replace(/https?:\/\/[^/]+/i, "")
+          .replace("/uncategorized/", "/blog/")
+
+// 🚨 SHARE RAIL (posts only): vertical floating bar beside the article
+// with the most popular networks. Pinterest uses the featured image.
+const pinImage = featuredImageUrl
+    ? encodeURIComponent(new URL(featuredImageUrl, LIVE_SITE).href)
+    : ""
+const railLinks = [
+    {
+        key: "facebook",
+        label: "Share on Facebook",
+        icon: "fa-brands fa-facebook-f",
+        href: `https://www.facebook.com/sharer/sharer.php?u=${encUrl}`,
+        popup: true,
+    },
+    {
+        key: "x",
+        label: "Share on X",
+        icon: "fa-brands fa-x-twitter",
+        href: `https://twitter.com/intent/tweet?url=${encUrl}&text=${encTitle}`,
+        popup: true,
+    },
+    {
+        key: "linkedin",
+        label: "Share on LinkedIn",
+        icon: "fa-brands fa-linkedin-in",
+        href: `https://www.linkedin.com/sharing/share-offsite/?url=${encUrl}`,
+        popup: true,
+    },
+    {
+        key: "whatsapp",
+        label: "Share on WhatsApp",
+        icon: "fa-brands fa-whatsapp",
+        href: `https://api.whatsapp.com/send?text=${encTitle}%20${encUrl}`,
+        popup: true,
+    },
+    {
+        key: "telegram",
+        label: "Share on Telegram",
+        icon: "fa-brands fa-telegram",
+        href: `https://t.me/share/url?url=${encUrl}&text=${encTitle}`,
+        popup: true,
+    },
+    {
+        key: "reddit",
+        label: "Share on Reddit",
+        icon: "fa-brands fa-reddit-alien",
+        href: `https://www.reddit.com/submit?url=${encUrl}&title=${encTitle}`,
+        popup: true,
+    },
+    {
+        key: "pinterest",
+        label: "Save to Pinterest",
+        icon: "fa-brands fa-pinterest-p",
+        href: `https://pinterest.com/pin/create/button/?url=${encUrl}${pinImage ? `&media=${pinImage}` : ""}&description=${encTitle}`,
+        popup: true,
+    },
+    {
+        key: "email",
+        label: "Share by email",
+        icon: "fa-solid fa-envelope",
+        href: `mailto:?subject=${encTitle}&body=${encodeURIComponent(`${shareTitle}\n\n${sharePageUrl}`)}`,
+        popup: false,
+    },
+]
 
 // --- 6. AUTO TABLE OF CONTENTS (TOC) GENERATOR ---
 let rawContent = post.content || ""
@@ -734,6 +828,33 @@ if (wrapperStart !== -1) {
             finalContent.slice(wrapperEnd)
     }
 }
+
+// 🚨 BLOG HERO INTRO (posts only): the FIRST real paragraph of the post
+// is shown under the H1 in the hero, and removed from the body so it
+// isn't repeated. Skips empty paragraphs, image-only paragraphs and the
+// injected editorial/affiliate notices. Falls back to the excerpt.
+let heroIntroHtml = ""
+let bodyContent = finalContent
+if (isPost) {
+    const pRegex = /<p\b[^>]*>([\s\S]*?)<\/p>/gi
+    let m: RegExpExecArray | null
+    while ((m = pRegex.exec(finalContent)) !== null) {
+        const inner = m[1]
+        const text = decodeBasicEntities(stripHtmlTags(inner))
+            .replace(/\s+/g, " ")
+            .trim()
+        if (!text) continue
+        if (/^(Editorial Statement|Affiliate Disclosure)/i.test(text)) continue
+        heroIntroHtml = inner
+            .replace(/<img\b[^>]*>/gi, "")
+            .replace(/<br\s*\/?>/gi, " ")
+            .trim()
+        bodyContent =
+            finalContent.slice(0, m.index) +
+            finalContent.slice(m.index + m[0].length)
+        break
+    }
+}
 ---
 
 <Layout
@@ -747,16 +868,176 @@ if (wrapperStart !== -1) {
     author={authorName}
 >
     {
-        /* 🚨 NEW HERO — light layout: title, meta description, then one meta row
-         (Updated On / Author / Fact Checked reviewer / compact share pill). */
-    }
-    <header class="cus-hero">
-        <div class="cus-hero-container">
-            <div class={showHeroImage ? "cus-hero-grid" : undefined}>
-                <div class="cus-hero-main">
-                    <nav class="post-breadcrumbs" aria-label="breadcrumb">
-                        {
-                            yoastBreadcrumbs.length > 0 ? (
+        isPost ? (
+            /* 🚨 BLOG HERO (posts) — breadcrumbs, bold title, excerpt,
+               author/category/date pill, featured image on the right */
+            <header class="cus-blog-hero">
+                <div
+                    class={
+                        showHeroImage
+                            ? "cus-blog-hero__inner"
+                            : "cus-blog-hero__inner cus-blog-hero__inner--text"
+                    }
+                >
+                    <div class="cus-blog-hero__text">
+                        <nav class="cus-blog-crumbs" aria-label="breadcrumb">
+                            {yoastBreadcrumbs.length > 0 ? (
+                                yoastBreadcrumbs.map((crumb: any, i: number) =>
+                                    crumb.isLast ? (
+                                        <span
+                                            class="current"
+                                            set:html={crumb.text}
+                                        />
+                                    ) : (
+                                        <>
+                                            {i === 0 ? (
+                                                <a
+                                                    href={crumb.url}
+                                                    class="home"
+                                                    aria-label="Home"
+                                                >
+                                                    <i
+                                                        class="fa-solid fa-house"
+                                                        aria-hidden="true"
+                                                    />
+                                                </a>
+                                            ) : (
+                                                <a
+                                                    href={crumb.url}
+                                                    set:html={crumb.text}
+                                                />
+                                            )}
+                                            <span class="sep">/</span>
+                                        </>
+                                    ),
+                                )
+                            ) : (
+                                <>
+                                    <a href="/" class="home" aria-label="Home">
+                                        <i
+                                            class="fa-solid fa-house"
+                                            aria-hidden="true"
+                                        />
+                                    </a>
+                                    <span class="sep">/</span>
+                                    <a href="/blog/">Blog</a>
+                                    <span class="sep">/</span>
+                                    <span
+                                        class="current"
+                                        set:html={
+                                            focusKeyword
+                                                ? focusKeyword
+                                                      .charAt(0)
+                                                      .toUpperCase() +
+                                                  focusKeyword.slice(1)
+                                                : displayTitle
+                                        }
+                                    />
+                                </>
+                            )}
+                        </nav>
+
+                        <h1
+                            class="cus-blog-hero__title"
+                            set:html={displayTitle}
+                        />
+
+                        {heroIntroHtml ? (
+                            <p
+                                class="cus-blog-hero__excerpt"
+                                set:html={heroIntroHtml}
+                            />
+                        ) : (
+                            blogExcerpt && (
+                                <p class="cus-blog-hero__excerpt">
+                                    {blogExcerpt}
+                                </p>
+                            )
+                        )}
+
+                        <div class="cus-blog-hero__meta">
+                            <a
+                                href={authorLink}
+                                class="cus-blog-hero__author"
+                                data-open-author-popup="true"
+                            >
+                                <img
+                                    src={authorAvatar}
+                                    alt={authorName}
+                                    width="30"
+                                    height="30"
+                                    referrerpolicy="no-referrer"
+                                />
+                                <span>
+                                    Written by: <strong>{authorName}</strong>
+                                </span>
+                            </a>
+                            <a href={blogCatLink} class="cus-blog-hero__cat">
+                                {blogCatName}
+                            </a>
+                            <time
+                                class="cus-blog-hero__date"
+                                datetime={rawDate}
+                            >
+                                {formattedDate}
+                            </time>
+                        </div>
+
+                        {showReviewer && (
+                            <p class="cus-blog-hero__factcheck">
+                                <i
+                                    class="fa-solid fa-circle-check"
+                                    aria-hidden="true"
+                                />
+                                Fact checked by{" "}
+                                <a href={reviewerLink}>{reviewerName}</a>
+                            </p>
+                        )}
+                    </div>
+
+                    {showHeroImage && (
+                        <div class="cus-blog-hero__media">
+                            <img
+                                src={featuredImageUrl}
+                                alt={heroImageAlt}
+                                width="1200"
+                                height="630"
+                                loading="eager"
+                                fetchpriority="high"
+                                decoding="async"
+                                referrerpolicy="no-referrer"
+                            />
+                        </div>
+                    )}
+                </div>
+
+                <div class="cus-blog-hero__editorial cus-hero-editorial">
+                    <p>
+                        <strong>Editorial Statement:</strong> At CasinoUS, we
+                        independently review and select the online casinos
+                        featured on our site. We assess each operator using
+                        consistent criteria covering licensing, security,
+                        payments, payouts, bonuses, games, customer support
+                        and responsible gambling.
+                    </p>
+                    <p>
+                        We may earn commissions when readers use certain
+                        affiliate links. However, commercial relationships do
+                        not determine which casinos we feature or how we
+                        evaluate them. We highlight both strengths and
+                        limitations so that US players can make more informed
+                        decisions.
+                    </p>
+                </div>
+            </header>
+        ) : (
+            /* PAGES — light hero: title, then one meta row
+               (Updated On / Author / Fact Checked reviewer / share pill) */
+            <header class="cus-hero">
+                <div class="cus-hero-container">
+                    <div class="cus-hero-main">
+                        <nav class="post-breadcrumbs" aria-label="breadcrumb">
+                            {yoastBreadcrumbs.length > 0 ? (
                                 yoastBreadcrumbs.map((crumb: any) =>
                                     crumb.isLast ? (
                                         <span
@@ -774,7 +1055,6 @@ if (wrapperStart !== -1) {
                                     ),
                                 )
                             ) : (
-                                /* Fallback if Yoast breadcrumbs are missing */
                                 <>
                                     <a href="/">Home</a>
                                     <span class="separator">›</span>
@@ -790,58 +1070,57 @@ if (wrapperStart !== -1) {
                                         }
                                     />
                                 </>
-                            )
-                        }
-                    </nav>
+                            )}
+                        </nav>
 
-                    <h1 class="cus-hero-title" set:html={displayTitle} />
+                        <h1 class="cus-hero-title" set:html={displayTitle} />
 
-                    <div class="cus-hero-meta">
-                        {/* Updated on */}
-                        <div class="cus-meta-item cus-meta-updated">
-                            <i
-                                class="fa-solid fa-calendar-days cus-meta-cal"
-                                aria-hidden="true"></i>
-                            <div class="cus-meta-stack">
-                                <span class="cus-meta-eyebrow">Updated On</span>
-                                <span class="cus-meta-strong">
-                                    {formattedDate}
-                                </span>
+                        <div class="cus-hero-meta">
+                            <div class="cus-meta-item cus-meta-updated">
+                                <i
+                                    class="fa-solid fa-calendar-days cus-meta-cal"
+                                    aria-hidden="true"></i>
+                                <div class="cus-meta-stack">
+                                    <span class="cus-meta-eyebrow">
+                                        Updated On
+                                    </span>
+                                    <span class="cus-meta-strong">
+                                        {formattedDate}
+                                    </span>
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Author */}
-                        <div class="cus-meta-item cus-meta-person">
-                            <a
-                                href={authorLink}
-                                class="author-image-link"
-                                aria-label={`View ${authorName}'s profile`}
-                                data-open-author-popup="true"
-                            >
-                                <img
-                                    src={authorAvatar}
-                                    alt={authorName}
-                                    class="cus-meta-avatar"
-                                    width="40"
-                                    height="40"
-                                    referrerpolicy="no-referrer"
-                                />
-                            </a>
-                            <span class="cus-meta-line">
+                            <div class="cus-meta-item cus-meta-person">
                                 <a
                                     href={authorLink}
-                                    class="author-text-link"
+                                    class="author-image-link"
+                                    aria-label={`View ${authorName}'s profile`}
                                     data-open-author-popup="true"
                                 >
-                                    <strong>{authorName}</strong>
+                                    <img
+                                        src={authorAvatar}
+                                        alt={authorName}
+                                        class="cus-meta-avatar"
+                                        width="40"
+                                        height="40"
+                                        referrerpolicy="no-referrer"
+                                    />
                                 </a>
-                                <span class="cus-meta-role">Casino Writer</span>
-                            </span>
-                        </div>
+                                <span class="cus-meta-line">
+                                    <a
+                                        href={authorLink}
+                                        class="author-text-link"
+                                        data-open-author-popup="true"
+                                    >
+                                        <strong>{authorName}</strong>
+                                    </a>
+                                    <span class="cus-meta-role">
+                                        Casino Writer
+                                    </span>
+                                </span>
+                            </div>
 
-                        {/* Reviewer (Fact Checked) */}
-                        {
-                            showReviewer && (
+                            {showReviewer && (
                                 <div class="cus-meta-item cus-meta-person cus-meta-reviewer">
                                     <span class="cus-fact-badge">
                                         <i
@@ -876,21 +1155,19 @@ if (wrapperStart !== -1) {
                                         </span>
                                     </span>
                                 </div>
-                            )
-                        }
+                            )}
 
-                        {
-                            /* Share this page: slides open on hover/tap; native share sheet on phones */
-                        }
-                        <div
-                            class="cus-share"
-                            id="cus-share"
-                            data-share-url={sharePageUrl}
-                            data-share-title={shareTitle}
-                        >
-                            <div class="cus-share-icons" id="cus-share-icons">
-                                {
-                                    shareLinks.map(s => (
+                            <div
+                                class="cus-share"
+                                id="cus-share"
+                                data-share-url={sharePageUrl}
+                                data-share-title={shareTitle}
+                            >
+                                <div
+                                    class="cus-share-icons"
+                                    id="cus-share-icons"
+                                >
+                                    {shareLinks.map(s => (
                                         <a
                                             href={s.href}
                                             target={
@@ -910,79 +1187,60 @@ if (wrapperStart !== -1) {
                                         >
                                             <i class={s.icon} />
                                         </a>
-                                    ))
-                                }
+                                    ))}
+                                    <button
+                                        type="button"
+                                        class="share-btn copy"
+                                        id="cus-share-copy"
+                                        aria-label="Copy link"
+                                        title="Copy link"
+                                    >
+                                        <i class="fa-solid fa-link"></i>
+                                    </button>
+                                </div>
                                 <button
                                     type="button"
-                                    class="share-btn copy"
-                                    id="cus-share-copy"
-                                    aria-label="Copy link"
-                                    title="Copy link"
+                                    class="cus-share-toggle"
+                                    id="cus-share-toggle"
+                                    aria-expanded="false"
+                                    aria-controls="cus-share-icons"
+                                    aria-label="Share this page"
+                                    title="Share this page"
                                 >
-                                    <i class="fa-solid fa-link"></i>
+                                    <i class="fa-solid fa-share-nodes"></i>
                                 </button>
+                                <span
+                                    class="cus-share-toast"
+                                    id="cus-share-toast"
+                                    role="status"
+                                    aria-live="polite"></span>
                             </div>
-                            <button
-                                type="button"
-                                class="cus-share-toggle"
-                                id="cus-share-toggle"
-                                aria-expanded="false"
-                                aria-controls="cus-share-icons"
-                                aria-label="Share this page"
-                                title="Share this page"
-                            >
-                                <i class="fa-solid fa-share-nodes"></i>
-                            </button>
-                            <span
-                                class="cus-share-toast"
-                                id="cus-share-toast"
-                                role="status"
-                                aria-live="polite"></span>
                         </div>
-                        {/* ↑ closes .cus-share */}
                     </div>
-                    {/* ↑ closes .cus-hero-meta */}
+
+                    <div class="cus-hero-editorial">
+                        <p>
+                            <strong>Editorial Statement:</strong> At CasinoUS,
+                            we independently review and select the online
+                            casinos featured on our site. We assess each
+                            operator using consistent criteria covering
+                            licensing, security, payments, payouts, bonuses,
+                            games, customer support and responsible gambling.
+                        </p>
+                        <p>
+                            We may earn commissions when readers use certain
+                            affiliate links. However, commercial relationships
+                            do not determine which casinos we feature or how we
+                            evaluate them. We highlight both strengths and
+                            limitations so that US players can make more
+                            informed decisions.
+                        </p>
+                    </div>
                 </div>
-                {/* ↑ closes .cus-hero-main */}
+            </header>
+        )
+    }
 
-                {/* 🚨 HERO IMAGE: featured image on the right — posts only */}
-                {
-                    showHeroImage && (
-                        <div class="cus-hero-media">
-                            <img
-                                src={featuredImageUrl}
-                                alt={heroImageAlt}
-                                width="1200"
-                                height="630"
-                                loading="eager"
-                                fetchpriority="high"
-                                decoding="async"
-                                referrerpolicy="no-referrer"
-                            />
-                        </div>
-                    )
-                }
-            </div>
-            {/* ↑ closes the grid wrapper */}
-
-            <div class="cus-hero-editorial">
-                <p>
-                    <strong>Editorial Statement:</strong> At CasinoUS, we independently
-                    review and select the online casinos featured on our site. We
-                    assess each operator using consistent criteria covering licensing,
-                    security, payments, payouts, bonuses, games, customer support
-                    and responsible gambling.
-                </p>
-                <p>
-                    We may earn commissions when readers use certain affiliate
-                    links. However, commercial relationships do not determine
-                    which casinos we feature or how we evaluate them. We
-                    highlight both strengths and limitations so that US players
-                    can make more informed decisions.
-                </p>
-            </div>
-        </div>
-    </header>
     <main class={isPost ? "post-wrapper" : "page-wrapper"}>
         <div class="content-with-sidebar">
             <article
@@ -990,20 +1248,68 @@ if (wrapperStart !== -1) {
                     ? "post-container"
                     : "page-container cus-page-container"}
             >
+                {/* 🚨 SHARE RAIL (posts only): floats beside the article on wide screens */}
                 {
-                    isPost && featuredImageUrl && (
-                        <div class="featured-image-wrapper">
-                            <img
-                                src={featuredImageUrl}
-                                alt={post.title}
-                                class="featured-image"
-                                referrerpolicy="no-referrer"
-                            />
+                    isPost && (
+                        <div
+                            class="cus-share-rail"
+                            data-share-rail
+                            data-share-url={sharePageUrl}
+                            data-share-title={shareTitle}
+                        >
+                            <div class="cus-share-rail__inner">
+                                <span class="cus-share-rail__label">Share</span>
+                                <div class="cus-share-rail__bar">
+                                    {railLinks.map(l => (
+                                        <a
+                                            href={l.href}
+                                            class={`cus-share-rail__btn is-${l.key}`}
+                                            target={
+                                                l.key === "email"
+                                                    ? undefined
+                                                    : "_blank"
+                                            }
+                                            rel="nofollow noopener noreferrer"
+                                            aria-label={l.label}
+                                            title={l.label}
+                                            data-rail-popup={
+                                                l.popup ? "true" : undefined
+                                            }
+                                        >
+                                            <i class={l.icon} />
+                                        </a>
+                                    ))}
+                                    <button
+                                        type="button"
+                                        class="cus-share-rail__btn is-copy"
+                                        data-rail-copy
+                                        aria-label="Copy link"
+                                        title="Copy link"
+                                    >
+                                        <i class="fa-solid fa-link" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="cus-share-rail__btn is-more"
+                                        data-rail-native
+                                        aria-label="More sharing options"
+                                        title="More sharing options"
+                                        hidden
+                                    >
+                                        <i class="fa-solid fa-share-nodes" />
+                                    </button>
+                                </div>
+                                <span
+                                    class="cus-share-rail__toast"
+                                    data-rail-toast
+                                    role="status"
+                                    aria-live="polite"></span>
+                            </div>
                         </div>
                     )
                 }
 
-                <div class="wp-content" set:html={finalContent} />
+                <div class="wp-content" set:html={bodyContent} />
             </article>
 
             <aside
@@ -1342,18 +1648,6 @@ if (wrapperStart !== -1) {
                     </div>
                 </div>
             </div>
-
-            <div class="site-trust-statement">
-                <p>
-                    <b>Editorial Statement: </b> Casino US is your trusted source
-                    for timely industry updates, in-depth analysis, and honest operator
-                    reviews. Our editorial team brings years of specialized gaming
-                    industry knowledge to every story, holding ourselves to strict
-                    standards of accuracy and objectivity. We're dedicated to providing
-                    straightforward, unbiased, and reliable reporting on the US gambling
-                    landscape and beyond.
-                </p>
-            </div>
         </div>
     </section>
 
@@ -1490,9 +1784,46 @@ if (wrapperStart !== -1) {
         }
     }
 
-    // 🚨 HERO SHARE PILL: hover/focus opens on desktop (CSS); click toggles.
-    // On touch devices the button opens the native share sheet when available.
-    // Social links open in a small popup window; Copy Link copies the URL.
+    // Shared helper: open a share URL in a small centred popup window
+    function cusOpenSharePopup(e, href) {
+        const w = 600
+        const h = 560
+        const left = window.screenX + (window.outerWidth - w) / 2
+        const top = window.screenY + (window.outerHeight - h) / 2
+        const popup = window.open(
+            href,
+            "share",
+            `width=${w},height=${h},left=${left},top=${top}`,
+        )
+        if (popup) {
+            popup.opener = null
+            e.preventDefault()
+        }
+    }
+
+    // Shared helper: copy text with a fallback for older browsers
+    function cusCopyText(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            return navigator.clipboard.writeText(text).catch(() => {
+                cusCopyFallback(text)
+            })
+        }
+        cusCopyFallback(text)
+        return Promise.resolve()
+    }
+    function cusCopyFallback(text) {
+        const ta = document.createElement("textarea")
+        ta.value = text
+        ta.style.position = "fixed"
+        ta.style.opacity = "0"
+        document.body.appendChild(ta)
+        ta.select()
+        document.execCommand("copy")
+        ta.remove()
+    }
+
+    // 🚨 PAGE HERO SHARE PILL (pages only): hover/focus opens on desktop (CSS);
+    // click toggles. On touch devices it opens the native share sheet.
     ;(function () {
         function initHeroShare() {
             const wrap = document.getElementById("cus-share")
@@ -1524,61 +1855,34 @@ if (wrapperStart !== -1) {
 
             toggle.addEventListener("click", async e => {
                 e.stopPropagation()
-                // Phones/tablets: use the native share sheet (any installed app)
                 if (isTouch && navigator.share) {
                     try {
                         await navigator.share({ title, url })
                         return
                     } catch (err) {
                         if (err && err.name === "AbortError") return
-                        // otherwise fall through and show the icons
                     }
                 }
                 setOpen(!wrap.classList.contains("is-open"))
             })
 
-            // Open social share links in a small centered popup (new tab fallback)
             wrap.querySelectorAll("[data-share-popup]").forEach(a => {
-                a.addEventListener("click", e => {
-                    const w = 600
-                    const h = 560
-                    const left = window.screenX + (window.outerWidth - w) / 2
-                    const top = window.screenY + (window.outerHeight - h) / 2
-                    const popup = window.open(
-                        a.href,
-                        "share",
-                        `width=${w},height=${h},left=${left},top=${top}`,
-                    )
-                    if (popup) {
-                        popup.opener = null
-                        e.preventDefault()
-                    }
-                })
+                a.addEventListener("click", e => cusOpenSharePopup(e, a.href))
             })
 
             if (copyBtn) {
-                copyBtn.addEventListener("click", async e => {
+                copyBtn.addEventListener("click", e => {
                     e.stopPropagation()
-                    try {
-                        await navigator.clipboard.writeText(url)
-                    } catch (err) {
-                        // Fallback for older browsers / non-HTTPS
-                        const ta = document.createElement("textarea")
-                        ta.value = url
-                        ta.style.position = "fixed"
-                        ta.style.opacity = "0"
-                        document.body.appendChild(ta)
-                        ta.select()
-                        document.execCommand("copy")
-                        ta.remove()
-                    }
-                    copyBtn.classList.add("is-copied")
-                    copyBtn.innerHTML = '<i class="fa-solid fa-check"></i>'
-                    showToast("Link copied")
-                    setTimeout(() => {
-                        copyBtn.classList.remove("is-copied")
-                        copyBtn.innerHTML = '<i class="fa-solid fa-link"></i>'
-                    }, 1800)
+                    cusCopyText(url).then(() => {
+                        copyBtn.classList.add("is-copied")
+                        copyBtn.innerHTML = '<i class="fa-solid fa-check"></i>'
+                        showToast("Link copied")
+                        setTimeout(() => {
+                            copyBtn.classList.remove("is-copied")
+                            copyBtn.innerHTML =
+                                '<i class="fa-solid fa-link"></i>'
+                        }, 1800)
+                    })
                 })
             }
 
@@ -1597,6 +1901,75 @@ if (wrapperStart !== -1) {
             initHeroShare()
         }
         document.addEventListener("astro:page-load", initHeroShare)
+    })()
+
+    // 🚨 SHARE RAIL (posts only): popups for the networks, copy link,
+    // and a "more" button that opens the phone's native share sheet
+    // (Instagram, TikTok, Messages, etc.) where the browser supports it.
+    ;(function () {
+        function initShareRail() {
+            document.querySelectorAll("[data-share-rail]").forEach(rail => {
+                if (rail.dataset.railBound) return
+                rail.dataset.railBound = "true"
+
+                const url = rail.dataset.shareUrl || location.href
+                const title = rail.dataset.shareTitle || document.title
+                const toast = rail.querySelector("[data-rail-toast]")
+                const copyBtn = rail.querySelector("[data-rail-copy]")
+                const nativeBtn = rail.querySelector("[data-rail-native]")
+
+                const showToast = msg => {
+                    if (!toast) return
+                    toast.textContent = msg
+                    toast.classList.add("is-visible")
+                    clearTimeout(toast._t)
+                    toast._t = setTimeout(
+                        () => toast.classList.remove("is-visible"),
+                        1800,
+                    )
+                }
+
+                rail.querySelectorAll("[data-rail-popup]").forEach(a => {
+                    a.addEventListener("click", e =>
+                        cusOpenSharePopup(e, a.href),
+                    )
+                })
+
+                if (copyBtn) {
+                    copyBtn.addEventListener("click", () => {
+                        cusCopyText(url).then(() => {
+                            copyBtn.classList.add("is-copied")
+                            copyBtn.innerHTML =
+                                '<i class="fa-solid fa-check"></i>'
+                            showToast("Link copied")
+                            setTimeout(() => {
+                                copyBtn.classList.remove("is-copied")
+                                copyBtn.innerHTML =
+                                    '<i class="fa-solid fa-link"></i>'
+                            }, 1800)
+                        })
+                    })
+                }
+
+                if (nativeBtn && navigator.share) {
+                    nativeBtn.hidden = false
+                    nativeBtn.addEventListener("click", async () => {
+                        try {
+                            await navigator.share({ title, url })
+                        } catch (err) {
+                            /* user closed the sheet — nothing to do */
+                        }
+                    })
+                }
+            })
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", initShareRail)
+        } else {
+            initShareRail()
+        }
+        document.addEventListener("astro:page-load", initShareRail)
     })()
 
     // 🚨 SIDEBAR TOC: highlight the section currently in view
@@ -2237,7 +2610,7 @@ if (wrapperStart !== -1) {
     }
 
     /* =========================================
-       🚨 NEW HERO (light, matches crazyvegas reference)
+       PAGE HERO (light, matches crazyvegas reference) — pages only
     ========================================= */
     .cus-hero {
         background: #ffffff;
@@ -2247,6 +2620,9 @@ if (wrapperStart !== -1) {
     .cus-hero-container {
         max-width: 1200px;
         margin: 0 auto;
+    }
+    .cus-hero-main {
+        min-width: 0;
     }
 
     /* Breadcrumbs (light background) */
@@ -2398,9 +2774,9 @@ if (wrapperStart !== -1) {
     .cus-fact-badge i {
         font-size: 0.7rem;
     }
-    /* Share pill: socials squeezed behind one button.
-       The icons open as an OVERLAY to the left of the button, so the
-       pill never changes size and the meta row never re-wraps
+
+    /* Share pill (pages): the icons open as an OVERLAY to the left of the
+       button, so the pill never changes size and the meta row never re-wraps
        (growing in place caused the hover "shake"). */
     .cus-share {
         position: relative;
@@ -2436,8 +2812,7 @@ if (wrapperStart !== -1) {
             transform 0.2s ease,
             visibility 0s linear 0.2s;
     }
-    /* Invisible bridge between the icons and the button, so moving the
-       mouse from the button to the icons doesn't close the overlay */
+    /* Invisible bridge between the icons and the button */
     .cus-share-icons::after {
         content: "";
         position: absolute;
@@ -2497,7 +2872,7 @@ if (wrapperStart !== -1) {
         outline-offset: 2px;
     }
 
-    /* Compact social icons inside the overlay */
+    /* Compact social icons inside the pill overlay */
     .share-btn {
         width: 30px;
         height: 30px;
@@ -2541,114 +2916,11 @@ if (wrapperStart !== -1) {
     .share-btn.copy.is-copied {
         background-color: #16a34a;
     }
-
-    /* "Link copied" confirmation */
-    .cus-share-toast {
-        position: absolute;
-        right: 0;
-        top: calc(100% + 8px);
-        background: #0f172a;
-        color: #ffffff;
-        font-size: 0.75rem;
-        font-weight: 700;
-        padding: 0.35rem 0.7rem;
-        border-radius: 6px;
-        white-space: nowrap;
-        opacity: 0;
-        transform: translateY(-4px);
-        pointer-events: none;
-        z-index: 5;
-        transition:
-            opacity 0.2s ease,
-            transform 0.2s ease;
-    }
-    .cus-share-toast.is-visible {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    .cus-share-toast:empty {
-        display: none;
-    }
-    /* Hover = brighter only. No lift/translate, which also caused jitter. */
+    /* Hover = brighter only. No lift/translate (that caused jitter). */
     .share-btn:hover {
+        transform: none !important;
         filter: brightness(1.15);
     }
-    .cus-share-toggle {
-        width: 34px;
-        height: 34px;
-        border-radius: 50%;
-        border: none;
-        background: #f1f5f9;
-        color: #334155;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        font-size: 0.85rem;
-        flex-shrink: 0;
-        transition:
-            background 0.2s ease,
-            color 0.2s ease;
-    }
-    .cus-share-toggle:hover,
-    .cus-share.is-open .cus-share-toggle {
-        background: #0f172a;
-        color: #ffffff;
-    }
-    .cus-share-toggle:focus-visible,
-    .share-btn:focus-visible {
-        outline: 2px solid #2563eb;
-        outline-offset: 2px;
-    }
-
-    /* Compact social icons inside the pill */
-    .share-btn {
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        color: #ffffff;
-        font-size: 0.8rem;
-        text-decoration: none;
-        transition:
-            transform 0.2s ease,
-            filter 0.2s ease;
-    }
-    .share-btn {
-        border: none;
-        cursor: pointer;
-        font-family: inherit;
-    }
-    .share-btn.x {
-        background-color: #000000;
-    }
-    .share-btn.facebook {
-        background-color: #1877f2;
-    }
-    .share-btn.linkedin {
-        background-color: #0a66c2;
-    }
-    .share-btn.whatsapp {
-        background-color: #25d366;
-    }
-    .share-btn.telegram {
-        background-color: #229ed9;
-    }
-    .share-btn.reddit {
-        background-color: #ff4500;
-    }
-    .share-btn.email {
-        background-color: #64748b;
-    }
-    .share-btn.copy {
-        background-color: #0f172a;
-    }
-    .share-btn.copy.is-copied {
-        background-color: #16a34a;
-    }
 
     /* "Link copied" confirmation */
     .cus-share-toast {
@@ -2676,16 +2948,13 @@ if (wrapperStart !== -1) {
     }
     .cus-share-toast:empty {
         display: none;
-    }
-    .share-btn:hover {
-        transform: translateY(-1px);
-        filter: brightness(1.1);
     }
 
     @media (prefers-reduced-motion: reduce) {
         .cus-share-icons,
         .share-btn,
-        .author-image-link {
+        .author-image-link,
+        .cus-share-rail__btn {
             transition: none;
         }
     }
@@ -2744,6 +3013,345 @@ if (wrapperStart !== -1) {
     }
 
     /* =========================================
+       🚨 BLOG HERO (posts only)
+    ========================================= */
+    .cus-blog-hero {
+        position: relative;
+        background: #ffffff;
+        padding: 2.5rem 1rem 1.5rem;
+        box-shadow: 0 22px 30px -30px rgba(15, 23, 42, 0.45);
+        margin-bottom: 1.5rem;
+    }
+    .cus-blog-hero__inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+        gap: 2.25rem;
+        align-items: center;
+    }
+    .cus-blog-hero__inner--text {
+        grid-template-columns: minmax(0, 1fr);
+        max-width: 900px;
+    }
+    .cus-blog-hero__text {
+        min-width: 0;
+    }
+
+    /* Breadcrumbs: home icon / Blog / current */
+    .cus-blog-crumbs {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        font-size: 0.95rem;
+        white-space: nowrap;
+        overflow: hidden;
+        margin-bottom: 1.6rem;
+    }
+    .cus-blog-crumbs a {
+        color: #3b82f6;
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+    .cus-blog-crumbs a:hover {
+        color: #1d4ed8;
+    }
+    .cus-blog-crumbs .home {
+        color: #1d4ed8;
+        font-size: 0.95rem;
+    }
+    .cus-blog-crumbs .sep {
+        color: #0f172a;
+    }
+    .cus-blog-crumbs .current {
+        color: #0f172a;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .cus-blog-hero__title {
+        font-size: clamp(1.9rem, 3vw, 2.45rem);
+        font-weight: 900;
+        line-height: 1.18;
+        letter-spacing: -0.3px;
+        color: #0b0b0b;
+        margin: 0 0 0.85rem 0;
+    }
+    .cus-blog-hero__excerpt {
+        font-size: 1.1rem !important;
+        line-height: 1.6;
+        color: #4b5563 !important;
+        margin: 0 0 2.25rem 0 !important;
+    }
+
+    .cus-blog-hero__excerpt a {
+        color: #2563eb !important;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        font-weight: 600;
+    }
+    .cus-blog-hero__excerpt strong {
+        color: #1f2937;
+    }
+
+    /* Pill: Written by · category · date */
+    .cus-blog-hero__meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem 1rem;
+        flex-wrap: wrap;
+        border: 1px solid #e5e7eb;
+        border-radius: 999px;
+        padding: 6px 16px 6px 8px;
+        background: #ffffff;
+    }
+    .cus-blog-hero__author {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #4b5563;
+        font-size: 0.9rem;
+        text-decoration: none;
+        min-width: 0;
+    }
+    .cus-blog-hero__author img {
+        width: 30px !important;
+        height: 30px !important;
+        border-radius: 50%;
+        object-fit: cover;
+        flex: none;
+    }
+    .cus-blog-hero__author strong {
+        font-weight: 500;
+        color: #4b5563;
+    }
+    .cus-blog-hero__author:hover strong {
+        color: #2563eb;
+    }
+    .cus-blog-hero__cat {
+        background: #eef2f7;
+        color: #475569;
+        font-size: 0.85rem;
+        padding: 6px 16px;
+        border-radius: 999px;
+        text-decoration: none;
+        transition: background 0.2s ease;
+    }
+    .cus-blog-hero__cat:hover {
+        background: #e2e8f0;
+    }
+    .cus-blog-hero__date {
+        color: #6b7280;
+        font-size: 0.95rem;
+        white-space: nowrap;
+    }
+
+    .cus-blog-hero__factcheck {
+        margin: 0.75rem 0 0 0.5rem !important;
+        font-size: 0.85rem !important;
+        color: #64748b !important;
+    }
+    .cus-blog-hero__factcheck i {
+        color: #16a34a;
+        margin-right: 0.35rem;
+    }
+    .cus-blog-hero__factcheck a {
+        color: #0f172a;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .cus-blog-hero__factcheck a:hover {
+        color: #2563eb;
+    }
+
+    .cus-blog-hero__media img {
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1200 / 630;
+        object-fit: cover;
+        border-radius: 16px;
+        background: #f1f5f9;
+    }
+
+    .cus-blog-hero__editorial {
+        max-width: 1200px;
+        margin: 1.75rem auto 0;
+    }
+
+    @media (max-width: 900px) {
+        .cus-blog-hero {
+            padding: 1.5rem 1rem 1.25rem;
+        }
+        .cus-blog-hero__inner {
+            grid-template-columns: minmax(0, 1fr);
+            gap: 1.5rem;
+        }
+        .cus-blog-hero__excerpt {
+            margin-bottom: 1.5rem !important;
+        }
+        .cus-blog-hero__meta {
+            border-radius: 16px;
+        }
+        .cus-blog-hero__media img {
+            border-radius: 12px;
+        }
+    }
+    @media (max-width: 640px) {
+        .cus-blog-hero__title {
+            font-size: 1.6rem;
+        }
+        .cus-blog-hero__excerpt {
+            font-size: 1rem !important;
+        }
+    }
+
+    /* =========================================
+       🚨 SHARE RAIL (posts only)
+       Wide screens: vertical bar floating left of the article.
+       Narrower: compact row at the top of the article.
+    ========================================= */
+    article.post-container {
+        position: relative;
+    }
+    .cus-share-rail {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: -78px;
+        width: 54px;
+        z-index: 5;
+    }
+    .cus-share-rail__inner {
+        position: sticky;
+        top: calc(var(--cus-mtoc-top, 90px) + 2rem);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+    .cus-share-rail__label {
+        font-size: 0.85rem;
+        color: #0f172a;
+    }
+    .cus-share-rail__bar {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        background: #0b0b6e;
+        border-radius: 999px;
+        padding: 10px 6px;
+        box-shadow: 0 10px 24px -12px rgba(11, 11, 110, 0.55);
+    }
+    .cus-share-rail__btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: none;
+        background: transparent;
+        color: #ffffff !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        text-decoration: none !important;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    .cus-share-rail__btn[hidden] {
+        display: none !important;
+    }
+    .cus-share-rail__btn:focus-visible {
+        outline: 2px solid #93c5fd;
+        outline-offset: 1px;
+    }
+    /* Each network lights up in its own brand colour on hover */
+    .cus-share-rail__btn.is-facebook:hover {
+        background: #1877f2;
+    }
+    .cus-share-rail__btn.is-x:hover {
+        background: #000000;
+    }
+    .cus-share-rail__btn.is-linkedin:hover {
+        background: #0a66c2;
+    }
+    .cus-share-rail__btn.is-whatsapp:hover {
+        background: #25d366;
+    }
+    .cus-share-rail__btn.is-telegram:hover {
+        background: #229ed9;
+    }
+    .cus-share-rail__btn.is-reddit:hover {
+        background: #ff4500;
+    }
+    .cus-share-rail__btn.is-pinterest:hover {
+        background: #e60023;
+    }
+    .cus-share-rail__btn.is-email:hover,
+    .cus-share-rail__btn.is-copy:hover,
+    .cus-share-rail__btn.is-more:hover {
+        background: rgba(255, 255, 255, 0.18);
+    }
+    .cus-share-rail__btn.is-copied {
+        background: #16a34a !important;
+    }
+    .cus-share-rail__toast {
+        position: absolute;
+        left: calc(100% + 8px);
+        bottom: 6px;
+        background: #0f172a;
+        color: #ffffff;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.35rem 0.7rem;
+        border-radius: 6px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+    }
+    .cus-share-rail__toast.is-visible {
+        opacity: 1;
+    }
+    .cus-share-rail__toast:empty {
+        display: none;
+    }
+
+    /* Not enough room beside the article: show it as a row instead */
+    @media (max-width: 1359px) {
+        .cus-share-rail {
+            position: static;
+            width: auto;
+            margin: 0 0 1.25rem;
+        }
+        .cus-share-rail__inner {
+            position: relative;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            gap: 10px;
+        }
+        .cus-share-rail__bar {
+            flex-direction: row;
+            flex-wrap: wrap;
+            padding: 4px 8px;
+            border-radius: 20px;
+        }
+        .cus-share-rail__btn {
+            width: 32px;
+            height: 32px;
+            font-size: 0.9rem;
+        }
+        .cus-share-rail__toast {
+            left: auto;
+            top: calc(100% + 6px);
+            bottom: auto;
+        }
+    }
+
+    /* =========================================
        POST & PAGE CONTENT STYLING
     ========================================= */
     .post-wrapper {
@@ -2766,8 +3374,6 @@ if (wrapperStart !== -1) {
         gap: 2rem;
         align-items: start;
     }
-
-    
 
     .post-sidebar {
         min-width: 0;
@@ -2925,7 +3531,7 @@ if (wrapperStart !== -1) {
 
     @media (max-width: 900px) {
         .content-with-sidebar {
-            grid-template-columns: minmax(0, 1fr); /* was: 1fr */
+            grid-template-columns: minmax(0, 1fr);
         }
         .content-with-sidebar > * {
             min-width: 0;
@@ -2938,12 +3544,6 @@ if (wrapperStart !== -1) {
 
     .cus-faq-question {
         font-weight: 600 !important;
-    }
-
-    .featured-image-wrapper {
-        margin: -2.5rem -2.5rem 2.5rem -2.5rem;
-        border-radius: 12px 12px 0 0;
-        overflow: hidden;
     }
 
     .wp-content p {
@@ -3071,13 +3671,12 @@ if (wrapperStart !== -1) {
     }
 
     /* =========================================
-       NEW: RELATED BLOGS GRID 
-       (Matches your screenshot exactly)
+       RELATED BLOGS GRID
     ========================================= */
     .related-blogs-container {
         margin-top: 4rem;
         padding: 2.5rem;
-        background-color: #f1f5f9; /* Light grey block */
+        background-color: #f1f5f9;
         border-radius: 12px;
         border: 1px solid #e2e8f0;
     }
@@ -3111,7 +3710,7 @@ if (wrapperStart !== -1) {
     }
 
     .related-blog-image {
-        flex: 0 0 150px; /* Fixed width for images */
+        flex: 0 0 150px;
         height: 100px;
         border-radius: 8px;
         overflow: hidden;
@@ -3200,13 +3799,6 @@ if (wrapperStart !== -1) {
         transform: translateX(3px);
     }
 
-    /* Mobile Responsiveness */
-    @media (max-width: 900px) {
-        .featured-image-wrapper {
-            margin: -1.5rem -1.5rem 1.5rem -1.5rem;
-        }
-    }
-
     @media (max-width: 600px) {
         .cus-banking-grid,
         .cus-cc-grid,
@@ -3224,57 +3816,19 @@ if (wrapperStart !== -1) {
         }
     }
 
-    /* =========================================
-       🚨 HERO FEATURED IMAGE (posts only)
-    ========================================= */
-    .cus-hero-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        gap: 2.5rem;
-        align-items: center;
+    .wp-content p a,
+    .wp-content li a {
+        color: #3b6ca8 !important;
     }
-    .cus-hero-main {
-        min-width: 0;
-    }
-    .cus-hero-media {
-        padding: 1.5rem 0;
-    }
-    .cus-hero-media img {
-        display: block;
-        width: 100%;
-        height: auto;
-        aspect-ratio: 1200 / 630;
-        object-fit: cover;
-        border-radius: 16px;
-        box-shadow: 0 18px 40px -18px rgba(15, 23, 42, 0.35);
-        background: #f1f5f9;
-    }
-
-    @media (max-width: 900px) {
-        .cus-hero-grid {
-            grid-template-columns: minmax(0, 1fr);
-            gap: 0;
-        }
-        .cus-hero-media {
-            padding: 0 0 1rem;
-        }
-        .cus-hero-media img {
-            border-radius: 12px;
-        }
-    }
-
-
-
-    .wp-content p a, .wp-content li a {
-    color: #3b6ca8 !important;}
 
     .cus-hero-title {
-    font-size: 35px }
+        font-size: 35px;
+    }
 
     @media (max-width: 600px) {
         .header-topbar {
-    display: none !important;
-}
+            display: none !important;
+        }
         .wp-content ol.wp-block-list li {
             padding: 1.25rem 1.25rem 1.25rem 3.75rem !important;
         }
@@ -3295,12 +3849,10 @@ if (wrapperStart !== -1) {
             text-align: center !important;
         }
 
+        article.post-container figure {
+            display: none !important;
+        }
 
-      article.post-container figure {
-    display: none !important;
-}
-
-        /* Related Posts Mobile tweaks */
         .related-blogs-container {
             padding: 1.5rem;
         }
@@ -3321,7 +3873,7 @@ if (wrapperStart !== -1) {
     }
 
     @media (max-width: 640px) {
-        /* Two-column grid: date + share on row 1, author + reviewer on row 2 */
+        /* Page hero: two-column grid — date + share on row 1, author + reviewer on row 2 */
         .cus-hero-meta {
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
@@ -3330,7 +3882,6 @@ if (wrapperStart !== -1) {
             padding: 5px 0 !important;
         }
 
-        /* Row 1: compact date */
         .cus-meta-updated {
             grid-column: 1 !important;
             grid-row: 1 !important;
@@ -3354,7 +3905,6 @@ if (wrapperStart !== -1) {
             color: #64748b !important;
         }
 
-        /* Row 1: share button on the right */
         .cus-share {
             grid-column: 2 !important;
             grid-row: 1 !important;
@@ -3370,7 +3920,6 @@ if (wrapperStart !== -1) {
             font-size: 0.75rem !important;
         }
 
-        /* Row 2: author and reviewer side by side */
         .cus-meta-person {
             grid-row: 2 !important;
             flex-basis: auto !important;
@@ -3408,7 +3957,6 @@ if (wrapperStart !== -1) {
             display: none !important;
         }
 
-        /* Small "Fact Checked" label above the reviewer */
         .cus-fact-badge {
             position: static !important;
             flex-basis: 100% !important;
