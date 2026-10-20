@@ -17,6 +17,16 @@
       "permanent": true
     },
     {
+      "source": "/executives",
+      "destination": "/profiles/",
+      "permanent": true
+    },
+    {
+      "source": "/executives/:path*",
+      "destination": "/profiles/:path*",
+      "permanent": true
+    },
+    {
       "source": "/play/clubworld-hp",
       "destination": "http://tracking.affiliateedge.eu/default.aspx?AffUserID=10973&casinoID=181",
       "permanent": true

@@ -1,7 +1,7 @@
 const WP_DOMAIN = "https://cms.casinous.com"
 const WP_GRAPHQL = `${WP_DOMAIN}/graphql`
 
-export const EXECUTIVES_PARENT_URI = "/executives/"
+export const EXECUTIVES_PARENT_URI = "/profiles/"
 export const EXECUTIVES_PER_PAGE = 32
 
 export type Executive = {
@@ -144,7 +144,7 @@ export function getExecutivesData() {
 }
 
 export const executivesPageUrl = (n: number) =>
-    n <= 1 ? "/executives/" : `/executives/page/${n}/`
+    n <= 1 ? "/profiles/" : `/profiles/page/${n}/`
 
 // 1 2 … 10  /  1 … 4 5 6 … 10
 export function paginationItems(current: number, total: number): (number | "gap")[] {

@@ -157,7 +157,7 @@ export async function getStaticPaths() {
 
     const validNodes = allNodes.filter((node: any) => {
     if (!node.uri || node.uri === "/") return false
-    if (node.uri === "/executives/") return false // handled by src/pages/executives/
+    if (node.uri === "/profiles/") return false
     if (node.uri.includes("http") || node.uri.includes("casinous.com")) {
         return false
     }
