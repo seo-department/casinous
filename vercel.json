@@ -16,6 +16,7 @@
       "destination": "/finwiz-admin.php",
       "permanent": true
     },
+    
     {
       "source": "/executives",
       "destination": "/profiles/",
