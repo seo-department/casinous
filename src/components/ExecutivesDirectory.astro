@@ -1,0 +1,472 @@
+---
+import Layout from "../layouts/Layout.astro"
+import {
+    getExecutivesData,
+    EXECUTIVES_PER_PAGE,
+    executivesPageUrl,
+    paginationItems,
+} from "../lib/executives"
+
+interface Props {
+    pageNum: number
+}
+const { pageNum } = Astro.props
+
+const { parent, executives } = await getExecutivesData()
+const total = executives.length
+const totalPages = Math.max(1, Math.ceil(total / EXECUTIVES_PER_PAGE))
+const start = (pageNum - 1) * EXECUTIVES_PER_PAGE
+const pageItems = executives.slice(start, start + EXECUTIVES_PER_PAGE)
+const pager = paginationItems(pageNum, totalPages)
+
+const LIVE_SITE = "https://www.casinous.com"
+const canonical = `${LIVE_SITE}${executivesPageUrl(pageNum)}`
+const suffix = pageNum > 1 ? ` – Page ${pageNum}` : ""
+
+const vercelEnv = process.env.VERCEL_ENV
+const robots = vercelEnv && vercelEnv !== "production" ? "noindex, nofollow" : "index, follow"
+
+const avatar = (name: string) =>
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=e2e8f0&color=0f172a&bold=true&size=200`
+
+const schema = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: `${parent.title}${suffix}`,
+    url: canonical,
+    mainEntity: {
+        "@type": "ItemList",
+        numberOfItems: pageItems.length,
+        itemListElement: pageItems.map((e, i) => ({
+            "@type": "ListItem",
+            position: start + i + 1,
+            item: {
+                "@type": "Person",
+                name: e.name,
+                url: `${LIVE_SITE}${e.link}`,
+                ...(e.role && { jobTitle: e.role }),
+                ...(e.company && { worksFor: { "@type": "Organization", name: e.company } }),
+            },
+        })),
+    },
+})
+
+// Lightweight data for client-side search across ALL pages
+const searchData = JSON.stringify(
+    executives.map(e => ({
+        n: e.name,
+        c: e.company,
+        r: e.role,
+        l: e.link,
+        i: e.image || avatar(e.name),
+    })),
+).replace(/</g, "\\u003c")
+---
+
+<Layout
+    title={`${parent.title}${suffix} | Casino US`}
+    seoTitle={`${parent.seoTitle}${suffix}`}
+    description={parent.metaDesc}
+    canonical={canonical}
+    robots={robots}
+    schema={schema}
+>
+    <section class="cus-exec" id="cus-exec">
+        <div class="cus-exec__container">
+            <nav class="cus-exec__crumbs" aria-label="breadcrumb">
+                <a href="/">Home</a>
+                <span aria-hidden="true">›</span>
+                {pageNum > 1 ? <a href="/executives/">Executives</a> : <span class="current">Executives</span>}
+                {pageNum > 1 && <><span aria-hidden="true">›</span><span class="current">Page {pageNum}</span></>}
+            </nav>
+
+            <h1 class="cus-exec__title">{parent.title}{suffix}</h1>
+
+            {pageNum === 1 && parent.introHtml && (
+                <div class="cus-exec__intro" set:html={parent.introHtml} />
+            )}
+
+            <div class="cus-exec__toolbar">
+                <p class="cus-exec__count" data-exec-count>
+                    {total} Profiles – Page {pageNum}
+                </p>
+                <label class="cus-exec__search">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    <input
+                        type="search"
+                        placeholder="Search profile"
+                        aria-label="Search executive profiles"
+                        autocomplete="off"
+                        data-exec-search
+                    />
+                </label>
+            </div>
+
+            <div class="cus-exec__grid" data-exec-grid>
+                {pageItems.map(e => (
+                    <a href={e.link} class="cus-exec-card">
+                        <span class="cus-exec-card__photo">
+                            <img
+                                src={e.image || avatar(e.name)}
+                                alt={e.imageAlt}
+                                width="92"
+                                height="92"
+                                loading="lazy"
+                                decoding="async"
+                                referrerpolicy="no-referrer"
+                            />
+                        </span>
+                        <span class="cus-exec-card__body">
+                            <span class="cus-exec-card__name">{e.name}</span>
+                            {e.company && <span class="cus-exec-card__company">{e.company}</span>}
+                            {e.role && <span class="cus-exec-card__role">{e.role}</span>}
+                        </span>
+                    </a>
+                ))}
+            </div>
+
+            {totalPages > 1 && (
+                <nav class="cus-exec-pager" aria-label="Executives pagination" data-exec-pager>
+                    {pageNum > 1 && (
+                        <a href={executivesPageUrl(pageNum - 1)} class="cus-exec-pager__btn" rel="prev" aria-label="Previous page">
+                            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+                        </a>
+                    )}
+                    {pager.map(item =>
+                        item === "gap" ? (
+                            <span class="cus-exec-pager__gap" aria-hidden="true">…</span>
+                        ) : item === pageNum ? (
+                            <span class="cus-exec-pager__btn is-active" aria-current="page">{item}</span>
+                        ) : (
+                            <a href={executivesPageUrl(item)} class="cus-exec-pager__btn">{item}</a>
+                        ),
+                    )}
+                    {pageNum < totalPages && (
+                        <a href={executivesPageUrl(pageNum + 1)} class="cus-exec-pager__btn" rel="next" aria-label="Next page">
+                            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                        </a>
+                    )}
+                </nav>
+            )}
+        </div>
+    </section>
+
+    <script is:inline type="application/json" id="cus-exec-data" set:html={searchData} />
+</Layout>
+
+<script is:inline>
+    ;(function () {
+        function initExecSearch() {
+            const root = document.getElementById("cus-exec")
+            if (!root || root.dataset.bound) return
+            root.dataset.bound = "true"
+
+            const input = root.querySelector("[data-exec-search]")
+            const grid = root.querySelector("[data-exec-grid]")
+            const pager = root.querySelector("[data-exec-pager]")
+            const count = root.querySelector("[data-exec-count]")
+            const dataEl = document.getElementById("cus-exec-data")
+            if (!input || !grid || !dataEl) return
+
+            let all = []
+            try {
+                all = JSON.parse(dataEl.textContent || "[]")
+            } catch (e) {}
+
+            const originalGrid = grid.innerHTML
+            const originalCount = count ? count.textContent : ""
+
+            const esc = s =>
+                String(s || "").replace(/[&<>"']/g, c => ({
+                    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+                })[c])
+            const norm = s =>
+                String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+
+            const card = e => `
+                <a href="${esc(e.l)}" class="cus-exec-card">
+                    <span class="cus-exec-card__photo">
+                        <img src="${esc(e.i)}" alt="${esc(e.n)}" width="92" height="92" loading="lazy" referrerpolicy="no-referrer">
+                    </span>
+                    <span class="cus-exec-card__body">
+                        <span class="cus-exec-card__name">${esc(e.n)}</span>
+                        ${e.c ? `<span class="cus-exec-card__company">${esc(e.c)}</span>` : ""}
+                        ${e.r ? `<span class="cus-exec-card__role">${esc(e.r)}</span>` : ""}
+                    </span>
+                </a>`
+
+            function run() {
+                const raw = input.value.trim()
+                const q = norm(raw)
+                if (!q) {
+                    grid.innerHTML = originalGrid
+                    if (count) count.textContent = originalCount
+                    if (pager) pager.hidden = false
+                    return
+                }
+                const hits = all.filter(e => norm(`${e.n} ${e.c} ${e.r}`).includes(q))
+                grid.innerHTML = hits.length
+                    ? hits.map(card).join("")
+                    : `<p class="cus-exec__empty">No profiles match “${esc(raw)}”.</p>`
+                if (count) count.textContent = `${hits.length} result${hits.length === 1 ? "" : "s"}`
+                if (pager) pager.hidden = true
+            }
+
+            let t
+            input.addEventListener("input", () => {
+                clearTimeout(t)
+                t = setTimeout(run, 120)
+            })
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", initExecSearch)
+        } else {
+            initExecSearch()
+        }
+        document.addEventListener("astro:page-load", initExecSearch)
+    })()
+</script>
+
+<style is:global>
+    .cus-exec {
+        background: #f8fafc;
+        padding: 1.5rem 1rem 3rem;
+    }
+    .cus-exec__container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .cus-exec__crumbs {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        color: #94a3b8;
+        margin-bottom: 0.9rem;
+    }
+    .cus-exec__crumbs a {
+        color: #2563eb;
+        text-decoration: none;
+    }
+    .cus-exec__crumbs a:hover { text-decoration: underline; }
+    .cus-exec__crumbs .current { color: #0f172a; }
+
+    .cus-exec__title {
+        font-size: clamp(1.6rem, 2.5vw, 2.2rem);
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: -0.4px;
+        margin: 0 0 0.75rem;
+    }
+    .cus-exec__intro {
+        max-width: 900px;
+        margin-bottom: 1.5rem;
+    }
+    .cus-exec__intro p {
+        font-size: 15px !important;
+        line-height: 1.7;
+        color: #475569;
+        margin: 0 0 0.75rem !important;
+    }
+
+    /* Toolbar: count + search */
+    .cus-exec__toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+    }
+    .cus-exec__count {
+        margin: 0 !important;
+        font-size: 0.85rem !important;
+        color: #64748b !important;
+    }
+    .cus-exec__search {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0 0.75rem;
+        height: 38px;
+        min-width: 220px;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .cus-exec__search:focus-within {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+    .cus-exec__search i {
+        color: #94a3b8;
+        font-size: 0.85rem;
+    }
+    .cus-exec__search input {
+        border: 0;
+        outline: 0;
+        background: transparent;
+        font: inherit;
+        font-size: 0.875rem;
+        color: #0f172a;
+        width: 100%;
+    }
+
+    /* Grid */
+    .cus-exec__grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+    }
+    @media (max-width: 1100px) {
+        .cus-exec__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 800px) {
+        .cus-exec__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 520px) {
+        .cus-exec__grid { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    /* Card (light take on the reference) */
+    .cus-exec-card {
+        display: grid;
+        grid-template-columns: 92px minmax(0, 1fr);
+        align-items: stretch;
+        min-height: 92px;
+        background-color: #ffffff;
+        background-image:
+            repeating-linear-gradient(135deg, rgba(15, 23, 42, 0.035) 0 1px, transparent 1px 22px),
+            linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+        text-decoration: none !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .cus-exec-card:hover,
+    .cus-exec-card:focus-visible {
+        border-color: #cbd5e1;
+        box-shadow: 0 10px 20px -12px rgba(15, 23, 42, 0.25);
+        transform: translateY(-2px);
+    }
+    .cus-exec-card:focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 2px;
+    }
+
+    .cus-exec-card__photo {
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+        overflow: hidden;
+    }
+    /* !important beats the global img { height: auto !important } in Layout */
+    .cus-exec-card__photo img {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: none !important;
+        object-fit: cover;
+        object-position: center top;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        transition: transform 0.3s ease;
+    }
+    .cus-exec-card:hover .cus-exec-card__photo img {
+        transform: scale(1.04);
+    }
+
+    .cus-exec-card__body {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 0.4rem;
+        padding: 0.75rem 1rem;
+        min-width: 0;
+    }
+    .cus-exec-card__name {
+        font-size: 15px;
+        font-weight: 800;
+        line-height: 1.25;
+        color: #0f172a;
+        padding-bottom: 0.45rem;
+        border-bottom: 1px solid #cbd5e1;
+        transition: border-color 0.2s ease, color 0.2s ease;
+    }
+    .cus-exec-card:hover .cus-exec-card__name {
+        border-bottom-color: #dc2626;
+    }
+    .cus-exec-card__company {
+        font-size: 12.5px;
+        font-weight: 500;
+        line-height: 1.35;
+        color: #475569;
+    }
+    .cus-exec-card__role {
+        font-size: 11.5px;
+        line-height: 1.3;
+        color: #94a3b8;
+        margin-top: -0.2rem;
+    }
+
+    .cus-exec__empty {
+        grid-column: 1 / -1;
+        text-align: center;
+        color: #64748b !important;
+        padding: 2rem 0;
+        margin: 0 !important;
+    }
+
+    /* Pagination */
+    .cus-exec-pager {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+    .cus-exec-pager[hidden] { display: none; }
+    .cus-exec-pager__btn,
+    .cus-exec-pager__gap {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 36px;
+        height: 36px;
+        padding: 0 0.6rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+    .cus-exec-pager__btn {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        color: #0f172a;
+        text-decoration: none;
+        transition: border-color 0.2s ease, color 0.2s ease;
+    }
+    a.cus-exec-pager__btn:hover {
+        border-color: #2563eb;
+        color: #2563eb;
+    }
+    .cus-exec-pager__btn.is-active {
+        background: #0f172a;
+        border-color: #0f172a;
+        color: #fff;
+    }
+    .cus-exec-pager__gap {
+        color: #94a3b8;
+        min-width: 24px;
+        padding: 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .cus-exec-card,
+        .cus-exec-card__photo img { transition: none; }
+    }
+</style>

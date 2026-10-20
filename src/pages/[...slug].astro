@@ -156,12 +156,13 @@ export async function getStaticPaths() {
     }
 
     const validNodes = allNodes.filter((node: any) => {
-        if (!node.uri || node.uri === "/") return false
-        if (node.uri.includes("http") || node.uri.includes("casinous.com")) {
-            return false
-        }
-        return true
-    })
+    if (!node.uri || node.uri === "/") return false
+    if (node.uri === "/executives/") return false // handled by src/pages/executives/
+    if (node.uri.includes("http") || node.uri.includes("casinous.com")) {
+        return false
+    }
+    return true
+})
 
     // Grab 8 recent posts total to divide between the two sections later
     const recentPosts = allPostsList.slice(0, 8)

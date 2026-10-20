@@ -1,0 +1,17 @@
+---
+import ExecutivesDirectory from "../../../components/ExecutivesDirectory.astro"
+import { getExecutivesData, EXECUTIVES_PER_PAGE } from "../../../lib/executives"
+
+export async function getStaticPaths() {
+    const { executives } = await getExecutivesData()
+    const totalPages = Math.ceil(executives.length / EXECUTIVES_PER_PAGE)
+    // Page 1 lives at /executives/, so start from 2
+    return Array.from({ length: Math.max(0, totalPages - 1) }, (_, i) => ({
+        params: { page: String(i + 2) },
+        props: { pageNum: i + 2 },
+    }))
+}
+
+const { pageNum } = Astro.props
+---
+<ExecutivesDirectory pageNum={pageNum} />
