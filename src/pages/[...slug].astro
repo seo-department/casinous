@@ -1332,7 +1332,7 @@ let bodyContent = finalContent
                 <div class="wp-content" set:html={bodyContent} />
             </article>
 
-                        <aside
+            <aside
                 class="post-sidebar"
                 aria-label="Page navigation and trust info"
             >
@@ -1346,7 +1346,9 @@ let bodyContent = finalContent
                         )
                     }
 
-                    {/* TOC on top, Mission Statement below — this group is the sticky part */}
+                    {
+                        /* TOC on top, Mission Statement below — this group is the sticky part */
+                    }
                     <div class="sidebar-sticky-group">
                         {
                             tocItems.length > 0 && (
@@ -2216,7 +2218,6 @@ let bodyContent = finalContent
             display: block !important;
         }
     }
-
 
     .cus-hero-intro {
         margin: 0 0 1.1rem 0 !important;
@@ -3444,12 +3445,10 @@ let bodyContent = finalContent
     }
 
     /* Only the last card sticks, just below the sticky header */
-    @media (min-width: 901px) {
+        @media (min-width: 901px) {
         .sidebar-sticky-wrap > :last-child {
             position: sticky;
             top: calc(var(--cus-mtoc-top, 90px) + 1rem);
-            max-height: calc(100vh - var(--cus-mtoc-top, 90px) - 2rem);
-            overflow-y: auto;
         }
     }
 
@@ -3551,8 +3550,6 @@ let bodyContent = finalContent
         list-style: none;
         margin: 0;
         padding: 0 1.25rem 1.25rem;
-        max-height: 420px;
-        overflow-y: auto;
     }
     .sidebar-toc-list li {
         border-top: 1px solid #f1f5f9;
@@ -3566,7 +3563,6 @@ let bodyContent = finalContent
         font-size: 0.88rem;
         color: #475569 !important;
         text-decoration: none !important;
-        font-weight: 600;
         line-height: 1.4;
         transition:
             color 0.2s ease,
@@ -4024,17 +4020,89 @@ let bodyContent = finalContent
         margin-left: -5px !important;
     }
 
-        /* TOC + Mission Statement travel together as the sticky block */
+    /* TOC + Mission Statement travel together as the sticky block */
     .sidebar-sticky-group {
         display: flex;
         flex-direction: column;
         gap: 1.5rem;
         scrollbar-width: thin;
     }
-    /* Keep the TOC compact so the Mission card stays reachable */
-    .sidebar-sticky-group .sidebar-toc-list {
-        max-height: 320px;
+ 
+
+    /* =========================================
+       🚨 CASINO REVIEW BOX (casino-reviews pages)
+       Keeps the WP review box inside the article column so it never
+       runs under the sidebar. Overrides the 1fr/2.5fr + 4-column rules
+       in Layout.astro, but only inside .wp-content.
+    ========================================= */
+    .content-with-sidebar > article {
+        min-width: 0;
+    }
+    .wp-content .tw-bg-boxbackreview,
+    .wp-content .tw-bg-boxbackreview .md\:tw-container {
+        max-width: 100% !important;
+        min-width: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        box-sizing: border-box;
+    }
+    .wp-content .tw-bg-boxbackreview {
+        overflow: hidden;
     }
 
-    
+    /* Offer card (left) + intro/score card (right) */
+    .wp-content .tw-bg-boxbackreview .tw-grid.md\:tw-grid-cols-3 {
+        grid-template-columns: minmax(200px, 230px) minmax(0, 1fr) !important;
+        gap: 1rem !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+    }
+    .wp-content .tw-bg-boxbackreview .tw-grid.md\:tw-grid-cols-3 > * {
+        min-width: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Score panel: ring + category chips that wrap instead of overflowing */
+    .wp-content .tw-bg-boxbackreview .tw-border-bordercolor {
+        flex-wrap: wrap !important;
+        gap: 1.25rem !important;
+        padding: 1.25rem !important;
+    }
+    .wp-content .tw-bg-boxbackreview .tw-border-bordercolor > div:first-child {
+        width: auto !important;
+        margin-bottom: 0 !important;
+    }
+    .wp-content .tw-bg-boxbackreview .tw-border-bordercolor .tw-grid {
+        flex: 1 1 320px;
+        min-width: 0;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+        gap: 0.6rem !important;
+    }
+
+    /* Narrower desktops / tablets: stack the two cards */
+    @media (max-width: 1150px) {
+        .wp-content .tw-bg-boxbackreview .tw-grid.md\:tw-grid-cols-3 {
+            grid-template-columns: minmax(0, 1fr) !important;
+        }
+        .wp-content
+            .tw-bg-boxbackreview
+            .tw-grid.md\:tw-grid-cols-3
+            > div:first-child {
+            max-width: 360px;
+            width: 100%;
+            margin: 0 auto !important;
+        }
+    }
+
+    /* Phones: ring on top, chips full width */
+    @media (max-width: 600px) {
+        .wp-content .tw-bg-boxbackreview .tw-border-bordercolor {
+            flex-direction: column !important;
+            align-items: center !important;
+        }
+        .wp-content .tw-bg-boxbackreview .tw-border-bordercolor .tw-grid {
+            grid-template-columns: minmax(0, 1fr) !important;
+            width: 100% !important;
+        }
+    }
 </style>

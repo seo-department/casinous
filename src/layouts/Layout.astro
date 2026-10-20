@@ -12986,6 +12986,11 @@ table tr:first-child td {
   .wp-content .toc-icon { transition: none; }
 }
 
+    .sidebar-toc-link {
+        padding: 0.45rem 0;
+        font-size: 0.85rem;
+    }
+
 </style>
 
 <script>
@@ -13374,6 +13379,42 @@ table tr:first-child td {
             }
         }
     })
+
+
+
+
+        // 🚨 SIDEBAR STICKY FIT: full TOC, no inner scroll. If the TOC + Mission
+    // block is taller than the viewport, use a negative sticky top so it
+    // scrolls with the page and then pins with its bottom edge visible.
+    ;(function () {
+        function fitSidebarSticky() {
+            const el = document.querySelector(".sidebar-sticky-wrap > :last-child")
+            if (!el) return
+            if (window.innerWidth < 901) {
+                el.style.top = ""
+                return
+            }
+            const header = document.querySelector(".header-bar")
+            const headerOffset =
+                (header ? header.getBoundingClientRect().height : 90) + 16
+            const available = window.innerHeight - headerOffset - 16
+
+            if (el.offsetHeight > available) {
+                el.style.top = `${window.innerHeight - el.offsetHeight - 16}px`
+            } else {
+                el.style.top = "" // fall back to the CSS value
+            }
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", fitSidebarSticky)
+        } else {
+            fitSidebarSticky()
+        }
+        window.addEventListener("load", fitSidebarSticky) // after fonts/images settle
+        window.addEventListener("resize", fitSidebarSticky, { passive: true })
+        document.addEventListener("astro:page-load", fitSidebarSticky)
+    })()
 </script>
 
 <script>
