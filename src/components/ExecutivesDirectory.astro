@@ -332,11 +332,11 @@ const searchData = JSON.stringify(
     }
 
     /* Card (light take on the reference) */
-    .cus-exec-card {
+        .cus-exec-card {
         display: grid;
-        grid-template-columns: 92px minmax(0, 1fr);
+        grid-template-columns: 120px minmax(0, 1fr);
         align-items: stretch;
-        min-height: 92px;
+        height: 124px;
         background-color: #ffffff;
         background-image:
             repeating-linear-gradient(135deg, rgba(15, 23, 42, 0.035) 0 1px, transparent 1px 22px),
@@ -366,12 +366,13 @@ const searchData = JSON.stringify(
         overflow: hidden;
     }
     /* !important beats the global img { height: auto !important } in Layout */
-    .cus-exec-card__photo img {
+        .cus-exec-card__photo img {
         width: 100% !important;
         height: 100% !important;
         max-width: none !important;
         object-fit: cover;
-        object-position: center top;
+        /* Banners have the person on the right; per-page override via --focus */
+        object-position: var(--focus, 82% 25%);
         margin: 0 !important;
         border-radius: 0 !important;
         transition: transform 0.3s ease;
