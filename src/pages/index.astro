@@ -144,9 +144,9 @@ const shareLinks = [
 
 const getCategoryUrl = (slug: string | undefined) => {
     if (!slug) return "#"
-    // If the category is 'blog', route to /blog/ instead of /category/blog/
+    // If the category is 'blog', route to /blog/ instead of blog/
     if (slug === "blog") return "/blog/"
-    return `/category/${slug}/`
+    return `${slug}/`
 }
 
 const createAuthorSlug = (name: string | undefined) => {
