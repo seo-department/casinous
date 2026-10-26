@@ -16,17 +16,6 @@
       "destination": "/finwiz-admin.php",
       "permanent": true
     },
-    
-    {
-      "source": "/executives",
-      "destination": "/profiles/",
-      "permanent": true
-    },
-    {
-      "source": "/executives/:path*",
-      "destination": "/profiles/:path*",
-      "permanent": true
-    },
     {
       "source": "/play/clubworld-hp",
       "destination": "http://tracking.affiliateedge.eu/default.aspx?AffUserID=10973&casinoID=181",
@@ -1370,6 +1359,526 @@
     {
       "source": "/budgeting/",
       "destination": "/casino-banking/budgeting/",
+      "permanent": true
+    },
+    {
+      "source": "/welcome-bonus/",
+      "destination": "/casino-bonuses/welcome/",
+      "permanent": true
+    },
+    {
+      "source": "/vip/",
+      "destination": "/casino-bonuses/vip/",
+      "permanent": true
+    },
+    {
+      "source": "/vip-programs/",
+      "destination": "/casino-bonuses/vip-programs/",
+      "permanent": true
+    },
+    {
+      "source": "/free-spins/",
+      "destination": "/casino-bonuses/free-spins/",
+      "permanent": true
+    },
+    {
+      "source": "/cashback-bonuses/",
+      "destination": "/casino-bonuses/cashback/",
+      "permanent": true
+    },
+    {
+      "source": "/low-wagering/",
+      "destination": "/casino-bonuses/low-wagering/",
+      "permanent": true
+    },
+    {
+      "source": "/100-deposit/",
+      "destination": "/casino-bonuses/100-deposit/",
+      "permanent": true
+    },
+    {
+      "source": "/no-wagering-bonuses/",
+      "destination": "/casino-bonuses/no-wagering/",
+      "permanent": true
+    },
+    {
+      "source": "/best-payout-casinos/",
+      "destination": "/online-casinos/best-payout/",
+      "permanent": true
+    },
+    {
+      "source": "/adam-greenblatt/",
+      "destination": "/profiles/adam-greenblatt/",
+      "permanent": true
+    },
+    {
+      "source": "/alejandro-tengco/",
+      "destination": "/profiles/alejandro-tengco/",
+      "permanent": true
+    },
+    {
+      "source": "/anna-sainsbury/",
+      "destination": "/profiles/anna-sainsbury/",
+      "permanent": true
+    },
+    {
+      "source": "/amy-howe/",
+      "destination": "/profiles/amy-howe/",
+      "permanent": true
+    },
+    {
+      "source": "/anna-johnson/",
+      "destination": "/profiles/anna-johnson/",
+      "permanent": true
+    },
+    {
+      "source": "/andrew-rhodes/",
+      "destination": "/profiles/andrew-rhodes/",
+      "permanent": true
+    },
+    {
+      "source": "/anthony-carano/",
+      "destination": "/profiles/anthony-carano/",
+      "permanent": true
+    },
+    {
+      "source": "/aregnaz-hakobyan/",
+      "destination": "/profiles/aregnaz-hakobyan/",
+      "permanent": true
+    },
+    {
+      "source": "/bill-hornbuckle/",
+      "destination": "/profiles/bill-hornbuckle/",
+      "permanent": true
+    },
+    {
+      "source": "/bill-miller/",
+      "destination": "/profiles/bill-miller/",
+      "permanent": true
+    },
+    {
+      "source": "/brian-dean/",
+      "destination": "/profiles/brian-dean/",
+      "permanent": true
+    },
+    {
+      "source": "/brigid-simmonds-obe/",
+      "destination": "/profiles/brigid-simmonds-obe/",
+      "permanent": true
+    },
+    {
+      "source": "/bryan-murphy/",
+      "destination": "/profiles/bryan-murphy/",
+      "permanent": true
+    },
+    {
+      "source": "/carsten-koerl/",
+      "destination": "/profiles/carsten-koerl/",
+      "permanent": true
+    },
+    {
+      "source": "/chen-si/",
+      "destination": "/profiles/chen-si/",
+      "permanent": true
+    },
+    {
+      "source": "/craig-billings/",
+      "destination": "/profiles/craig-billings/",
+      "permanent": true
+    },
+    {
+      "source": "/daisy-ho/",
+      "destination": "/profiles/daisy-ho/",
+      "permanent": true
+    },
+    {
+      "source": "/dan-taylor/",
+      "destination": "/profiles/dan-taylor/",
+      "permanent": true
+    },
+    {
+      "source": "/david-mann/",
+      "destination": "/profiles/david-mann/",
+      "permanent": true
+    },
+    {
+      "source": "/david-natroshvili/",
+      "destination": "/profiles/david-natroshvili/",
+      "permanent": true
+    },
+    {
+      "source": "/david-newton/",
+      "destination": "/profiles/david-newton/",
+      "permanent": true
+    },
+    {
+      "source": "/david-lopez/",
+      "destination": "/profiles/david-lopez/",
+      "permanent": true
+    },
+    {
+      "source": "/denise-coates/",
+      "destination": "/profiles/denise-coates/",
+      "permanent": true
+    },
+    {
+      "source": "/derek-stevens/",
+      "destination": "/profiles/derek-stevens/",
+      "permanent": true
+    },
+    {
+      "source": "/erika-ayers-badan/",
+      "destination": "/profiles/erika-ayers-badan/",
+      "permanent": true
+    },
+    {
+      "source": "/ernie-stevens-jr/",
+      "destination": "/profiles/ernie-stevens-jr/",
+      "permanent": true
+    },
+    {
+      "source": "/erwin-van-lambaart/",
+      "destination": "/profiles/erwin-van-lambaart/",
+      "permanent": true
+    },
+    {
+      "source": "/francis-lui/",
+      "destination": "/profiles/francis-lui/",
+      "permanent": true
+    },
+    {
+      "source": "/gustaf-hagman/",
+      "destination": "/profiles/gustaf-hagman/",
+      "permanent": true
+    },
+    {
+      "source": "/henrik-tjarnstrom/",
+      "destination": "/profiles/henrik-tjarnstrom/",
+      "permanent": true
+    },
+    {
+      "source": "/ian-brown/",
+      "destination": "/profiles/ian-brown/",
+      "permanent": true
+    },
+    {
+      "source": "/irina-cornides/",
+      "destination": "/profiles/irina-cornides/",
+      "permanent": true
+    },
+    {
+      "source": "/itai-pazner/",
+      "destination": "/profiles/itai-pazner/",
+      "permanent": true
+    },
+    {
+      "source": "/jason-robins/",
+      "destination": "/profiles/jason-robins/",
+      "permanent": true
+    },
+    {
+      "source": "/jay-snowden/",
+      "destination": "/profiles/jay-snowden/",
+      "permanent": true
+    },
+    {
+      "source": "/jenna-ekstrom/",
+      "destination": "/profiles/jenna-ekstrom/",
+      "permanent": true
+    },
+    {
+      "source": "/jesper-sogaard/",
+      "destination": "/profiles/jesper-sogaard/",
+      "permanent": true
+    },
+    {
+      "source": "/jesper-svensson/",
+      "destination": "/profiles/jesper-svensson/",
+      "permanent": true
+    },
+    {
+      "source": "/jette-nygaard-andersen/",
+      "destination": "/profiles/jette-nygaard-andersen/",
+      "permanent": true
+    },
+    {
+      "source": "/jim-allen/",
+      "destination": "/profiles/jim-allen/",
+      "permanent": true
+    },
+    {
+      "source": "/johan-tjarnberg/",
+      "destination": "/profiles/johan-tjarnberg/",
+      "permanent": true
+    },
+    {
+      "source": "/john-bryant/",
+      "destination": "/profiles/john-bryant/",
+      "permanent": true
+    },
+    {
+      "source": "/john-connelly/",
+      "destination": "/profiles/john-connelly/",
+      "permanent": true
+    },
+    {
+      "source": "/johnny-aitken/",
+      "destination": "/profiles/johnny-aitken/",
+      "permanent": true
+    },
+    {
+      "source": "/julian-jarvis/",
+      "destination": "/profiles/julian-jarvis/",
+      "permanent": true
+    },
+    {
+      "source": "/keith-smith/",
+      "destination": "/profiles/keith-smith/",
+      "permanent": true
+    },
+    {
+      "source": "/kristian-nylen/",
+      "destination": "/profiles/kristian-nylen/",
+      "permanent": true
+    },
+    {
+      "source": "/lara-falzon/",
+      "destination": "/profiles/lara-falzon/",
+      "permanent": true
+    },
+    {
+      "source": "/lynn-valbuena/",
+      "destination": "/profiles/lynn-valbuena/",
+      "permanent": true
+    },
+    {
+      "source": "/matt-kalish/",
+      "destination": "/profiles/matt-kalish/",
+      "permanent": true
+    },
+    {
+      "source": "/matt-king/",
+      "destination": "/profiles/matt-king/",
+      "permanent": true
+    },
+    {
+      "source": "/matt-wilson/",
+      "destination": "/profiles/matt-wilson/",
+      "permanent": true
+    },
+    {
+      "source": "/mark-hughes/",
+      "destination": "/profiles/mark-hughes/",
+      "permanent": true
+    },
+    {
+      "source": "/martin-carlesund/",
+      "destination": "/profiles/martin-carlesund/",
+      "permanent": true
+    },
+    {
+      "source": "/michael-dugher/",
+      "destination": "/profiles/michael-dugher/",
+      "permanent": true
+    },
+    {
+      "source": "/michael-silberling/",
+      "destination": "/profiles/michael-silberling/",
+      "permanent": true
+    },
+    {
+      "source": "/martin-liao/",
+      "destination": "/profiles/martin-liao/",
+      "permanent": true
+    },
+    {
+      "source": "/michael-daly/",
+      "destination": "/profiles/michael-daly/",
+      "permanent": true
+    },
+    {
+      "source": "/mike-ybarra/",
+      "destination": "/profiles/mike-ybarra/",
+      "permanent": true
+    },
+    {
+      "source": "/mor-weizer/",
+      "destination": "/profiles/mor-weizer/",
+      "permanent": true
+    },
+    {
+      "source": "/neil-fairweather/",
+      "destination": "/profiles/neil-fairweather/",
+      "permanent": true
+    },
+    {
+      "source": "/nigel-birrell/",
+      "destination": "/profiles/nigel-birrell/",
+      "permanent": true
+    },
+    {
+      "source": "/nikos-nikolakopoulos/",
+      "destination": "/profiles/nikos-nikolakopoulos/",
+      "permanent": true
+    },
+    {
+      "source": "/olabimpe-akingba/",
+      "destination": "/profiles/olabimpe-akingba/",
+      "permanent": true
+    },
+    {
+      "source": "/lawrence-ho/",
+      "destination": "/profiles/lawrence-ho/",
+      "permanent": true
+    },
+    {
+      "source": "/lim-kok-thay/",
+      "destination": "/profiles/lim-kok-thay/",
+      "permanent": true
+    },
+    {
+      "source": "/pascal-camia/",
+      "destination": "/profiles/pascal-camia/",
+      "permanent": true
+    },
+    {
+      "source": "/patrick-dumont/",
+      "destination": "/profiles/patrick-dumont/",
+      "permanent": true
+    },
+    {
+      "source": "/patrik-hofbauer/",
+      "destination": "/profiles/patrik-hofbauer/",
+      "permanent": true
+    },
+    {
+      "source": "/peter-jackson/",
+      "destination": "/profiles/peter-jackson/",
+      "permanent": true
+    },
+    {
+      "source": "/petra-de-ruiter/",
+      "destination": "/profiles/petra-de-ruiter/",
+      "permanent": true
+    },
+    {
+      "source": "/pontus-lindwall/",
+      "destination": "/profiles/pontus-lindwall/",
+      "permanent": true
+    },
+    {
+      "source": "/richard-schwartz/",
+      "destination": "/profiles/richard-schwartz/",
+      "permanent": true
+    },
+    {
+      "source": "/robert-chvatal/",
+      "destination": "/profiles/robert-chvatal/",
+      "permanent": true
+    },
+    {
+      "source": "/robert-goldstein/",
+      "destination": "/profiles/robert-goldstein/",
+      "permanent": true
+    },
+    {
+      "source": "/sam-swanell/",
+      "destination": "/profiles/sam-swanell/",
+      "permanent": true
+    },
+    {
+      "source": "/sandra-douglass-morgan/",
+      "destination": "/profiles/sandra-douglass-morgan/",
+      "permanent": true
+    },
+    {
+      "source": "/sara-slane/",
+      "destination": "/profiles/sara-slane/",
+      "permanent": true
+    },
+    {
+      "source": "/sheila-morago/",
+      "destination": "/profiles/sheila-morago/",
+      "permanent": true
+    },
+    {
+      "source": "/simon-hammon/",
+      "destination": "/profiles/simon-hammon/",
+      "permanent": true
+    },
+    {
+      "source": "/simon-johnson/",
+      "destination": "/profiles/simon-johnson/",
+      "permanent": true
+    },
+    {
+      "source": "/simon-thomas/",
+      "destination": "/profiles/simon-thomas/",
+      "permanent": true
+    },
+    {
+      "source": "/soo-kim/",
+      "destination": "/profiles/soo-kim/",
+      "permanent": true
+    },
+    {
+      "source": "/stephane-pallez/",
+      "destination": "/profiles/stephane-pallez/",
+      "permanent": true
+    },
+    {
+      "source": "/stian-hornsletten/",
+      "destination": "/profiles/stian-hornsletten/",
+      "permanent": true
+    },
+    {
+      "source": "/tim-miller/",
+      "destination": "/profiles/tim-miller/",
+      "permanent": true
+    },
+    {
+      "source": "/trevor-croker/",
+      "destination": "/profiles/trevor-croker/",
+      "permanent": true
+    },
+    {
+      "source": "/tsachi-maimon/",
+      "destination": "/profiles/tsachi-maimon/",
+      "permanent": true
+    },
+    {
+      "source": "/tom-reeg/",
+      "destination": "/profiles/tom-reeg/",
+      "permanent": true
+    },
+    {
+      "source": "/paul-liberman/",
+      "destination": "/profiles/paul-liberman/",
+      "permanent": true
+    },
+    {
+      "source": "/valentina-bagniya/",
+      "destination": "/profiles/valentina-bagniya/",
+      "permanent": true
+    },
+    {
+      "source": "/walter-bugno/",
+      "destination": "/profiles/walter-bugno/",
+      "permanent": true
+    },
+    {
+      "source": "/big-win-casinos/",
+      "destination": "/online-casinos/big-win/",
+      "permanent": true
+    },
+    {
+      "source": "/loyalty-programs/",
+      "destination": "/casino-bonuses/loyalty-programs/",
+      "permanent": true
+    },
+    {
+      "source": "/offshore-casinos/",
+      "destination": "/online-casinos/offshore/",
       "permanent": true
     }
   ]
