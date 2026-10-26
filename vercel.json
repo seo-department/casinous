@@ -1880,6 +1880,36 @@
       "source": "/offshore-casinos/",
       "destination": "/online-casinos/offshore/",
       "permanent": true
+    },
+    {
+      "source": "/bitcoin-casinos/",
+      "destination": "/online-casinos/bitcoin/",
+      "permanent": true
+    },
+    {
+      "source": "/blacklisted-casinos/",
+      "destination": "/online-casinos/blacklisted/",
+      "permanent": true
+    },
+    {
+      "source": "/canada-casino-guide/",
+      "destination": "/online-casinos/canada/",
+      "permanent": true
+    },
+    {
+      "source": "/casino-safety/",
+      "destination": "/online-casinos/safety/",
+      "permanent": true
+    },
+    {
+      "source": "/ecogra-casinos/",
+      "destination": "/online-casinos/ecogra/",
+      "permanent": true
+    },
+    {
+      "source": "/instant-play-casinos/",
+      "destination": "/online-casinos/instant-play/",
+      "permanent": true
     }
   ]
 }
