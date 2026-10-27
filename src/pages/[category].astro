@@ -97,13 +97,11 @@ const LIVE_SITE = "https://www.casinous.com"
 const currentYear = new Date().getFullYear().toString()
 
 // Thin archives (1–2 posts) stay out of Google until they fill up
-const MIN_POSTS_TO_INDEX = 3
+// 🚨 ROBOTS: every live category archive is indexable.
+// Only Vercel PREVIEW deployments (*.vercel.app) are blocked.
 const vercelEnv = process.env.VERCEL_ENV
 const isPreviewBuild = !!vercelEnv && vercelEnv !== "production"
-const robotsTag =
-    isPreviewBuild || posts.length < MIN_POSTS_TO_INDEX
-        ? "noindex, follow"
-        : "index, follow"
+const robotsTag = isPreviewBuild ? "noindex, follow" : "index, follow"
 
 const canonicalUrl = `${LIVE_SITE}/${category.slug}/`
 
