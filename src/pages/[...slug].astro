@@ -451,15 +451,20 @@ const sharePageUrl =
         ? canonicalUrl
         : new URL(Astro.url.pathname, LIVE_SITE).href
 
+const NAMED_ENTITIES: Record<string, string> = {
+    quot: '"', apos: "'", nbsp: " ", ndash: "–", mdash: "—",
+    lsquo: "‘", rsquo: "’", ldquo: "“", rdquo: "”", hellip: "…",
+    lt: "<", gt: ">",
+}
+
 const decodeBasicEntities = (s: string) =>
-    s
+    (s || "")
+        .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+        .replace(/&#x([0-9a-f]+);/gi, (_, h) =>
+            String.fromCodePoint(parseInt(h, 16)),
+        )
+        .replace(/&([a-z]+);/gi, (m, name) => NAMED_ENTITIES[name] ?? m)
         .replace(/&amp;/g, "&")
-        .replace(/&#0?38;/g, "&")
-        .replace(/&quot;/g, '"')
-        .replace(/&#0?39;|&#8217;|&rsquo;/g, "’")
-        .replace(/&#8211;|&ndash;/g, "–")
-        .replace(/&#8212;|&mdash;/g, "—")
-        .replace(/&nbsp;/g, " ")
 
 const shareTitle = decodeBasicEntities(stripHtmlTags(displayTitle))
 const encUrl = encodeURIComponent(sharePageUrl)
@@ -643,7 +648,7 @@ if (post.uri.startsWith("/casino-reviews/")) {
     rawContent = rawContent.replace(/<h1[^>]*>[\s\S]*?<\/h1>/gi, "")
 }
 
-const tocItems: { text: string; slug: string }[] = []
+const tocItems: { text: string; html: string; slug: string }[] = []
 const h2Regex = /<h2([^>]*)>([\s\S]*?)<\/h2>/gi
 const contentWithIds = rawContent.replace(
     h2Regex,
@@ -654,7 +659,11 @@ const contentWithIds = rawContent.replace(
             .replace(/[^a-z0-9]+/g, "-")
             .replace(/(^-|-$)+/g, "")
         if (cleanText.length > 0)
-            tocItems.push({ text: cleanText, slug: h2Slug })
+            tocItems.push({
+                text: decodeBasicEntities(cleanText).replaceAll("[year]", currentYear),
+                html: cleanText,
+                slug: h2Slug,
+            })
         if (attributes.includes("id=")) return match
         return `<h2${attributes} id="${h2Slug}">${text}</h2>`
     },
@@ -665,7 +674,7 @@ if (tocItems.length > 0) {
     const listItems = tocItems
         .map(
             item =>
-                `<li><a href="#${item.slug}" class="toc-jump-link">${item.text}</a></li>`,
+                `<li><a href="#${item.slug}" class="toc-jump-link">${item.html}</a></li>`,
         )
         .join("")
     tocHTML = `
