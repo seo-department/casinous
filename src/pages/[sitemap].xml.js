@@ -20,8 +20,10 @@ async function fetchAndClean(name) {
     // FIX 2: Rewrite all backend URLs to your Astro frontend URLs
     xmlString = xmlString.replaceAll(wpDomain, astroDomain);
 
-    // FIX 2b: Strip the /category/ base so URLs match your Astro routes
-    // (https://www.casinous.com/category/legislation/ -> https://www.casinous.com/legislation/)
+    // FIX 2b: Remove the "." category base (https://www.casinous.com/./blog/ -> https://www.casinous.com/blog/)
+    xmlString = xmlString.replace(/(https?:\/\/[^/<]+)\/\.\//g, '$1/');
+
+    // FIX 2c: Also strip a real /category/ base, in case you clear the WP field later
     xmlString = xmlString.replace(/(https?:\/\/[^/<]+)\/category\//g, '$1/');
 
     // FIX 3: Remove all <image:image> tags

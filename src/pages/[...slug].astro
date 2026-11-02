@@ -4,7 +4,7 @@ import { getReviewer } from "../data/reviewers"
 import SidebarLinks from "../components/SidebarLinks.astro"
 import OtherAuthors from "../components/OtherAuthors.astro"
 import { getTeamAuthors, type TeamAuthor } from "../lib/authors"
-
+import { authorSlugFromName } from "../lib/authorSlug"
 // 1. Fetch data from WordPress (Posts AND Pages)
 export async function getStaticPaths() {
     // 🚨 1. SINGLE SOURCE OF TRUTH FOR THE DOMAIN
@@ -293,20 +293,22 @@ const yoastTitle = (post.seo?.title || post.title || "").replaceAll(
 )
 const yoastDesc = (post.seo?.metaDesc || "").replaceAll("[year]", currentYear)
 
-// 🚨 FIX: Swap the Cloudways domain and fix the uncategorized path in the Schema
+
+// 🚨 FIX: Swap the CMS domain, fix the uncategorized path, and remove the "." category base
 let yoastSchema = post.seo?.schema?.raw || undefined
 if (yoastSchema) {
     yoastSchema = yoastSchema
         .replaceAll("https://cms.casinous.com", "https://www.casinous.com")
         .replaceAll("/uncategorized/", "/blog/")
+        .replaceAll("/./", "/")
 }
 
-// 🚨 FIX: Force the Yoast canonical URL to use the live domain AND fix the uncategorized path
 let canonicalUrl = post.seo?.canonical || undefined
 if (canonicalUrl) {
     canonicalUrl = canonicalUrl
         .replace("https://cms.casinous.com", "https://www.casinous.com")
         .replace("/uncategorized/", "/blog/")
+        .replace("/./", "/")
 }
 const focusKeyword = post.seo?.focuskw || undefined
 
@@ -325,8 +327,9 @@ const yoastBreadcrumbs = rawBreadcrumbs.map((crumb: any, index: number) => {
         /https?:\/+wordpress-[a-zA-Z0-9-]+\.cloudwaysapps\.com/gi,
         "",
     )
-    // Fix uncategorized breadcrumb paths
+        // Fix uncategorized breadcrumb paths
     cleanUrl = cleanUrl.replace("/uncategorized/", "/blog/")
+    cleanUrl = cleanUrl.replace("/./", "/")
 
     if (cleanUrl === "") cleanUrl = "/"
 
@@ -346,6 +349,8 @@ const yoastBreadcrumbs = rawBreadcrumbs.map((crumb: any, index: number) => {
         isLast: isLastItem,
     }
 })
+
+
 
 // 🚨 ROBOTS: decided HERE, never by Yoast/WordPress.
 // The CMS (cms.casinous.com) can be set to "Discourage search engines"
@@ -391,10 +396,7 @@ authorAvatar = authorAvatar.replace(
     wpDomain,
 )
 
-const authorSlug = authorName
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "")
+const authorSlug = authorSlugFromName(authorName)
 const authorLink = `/about-us/${authorSlug}/`
 
 const stripHtmlTags = (html: string) => {
@@ -571,11 +573,13 @@ const blogCatIsGeneric =
 const blogCatName = blogCatIsGeneric
     ? "Blog"
     : decodeBasicEntities(blogCatNode.name)
+
 const blogCatLink = blogCatIsGeneric
     ? "/blog/"
     : (blogCatNode.uri || "/blog/")
           .replace(/https?:\/\/[^/]+/i, "")
           .replace("/uncategorized/", "/blog/")
+          .replace("/./", "/")
 
 // 🚨 SHARE RAIL (posts only): vertical floating bar beside the article
 // with the most popular networks. Pinterest uses the featured image.
@@ -875,7 +879,7 @@ let bodyContent = finalContent
 ---
 
 <Layout
-    title={`${post.title} | AU Casinos Online`}
+    title={`${post.title} | US Casinos Online`}
     seoTitle={yoastTitle}
     description={yoastDesc}
     schema={yoastSchema}
