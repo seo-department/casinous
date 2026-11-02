@@ -1,6 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro"
-
+import { authorSlugFromName, getAuthorName } from "../lib/authorSlug"
 // 1. Fetch Homepage SEO, 30 Posts, Users, AND Categories in a single GraphQL query
 const wpUrl = "https://cms.casinous.com/graphql"
 
@@ -79,8 +79,10 @@ if (result.errors) {
 // --- 2. PROCESS SEO DATA ---
 const page = result.data?.nodeByUri
 const currentYear = new Date().getFullYear().toString()
-const yoastTitle = "Casino US | Independent Online Casino Reviews, News & Guides"
-const yoastDesc = "Casino US is your trusted source for Online Casinos in the USA, for 10+ years. Honest Casino reviews, expert analysis, and guides to help you play smarter."
+const yoastTitle =
+    "Casino US | Independent Online Casino Reviews, News & Guides"
+const yoastDesc =
+    "Casino US is your trusted source for Online Casinos in the USA, for 10+ years. Honest Casino reviews, expert analysis, and guides to help you play smarter."
 
 const wpDomain = "https://cms.casinous.com"
 let yoastSchema = page?.seo?.schema?.raw || undefined
@@ -149,13 +151,7 @@ const getCategoryUrl = (slug: string | undefined) => {
     return `${slug}/`
 }
 
-const createAuthorSlug = (name: string | undefined) => {
-    if (!name) return "editorial-team"
-    return name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)+/g, "")
-}
+const createAuthorSlug = (name: string | undefined) => authorSlugFromName(name)
 
 const cleanImageUrl = (url: string | undefined) => {
     if (!url) return "https://via.placeholder.com/300x150"
@@ -268,7 +264,7 @@ const manualFaqs = [
         category: "Casino",
         title: "What are the best payout casino games?",
         excerpt:
-              "The best payout casino games are Roulette, Blackjack, and Video Poker. These games offer the lowest house edge and give the player the best chance to win. Some of them even allow a player's skill to improve their chances of winning. Online slots have some of the biggest payouts, but generally, the house edge is larger, and winning is completely dependent on luck.",
+            "The best payout casino games are Roulette, Blackjack, and Video Poker. These games offer the lowest house edge and give the player the best chance to win. Some of them even allow a player's skill to improve their chances of winning. Online slots have some of the biggest payouts, but generally, the house edge is larger, and winning is completely dependent on luck.",
         uri: "/online-casinos/best-payout/",
     },
     {
@@ -279,12 +275,11 @@ const manualFaqs = [
         uri: "/online-casinos/new/",
     },
 
-
     {
         category: "Casino",
         title: "How do I know if a new online casino is safe?",
         excerpt:
-              "  This can be a bit tricky, but it is important to make sure it is before depositing any money. The best way is to make sure the new casino is to ensure it is properly licensed and regulated. Never deposit cash at a new site before it gets its license sorted. ",
+            "  This can be a bit tricky, but it is important to make sure it is before depositing any money. The best way is to make sure the new casino is to ensure it is properly licensed and regulated. Never deposit cash at a new site before it gets its license sorted. ",
         uri: "/online-casinos/best-payout/",
     },
     {
@@ -295,12 +290,11 @@ const manualFaqs = [
         uri: "/online-gambling/",
     },
 
-
     {
         category: "Casino",
         title: "Are online slots rigged?",
         excerpt:
-              "  Online slots from licensed software providers like RTG, NetEnt, and Betsoft use the same RNG as the real money version. The algorithm is identical only the currency changes. Games certified by eCOGRA or GLI are independently audited. Avoid demo slots from unverified studios with no third-party certification.",
+            "  Online slots from licensed software providers like RTG, NetEnt, and Betsoft use the same RNG as the real money version. The algorithm is identical only the currency changes. Games certified by eCOGRA or GLI are independently audited. Avoid demo slots from unverified studios with no third-party certification.",
         uri: "/online-slots/",
     },
     {
@@ -310,8 +304,6 @@ const manualFaqs = [
             "   Some casinos require a bonus code to be entered at the cashier before you deposit. Others activate the welcome offer automatically. Check the specific offer page before depositing; a missed code usually cannot be applied retroactively. If no code is shown, the offer likely activates on deposit. ",
         uri: "/casino-bonuses/",
     },
- 
-   
 ]
 
 // Topic tabs for the Q&A block, built from the categories present (first-seen order).
@@ -497,7 +489,8 @@ const registerAuthor = (
 recentPosts.forEach((p: any) => {
     const a = p.author?.node
     if (!a) return
-    const name = a.firstName && a.lastName ? `${a.firstName} ${a.lastName}` : a.name
+    const name =
+        a.firstName && a.lastName ? `${a.firstName} ${a.lastName}` : a.name
     registerAuthor(name, a.avatar?.url, undefined)
 })
 
@@ -522,12 +515,14 @@ recentPosts.forEach((p: any) => {
 })
 
 authorPopupMap.forEach((entry, name) => {
-    entry.posts = (postsByAuthorName.get(name) || []).slice(0, 5).map((p: any) => ({
-        title: p.title,
-        link: getRelativeUrl(p.uri),
-        image: cleanImageUrl(p.featuredImage?.node?.sourceUrl),
-        date: formatShortDate(p.date),
-    }))
+    entry.posts = (postsByAuthorName.get(name) || [])
+        .slice(0, 5)
+        .map((p: any) => ({
+            title: p.title,
+            link: getRelativeUrl(p.uri),
+            image: cleanImageUrl(p.featuredImage?.node?.sourceUrl),
+            date: formatShortDate(p.date),
+        }))
 })
 
 const authorPopupJson = JSON.stringify(
@@ -754,17 +749,15 @@ const authorPopupJson = JSON.stringify(
                                 <span>{formatShortDate(mainPost.date)}</span>
                                 <span>•</span>
                                 <a
-                                    href={`/about-us/${createAuthorSlug(mainPost.author?.node?.name)}/`}
+                                    href={`/about-us/${createAuthorSlug(getAuthorName(mainPost.author?.node))}/`}
                                     class="hover-red"
                                     style="text-transform: uppercase;"
                                     data-open-author-popup="true"
-                                    data-author-key={
-                                        mainPost.author?.node?.name ||
-                                        "Editorial Team"
-                                    }
+                                    data-author-key={getAuthorName(
+                                        mainPost.author?.node,
+                                    )}
                                 >
-                                    {mainPost.author?.node?.name ||
-                                        "Editorial Team"}
+                                    {getAuthorName(mainPost.author?.node)}
                                 </a>
                             </div>
                             <div
@@ -1047,7 +1040,8 @@ const authorPopupJson = JSON.stringify(
                                     )}
                                     class="category hover-red"
                                 >
-                                    {post.categories?.nodes[0]?.name || "Report"}
+                                    {post.categories?.nodes[0]?.name ||
+                                        "Report"}
                                 </a>
                                 <span>•</span>
                                 <time datetime={post.date}>
@@ -1067,7 +1061,11 @@ const authorPopupJson = JSON.stringify(
             </h2>
             <div class="nav-arrows">
                 <a href="/betting-systems/" class="more-link">More &rarr;</a>
-                <button type="button" id="guides-prev" aria-label="Previous guides">
+                <button
+                    type="button"
+                    id="guides-prev"
+                    aria-label="Previous guides"
+                >
                     <i class="fa-solid fa-chevron-left"></i>
                 </button>
                 <button type="button" id="guides-next" aria-label="Next guides">
@@ -1077,8 +1075,12 @@ const authorPopupJson = JSON.stringify(
         </header>
 
         <div class="tab-filters-small" id="guides-filters">
-            <button type="button" class="active" data-filter="top-picks">Top Picks</button>
-            <button type="button" data-filter="most-popular">Most Popular</button>
+            <button type="button" class="active" data-filter="top-picks"
+                >Top Picks</button
+            >
+            <button type="button" data-filter="most-popular"
+                >Most Popular</button
+            >
             <button type="button" data-filter="newest">Newest</button>
         </div>
 
@@ -1126,10 +1128,14 @@ const authorPopupJson = JSON.stringify(
         </header>
 
         <div class="tab-filters-pill mb-md" id="faq-filters">
-            <button type="button" class="active" data-filter="all">All Q&As</button>
+            <button type="button" class="active" data-filter="all"
+                >All Q&As</button
+            >
             {
                 faqCategories.map((cat: string) => (
-                    <button type="button" data-filter={cat}>{cat}</button>
+                    <button type="button" data-filter={cat}>
+                        {cat}
+                    </button>
                 ))
             }
         </div>
@@ -1244,7 +1250,7 @@ const authorPopupJson = JSON.stringify(
                             rel="noopener noreferrer"
                             aria-label="Facebook"
                         >
-                            <i class="fa-brands fa-facebook-f" />
+                            <i class="fa-brands fa-facebook-f"></i>
                         </a>
                         <a
                             href="https://www.instagram.com/realcasino_us/"
@@ -1252,19 +1258,19 @@ const authorPopupJson = JSON.stringify(
                             rel="noopener noreferrer"
                             aria-label="Instagram"
                         >
-                            <i class="fa-brands fa-instagram" />
+                            <i class="fa-brands fa-instagram"></i>
                         </a>
                     </div>
                 </div>
             </div>
-
-            
         </section>
 
-        {/* 🚨 AUTHOR POPUP — one shared card, filled in per-author on
+        {
+            /* 🚨 AUTHOR POPUP — one shared card, filled in per-author on
              hover/tap from the JSON payload below. Works for every byline
              on the page (hero, main post, each "More News" card) without
-             hardcoding any one author. */}
+             hardcoding any one author. */
+        }
         <div
             class="author-popup-card"
             id="author-popup-card"
@@ -1277,7 +1283,7 @@ const authorPopupJson = JSON.stringify(
                 id="author-popup-close"
                 aria-label="Close"
             >
-                <i class="fa-solid fa-xmark" />
+                <i class="fa-solid fa-xmark"></i>
             </button>
 
             <div class="author-popup-header">
@@ -1289,18 +1295,17 @@ const authorPopupJson = JSON.stringify(
                     referrerpolicy="no-referrer"
                 />
                 <span class="author-popup-eyebrow">Author</span>
-                <h3 class="author-popup-name" id="author-popup-name" />
+                <h3 class="author-popup-name" id="author-popup-name"></h3>
             </div>
 
             <div class="author-popup-body">
                 <span class="author-popup-label">About Author</span>
-                <p class="author-popup-bio" id="author-popup-bio" />
+                <p class="author-popup-bio" id="author-popup-bio"></p>
 
                 <span
                     class="author-popup-label author-popup-label-posts"
-                    id="author-popup-posts-label"
-                />
-                <ul class="author-popup-posts" id="author-popup-posts" />
+                    id="author-popup-posts-label"></span>
+                <ul class="author-popup-posts" id="author-popup-posts"></ul>
             </div>
 
             <a
@@ -1309,7 +1314,7 @@ const authorPopupJson = JSON.stringify(
                 id="author-popup-also-wrote"
             >
                 Also Wrote!
-                <i class="fa-solid fa-chevron-right" />
+                <i class="fa-solid fa-chevron-right"></i>
             </a>
         </div>
         <script
@@ -1331,13 +1336,16 @@ const authorPopupJson = JSON.stringify(
         const buttons = bar.querySelectorAll("button")
         const cards = document.querySelectorAll(".qa-grid .qa-card")
 
-        buttons.forEach((btn) => {
+        buttons.forEach(btn => {
             btn.addEventListener("click", () => {
                 const filter = btn.getAttribute("data-filter")
-                buttons.forEach((b) => b.classList.toggle("active", b === btn))
-                cards.forEach((card) => {
+                buttons.forEach(b => b.classList.toggle("active", b === btn))
+                cards.forEach(card => {
                     const cat = card.getAttribute("data-faq-category")
-                    card.classList.toggle("is-hidden", filter !== "all" && cat !== filter)
+                    card.classList.toggle(
+                        "is-hidden",
+                        filter !== "all" && cat !== filter,
+                    )
                 })
             })
         })
@@ -1356,22 +1364,32 @@ const authorPopupJson = JSON.stringify(
 
         if (filterBar) {
             const buttons = filterBar.querySelectorAll("button")
-            buttons.forEach((btn) => {
+            buttons.forEach(btn => {
                 btn.addEventListener("click", () => {
-                    buttons.forEach((b) => b.classList.toggle("active", b === btn))
+                    buttons.forEach(b =>
+                        b.classList.toggle("active", b === btn),
+                    )
                     const filter = btn.getAttribute("data-filter")
                     const cards = originalOrder.slice()
 
                     if (filter === "most-popular") {
                         cards
-                            .sort((a, b) => Number(b.dataset.popularity || 0) - Number(a.dataset.popularity || 0))
-                            .forEach((card) => track.appendChild(card))
+                            .sort(
+                                (a, b) =>
+                                    Number(b.dataset.popularity || 0) -
+                                    Number(a.dataset.popularity || 0),
+                            )
+                            .forEach(card => track.appendChild(card))
                     } else if (filter === "newest") {
                         cards
-                            .sort((a, b) => new Date(b.dataset.date || 0).getTime() - new Date(a.dataset.date || 0).getTime())
-                            .forEach((card) => track.appendChild(card))
+                            .sort(
+                                (a, b) =>
+                                    new Date(b.dataset.date || 0).getTime() -
+                                    new Date(a.dataset.date || 0).getTime(),
+                            )
+                            .forEach(card => track.appendChild(card))
                     } else {
-                        cards.forEach((card) => track.appendChild(card))
+                        cards.forEach(card => track.appendChild(card))
                     }
 
                     track.scrollTo({ left: 0, behavior: "smooth" })
@@ -1417,10 +1435,13 @@ const authorPopupJson = JSON.stringify(
             toast.textContent = msg
             toast.classList.add("is-visible")
             clearTimeout(toastTimer)
-            toastTimer = setTimeout(() => toast.classList.remove("is-visible"), 1800)
+            toastTimer = setTimeout(
+                () => toast.classList.remove("is-visible"),
+                1800,
+            )
         }
 
-        toggle.addEventListener("click", async (e) => {
+        toggle.addEventListener("click", async e => {
             e.stopPropagation()
             // Phones/tablets: use the native share sheet (any installed app)
             if (isTouch && navigator.share) {
@@ -1436,26 +1457,28 @@ const authorPopupJson = JSON.stringify(
         })
 
         // Open social share links in a small centered popup (new tab fallback)
-        wrap.querySelectorAll<HTMLAnchorElement>("[data-share-popup]").forEach((a) => {
-            a.addEventListener("click", (e) => {
-                const w = 600
-                const h = 560
-                const left = window.screenX + (window.outerWidth - w) / 2
-                const top = window.screenY + (window.outerHeight - h) / 2
-                const popup = window.open(
-                    a.href,
-                    "share",
-                    `width=${w},height=${h},left=${left},top=${top}`,
-                )
-                if (popup) {
-                    popup.opener = null
-                    e.preventDefault()
-                }
-            })
-        })
+        wrap.querySelectorAll<HTMLAnchorElement>("[data-share-popup]").forEach(
+            a => {
+                a.addEventListener("click", e => {
+                    const w = 600
+                    const h = 560
+                    const left = window.screenX + (window.outerWidth - w) / 2
+                    const top = window.screenY + (window.outerHeight - h) / 2
+                    const popup = window.open(
+                        a.href,
+                        "share",
+                        `width=${w},height=${h},left=${left},top=${top}`,
+                    )
+                    if (popup) {
+                        popup.opener = null
+                        e.preventDefault()
+                    }
+                })
+            },
+        )
 
         if (copyBtn) {
-            copyBtn.addEventListener("click", async (e) => {
+            copyBtn.addEventListener("click", async e => {
                 e.stopPropagation()
                 try {
                     await navigator.clipboard.writeText(url)
@@ -1480,11 +1503,11 @@ const authorPopupJson = JSON.stringify(
             })
         }
 
-        document.addEventListener("click", (e) => {
+        document.addEventListener("click", e => {
             if (!wrap.contains(e.target as Node)) setOpen(false)
         })
 
-        document.addEventListener("keydown", (e) => {
+        document.addEventListener("keydown", e => {
             if (e.key === "Escape") setOpen(false)
         })
     }
@@ -1528,11 +1551,14 @@ const authorPopupJson = JSON.stringify(
 
         function scheduleHide(delay) {
             cancelHide()
-            hideTimer = setTimeout(() => {
-                card.classList.remove("is-open")
-                card.setAttribute("aria-hidden", "true")
-                currentKey = null
-            }, delay === undefined ? 220 : delay)
+            hideTimer = setTimeout(
+                () => {
+                    card.classList.remove("is-open")
+                    card.setAttribute("aria-hidden", "true")
+                    currentKey = null
+                },
+                delay === undefined ? 220 : delay,
+            )
         }
 
         function fillCard(entry) {
@@ -1546,7 +1572,7 @@ const authorPopupJson = JSON.stringify(
             if (entry.posts && entry.posts.length > 0) {
                 postsLabelEl.textContent = `Latest Posts By: ${entry.name}`
                 postsLabelEl.style.display = ""
-                entry.posts.forEach((post) => {
+                entry.posts.forEach(post => {
                     const li = document.createElement("li")
                     const a = document.createElement("a")
                     a.href = post.link
@@ -1629,7 +1655,7 @@ const authorPopupJson = JSON.stringify(
             card.setAttribute("aria-hidden", "false")
         }
 
-        triggers.forEach((el) => {
+        triggers.forEach(el => {
             if (el.dataset.authorPopupBound) return
             el.dataset.authorPopupBound = "true"
 
@@ -1638,9 +1664,12 @@ const authorPopupJson = JSON.stringify(
             el.addEventListener("focus", () => showCard(el))
             el.addEventListener("blur", () => scheduleHide(120))
 
-            el.addEventListener("click", (e) => {
+            el.addEventListener("click", e => {
                 e.preventDefault()
-                if (card.classList.contains("is-open") && currentKey === el.dataset.authorKey) {
+                if (
+                    card.classList.contains("is-open") &&
+                    currentKey === el.dataset.authorKey
+                ) {
                     scheduleHide(0)
                 } else {
                     showCard(el)
@@ -1659,17 +1688,19 @@ const authorPopupJson = JSON.stringify(
             closeBtn.addEventListener("click", () => scheduleHide(0))
         }
 
-        document.addEventListener("click", (e) => {
+        document.addEventListener("click", e => {
             if (!card.classList.contains("is-open")) return
             if (e.target.closest("[data-open-author-popup]")) return
             if (!card.contains(e.target)) scheduleHide(0)
         })
 
-        document.addEventListener("keydown", (e) => {
+        document.addEventListener("keydown", e => {
             if (e.key === "Escape") scheduleHide(0)
         })
 
-        window.addEventListener("scroll", () => scheduleHide(0), { passive: true })
+        window.addEventListener("scroll", () => scheduleHide(0), {
+            passive: true,
+        })
         window.addEventListener("resize", () => scheduleHide(0))
     }
 
@@ -1760,7 +1791,9 @@ const authorPopupJson = JSON.stringify(
         justify-content: center;
         color: #ffffff !important;
         font-size: 0.95rem;
-        transition: transform 0.2s ease, filter 0.2s ease;
+        transition:
+            transform 0.2s ease,
+            filter 0.2s ease;
     }
     .site-author-socials a:nth-child(1) {
         background-color: #1877f2;
@@ -1855,8 +1888,8 @@ const authorPopupJson = JSON.stringify(
     }
 
     span.amb-name a {
-    color: #f8fafc !important;
-}
+        color: #f8fafc !important;
+    }
 
     .amb-name a:hover {
         color: #60a5fa;
@@ -2414,7 +2447,12 @@ const authorPopupJson = JSON.stringify(
         content: "";
         position: absolute;
         inset: 0;
-        background: linear-gradient(to top, rgb(30 41 59) 0%, rgb(30 41 59) 22%, transparent 45%);
+        background: linear-gradient(
+            to top,
+            rgb(30 41 59) 0%,
+            rgb(30 41 59) 22%,
+            transparent 45%
+        );
         z-index: 1;
     }
 
