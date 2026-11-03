@@ -1914,7 +1914,12 @@
     {
       "source": "/play/jacks-pay/",
       "destination": "https://record.onlinecasinoshare.com/_6KychLKsnaPT2Fu8bIPGIGNd7ZgqdRLk/1/",
-      "permanent": false
+      "permanent": true
+    },
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
     }
   ]
 }

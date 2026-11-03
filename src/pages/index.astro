@@ -537,6 +537,9 @@ const authorPopupJson = JSON.stringify(
     schema={yoastSchema}
 >
     <main class="news-portal-container">
+        <h1 class="page-h1">
+            Online Casinos in the USA – Honest Reviews, News &amp; Guides
+        </h1>
         <nav class="nav-filters">
             <a href="#" class="nav-btn active">All News</a>
             <a href="/blog/" class="nav-btn">Blogs</a>
@@ -597,12 +600,12 @@ const authorPopupJson = JSON.stringify(
                                     <span class="badge-breaking">Breaking</span>
                                 </div>
                             </a>
-                            <h1 class="article-title">
+                            <h2 class="article-title">
                                 <a
                                     href={getRelativeUrl(mainPost.uri)}
                                     set:html={mainPost.title}
                                 />
-                            </h1>
+                            </h2>
 
                             <div class="author-meta-box">
                                 <div class="amb-left">
@@ -2531,6 +2534,14 @@ const authorPopupJson = JSON.stringify(
         gap: 2rem;
     }
 
+    .page-h1 {
+    font-size: clamp(1.5rem, 2.5vw, 2rem);
+    font-weight: 800;
+    line-height: 1.2;
+    margin: 0 0 1.5rem 0;
+    color: #111827;
+}
+
     /* MAIN ARTICLE */
     .image-wrapper {
         width: 100%;
@@ -3155,4 +3166,6 @@ const authorPopupJson = JSON.stringify(
     .author-popup-also-wrote i {
         font-size: 0.75rem;
     }
+
+    
 </style>
