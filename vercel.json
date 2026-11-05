@@ -1920,6 +1920,16 @@
       "source": "/index.html",
       "destination": "/",
       "permanent": true
+    },
+    {
+      "source": "/author/alex/",
+      "destination": "/about-us/alex-harper/",
+      "permanent": true
+    },
+    {
+      "source": "/author/paige/",
+      "destination": "/about-us/paige-williams/",
+      "permanent": true
     }
   ]
 }
