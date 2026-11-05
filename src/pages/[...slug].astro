@@ -5,6 +5,25 @@ import SidebarLinks from "../components/SidebarLinks.astro"
 import OtherAuthors from "../components/OtherAuthors.astro"
 import { getTeamAuthors, type TeamAuthor } from "../lib/authors"
 import { authorSlugFromName } from "../lib/authorSlug"
+
+// 👇 ADD THIS BLOCK HERE
+const AUTHOR_NICENAME_MAP: Record<string, string> = {
+    david: "dave-cooper",
+    kylie: "kylie-johnston",
+    alex: "alex-harper",
+    paige: "paige-williams",
+}
+
+const fixAuthorUrls = (s: string) =>
+    s.replace(
+        /(https?:\/\/(?:www\.|cms\.)?casinous\.com)?\/author\/([a-z0-9-]+)\/?/gi,
+        (m, _d, nice) =>
+            AUTHOR_NICENAME_MAP[nice.toLowerCase()]
+                ? `https://www.casinous.com/about-us/${AUTHOR_NICENAME_MAP[nice.toLowerCase()]}/`
+                : m,
+    )
+// 👆 END OF NEW BLOCK
+
 // 1. Fetch data from WordPress (Posts AND Pages)
 export async function getStaticPaths() {
     // 🚨 1. SINGLE SOURCE OF TRUTH FOR THE DOMAIN
@@ -294,15 +313,15 @@ const yoastTitle = (post.seo?.title || post.title || "").replaceAll(
 const yoastDesc = (post.seo?.metaDesc || "").replaceAll("[year]", currentYear)
 
 
-// 🚨 FIX: Swap the CMS domain, fix the uncategorized path, and remove the "." category base
 let yoastSchema = post.seo?.schema?.raw || undefined
 if (yoastSchema) {
-    yoastSchema = yoastSchema
-        .replaceAll("https://cms.casinous.com", "https://www.casinous.com")
-        .replaceAll("/uncategorized/", "/blog/")
-        .replaceAll("/./", "/")
+    yoastSchema = fixAuthorUrls(
+        yoastSchema
+            .replaceAll("https://cms.casinous.com", "https://www.casinous.com")
+            .replaceAll("/uncategorized/", "/blog/")
+            .replaceAll("/./", "/"),
+    )
 }
-
 let canonicalUrl = post.seo?.canonical || undefined
 if (canonicalUrl) {
     canonicalUrl = canonicalUrl
@@ -760,8 +779,9 @@ let contentWithToc = contentWithIds
 if (tocHTML && !contentWithIds.includes("[casino_toc]")) {
     contentWithToc = contentWithIds.replace(/<h2/i, `${tocHTML}<h2`)
 }
-const fixedContent = contentWithToc
-    .replaceAll("[casino_toc]", tocHTML)
+const fixedContent = fixAuthorUrls(
+    contentWithToc
+        .replaceAll("[casino_toc]", tocHTML)
     .replace(/src="[^"]*placeholder[^"]*"/gi, "")
     .replaceAll('data-src="/wp-content/', 'src="/wp-content/')
     .replaceAll('data-srcset="/wp-content/', 'srcset="/wp-content/')
@@ -785,7 +805,8 @@ const fixedContent = contentWithToc
     .replaceAll("[casino_toc]", "")
     .replace(/<p>\s*<(strong|b)>\s*Updated:\s*<\/(strong|b)>.*?<\/p>/gi, "")
     .replace(/<h1[^>]*>[\s\S]*?<\/h1>/i, "")
-    .replaceAll("[year]", currentYear)
+    .replaceAll("[year]", currentYear),
+)
 
 const editorialStatementHtml = `<div class="cus-editorial-statement"><p><em><strong>Editorial Statement:</strong> Every operator featured on Casino US goes through our own independent review process. We test the platforms, dig into the terms, and form our own conclusions before anything gets published. Some links on this site are affiliate links, and we may earn a commission when a reader signs up through them — but that relationship has zero bearing on how we score or talk about a casino. If a site falls short somewhere, we say so, commercial partnership or not. Our <a href="https://www.casinous.com/how-we-rate-online-casinos/">evaluation criteria are laid out publicly</a>, and every review — good, bad, or mixed — reflects what our team found, not what a partner wants us to say.</em></p></div>`
 
