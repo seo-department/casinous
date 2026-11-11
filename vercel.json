@@ -1914,7 +1914,22 @@
     {
       "source": "/play/jacks-pay/",
       "destination": "https://record.onlinecasinoshare.com/_6KychLKsnaPT2Fu8bIPGIGNd7ZgqdRLk/1/",
-      "permanent": false
+      "permanent": true
+    },
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/author/alex/",
+      "destination": "/about-us/alex-harper/",
+      "permanent": true
+    },
+    {
+      "source": "/author/paige/",
+      "destination": "/about-us/paige-williams/",
+      "permanent": true
     }
   ]
 }
