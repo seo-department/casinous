@@ -3,8 +3,16 @@ export const prerender = true;
 const wpDomain = 'https://cms.casinous.com';
 const astroDomain = 'https://www.casinous.com';
 
+// Sitemaps that have no matching front-end routes (they would be all 404s)
+const EXCLUDED = ['author-sitemap'];
+
 // Shared helper: fetch a WP sitemap by name and clean it up
 async function fetchAndClean(name) {
+    // Never serve excluded sitemaps
+    if (EXCLUDED.includes(name)) {
+        return null;
+    }
+
     const wpSitemapUrl = `${wpDomain}/${name}.xml`;
     const response = await fetch(wpSitemapUrl);
 
@@ -29,6 +37,21 @@ async function fetchAndClean(name) {
     // FIX 3: Remove all <image:image> tags
     xmlString = xmlString.replace(/<image:image>[\s\S]*?<\/image:image>/gi, '');
 
+    // FIX 4: Remove excluded sub-sitemaps from the sitemap index
+    for (const excluded of EXCLUDED) {
+        const pattern = new RegExp(
+            `<sitemap>\\s*<loc>[^<]*\\/${excluded}\\.xml<\\/loc>[\\s\\S]*?<\\/sitemap>`,
+            'gi'
+        );
+        xmlString = xmlString.replace(pattern, '');
+    }
+
+    // FIX 5: Safety net - drop any <url> block pointing at /author/
+    xmlString = xmlString.replace(
+        /<url>\s*<loc>[^<]*\/author\/[^<]*<\/loc>[\s\S]*?<\/url>/gi,
+        ''
+    );
+
     return xmlString;
 }
 
@@ -50,6 +73,7 @@ export async function getStaticPaths() {
                 .filter(Boolean);
 
             for (const name of names) {
+                if (EXCLUDED.includes(name)) continue; // skip author-sitemap etc.
                 paths.push({ params: { sitemap: name } });
             }
         }

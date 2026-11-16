@@ -1004,7 +1004,6 @@
       "destination": "/blog/what-are-the-odds-of-winning-in-blackjack/",
       "permanent": true
     },
-    
     {
       "source": "/resorts-world-las-vegas-on-track-for-2020-opening/",
       "destination": "/blog/resorts-world-las-vegas-on-track-for-2020-opening/",
@@ -1925,6 +1924,5 @@
       "destination": "/",
       "permanent": true
     }
-    
   ]
 }
