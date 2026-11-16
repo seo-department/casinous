@@ -1004,11 +1004,7 @@
       "destination": "/blog/what-are-the-odds-of-winning-in-blackjack/",
       "permanent": true
     },
-    {
-      "source": "/author/lara/",
-      "destination": "/about-us/lara-johns/",
-      "permanent": true
-    },
+    
     {
       "source": "/resorts-world-las-vegas-on-track-for-2020-opening/",
       "destination": "/blog/resorts-world-las-vegas-on-track-for-2020-opening/",
@@ -1142,16 +1138,6 @@
     {
       "source": "/uncategorized/michigan-state-on-the-verge-of-legalizing-all-gambling/",
       "destination": "/blog/michigan-state-on-the-verge-of-legalizing-all-gambling/",
-      "permanent": true
-    },
-    {
-      "source": "/author/kylie/",
-      "destination": "/about-us/kylie-johnston/",
-      "permanent": true
-    },
-    {
-      "source": "/author/david/",
-      "destination": "/about-us/dave-cooper/",
       "permanent": true
     },
     {
@@ -1357,11 +1343,6 @@
     {
       "source": "/casino-reviews/planet-7-casino/",
       "destination": "/casino-reviews/planet-7/",
-      "permanent": true
-    },
-    {
-      "source": "/new-online-casinos/",
-      "destination": "/online-casinos/new/",
       "permanent": true
     },
     {
@@ -1943,16 +1924,7 @@
       "source": "/index.html",
       "destination": "/",
       "permanent": true
-    },
-    {
-      "source": "/author/alex/",
-      "destination": "/about-us/alex-harper/",
-      "permanent": true
-    },
-    {
-      "source": "/author/paige/",
-      "destination": "/about-us/paige-williams/",
-      "permanent": true
     }
+    
   ]
 }
