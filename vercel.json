@@ -1923,6 +1923,11 @@
       "source": "/index.html",
       "destination": "/",
       "permanent": true
+    },
+    {
+      "source": "/play/slots-and-casino/",
+      "destination": "https://record.onlinecasinoshare.com/_6KychLKsnaO2u08qNo8obWNd7ZgqdRLk/1/",
+      "permanent": true
     }
   ]
 }
