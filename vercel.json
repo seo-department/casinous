@@ -1365,11 +1365,6 @@
       "permanent": true
     },
     {
-      "source": "/welcome-bonus/",
-      "destination": "/casino-bonuses/welcome/",
-      "permanent": true
-    },
-    {
       "source": "/vip/",
       "destination": "/casino-bonuses/vip/",
       "permanent": true
@@ -1897,11 +1892,6 @@
     {
       "source": "/canada-casino-guide/",
       "destination": "/online-casinos/canada/",
-      "permanent": true
-    },
-    {
-      "source": "/casino-safety/",
-      "destination": "/online-casinos/safety/",
       "permanent": true
     },
     {
