@@ -1918,6 +1918,11 @@
       "source": "/play/slots-and-casino/",
       "destination": "https://record.onlinecasinoshare.com/_6KychLKsnaO2u08qNo8obWNd7ZgqdRLk/1/",
       "permanent": true
+    },
+    {
+      "source": "/online-poker/best-poker-sites-online/",
+      "destination": "/online-poker/",
+      "permanent": true
     }
   ]
 }
